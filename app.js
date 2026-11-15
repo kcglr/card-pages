@@ -669,6 +669,7 @@
     var cmNote = links.cm ? "exact card page" : cmStatus === "loading" ? "Finding exact card page…" :
       cmStatus === "not_found" ? "No exact match found" : cmStatus === "unavailable" ? "Card lookup unavailable" : "Exact card link unavailable";
     rows.push({ name: "Cardmarket", price: "—", note: cmNote, url: links.cm });
+    rows.push({ name: "Collectr", price: "—", note: links.collectr ? "View price on Collectr" : "Exact card link unavailable", url: links.collectr });
     $("sheet-markets").innerHTML = rows.map(function (m) {
       var body = '<span class="market-name">' + escapeHtml(m.name) +
         (m.url ? '<span class="market-go">↗</span>' : "") + "</span>" +
@@ -685,6 +686,7 @@
     else if (pcStatus !== "loading") out.push('<a href="' + escapeHtml(links.pcSearch) + '" target="_blank" rel="noopener noreferrer">Search PriceCharting</a>');
     if (links.cm) out.push('<a href="' + escapeHtml(links.cm) + '" target="_blank" rel="noopener noreferrer">Open card on Cardmarket</a>');
     else if (cmStatus !== "loading") out.push('<a href="' + escapeHtml(links.cmSearch) + '" target="_blank" rel="noopener noreferrer">Search Cardmarket</a>');
+    if (links.collectr) out.push('<a href="' + escapeHtml(links.collectr) + '" target="_blank" rel="noopener noreferrer">View price on Collectr</a>');
     if (links.ebaySold) out.push('<a href="' + escapeHtml(links.ebaySold) + '" target="_blank" rel="noopener noreferrer">View eBay sold listings</a>');
     $("sheet-links").innerHTML = out.join("");
   }
@@ -933,7 +935,7 @@
         return res.json();
       }),
       loadFx(),
-      fetch("links/" + encodeURIComponent(item.key) + ".json?v=20261116").then(function (res) {
+      fetch("links/" + encodeURIComponent(item.key) + ".json?v=20261116r3").then(function (res) {
         if (!res.ok) return {};
         return res.json();
       }).catch(function () { return {}; })

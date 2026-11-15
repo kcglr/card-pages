@@ -11,13 +11,15 @@
       .normalize("NFKD").replace(/[^\x00-\x7F]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
   }
   function number(value) {
-    var parts = String(value || "").split("/")[0].trim().split(/\s+/);
+    var parts = String(value || "").split("/")[0].trim().replace(/^([A-Za-z]+)\s+(\d+)/, "$1$2").split(/\s+/);
     return parts[parts.length - 1].toLowerCase().replace(/[^a-z0-9]/g, "").replace(/\d+/g, function (n) { return String(Number(n)); });
   }
   function setName(value) {
-    var name = normalize(value);
+    var name = normalize(value).replace(/^ex /, "");
     return { "expedition base set": "expedition", "celebrations classic collection": "celebrations",
-      "scarlet violet promos": "scarlet violet black star promos", "sword shield promos": "sword shield black star promos" }[name] || name;
+      "scarlet violet promos": "scarlet violet black star promos", "sword shield promos": "swsh black star promos",
+      "sword shield black star promos": "swsh black star promos", "sun moon promos": "sm black star promos",
+      "wizards promos": "wizards black star promos", "unseen forces unown collection": "unseen forces" }[name] || name;
   }
   function variantMatches(wanted, variant) {
     wanted = normalize(wanted).replace(/first edition/g, "1st edition");
@@ -29,6 +31,7 @@
     if (/^1st edition( holo)?$/.test(wanted)) return stamps.length === 1 && stamps[0] === "1st-edition" && !subtype && /^(holo|normal)$/.test(kind);
     if (wanted === "play pokemon") return stamps.length === 1 && stamps[0] === "player-rewards-program";
     if (wanted === "no symbol") return subtype === "missing-expansion-symbol" && !stamps.length;
+    if (wanted === "expansion stamp") return stamps.length === 1 && stamps[0] === "set-logo" && !subtype;
     if (stamps.length || subtype) return false;
     var special = { "reverse holo": ["reverse", ["", "mirror"]], "master ball holo": ["reverse", ["masterball"]],
       "poke ball holo": ["reverse", ["pokeball"]], "cosmos holo": ["holo", ["cosmos"]] }[wanted];
