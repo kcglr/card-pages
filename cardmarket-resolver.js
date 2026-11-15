@@ -57,20 +57,34 @@
   }
   function createResolver(fetcher) {
     var cache = new Map();
-    function get(path) {
-      if (cache.has(path)) return cache.get(path);
+    function request(path, attempt) {
       var controller = new AbortController();
       var timer = setTimeout(function () { controller.abort(); }, 12000);
-      var pending = Promise.resolve().then(function () {
+      return Promise.resolve().then(function () {
         return fetcher(API + path, { mode: "cors", signal: controller.signal });
       }).then(function (response) {
         if (response.status === 404) return null;
-        if (!response.ok) throw new Error("Catalog " + response.status);
+        if (!response.ok) {
+          var error = new Error("Catalog " + response.status);
+          error.retryable = response.status >= 500;
+          throw error;
+        }
         return response.json();
       }).catch(function (error) {
-        cache.delete(path);
+        // One retry covers a transient connection/timeout; never retry rate limits.
+        if (attempt === 0 && error.retryable !== false) {
+          clearTimeout(timer);
+          return request(path, 1);
+        }
         throw error;
       }).finally(function () { clearTimeout(timer); });
+    }
+    function get(path) {
+      if (cache.has(path)) return cache.get(path);
+      var pending = request(path, 0).catch(function (error) {
+        cache.delete(path);
+        throw error;
+      });
       cache.set(path, pending);
       return pending;
     }
