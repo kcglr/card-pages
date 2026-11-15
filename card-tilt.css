@@ -1,0 +1,29 @@
+/* Tilt only the artwork, keeping labels and click targets steady. */
+.tile, .sheet-art { touch-action: pan-y pinch-zoom; }
+.art, .sheet-art {
+  position: relative;
+  transform: perspective(700px) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg)) scale(var(--tilt-scale, 1));
+  transition: transform 450ms cubic-bezier(.2,.8,.2,1), box-shadow 450ms ease;
+  transform-origin: center;
+}
+.art.is-tilting, .sheet-art.is-tilting {
+  transition-duration: 70ms;
+  will-change: transform;
+  box-shadow: var(--tilt-shadow-x, 0px) var(--tilt-shadow-y, 6px) 18px rgba(28,28,28,.24);
+}
+.art::after, .sheet-art::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(circle at var(--tilt-light-x, 50%) var(--tilt-light-y, 50%), rgba(255,255,255,.24), transparent 65%);
+  opacity: 0;
+  transition: opacity 250ms ease;
+}
+.art.is-tilting::after, .sheet-art.is-tilting::after { opacity: 1; }
+.art img, .sheet-art img { -webkit-user-drag: none; user-select: none; }
+@media (prefers-reduced-motion: reduce) {
+  .art, .sheet-art { transform: none; transition: none; }
+  .art::after, .sheet-art::after { display: none; }
+}
