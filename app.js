@@ -517,7 +517,8 @@
     }
     var tiles = grid.querySelectorAll(".tile");
     for (var i = 0; i < tiles.length; i++) {
-      var card = current.cards[i];
+      var idx = parseInt(tiles[i].getAttribute("data-idx"), 10);
+      var card = current.cards[idx];
       if (!card) continue;
       var priced = card.price && card.price.headline;
       var head = tiles[i].querySelector(".headline");
