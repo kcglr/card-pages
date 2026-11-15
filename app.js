@@ -176,6 +176,16 @@
     return bits.filter(Boolean).join(" ");
   }
 
+  function pcTerms(card) {
+    // PriceCharting finds nothing when the query has a variant word or a "149/131" style number.
+    var parts = (card.set || "").split(" · ");
+    var num = (parts[1] || "").split("/")[0].replace(/^0+(?=\d)/, "");
+    var bits = [card.name, parts[0], num];
+    if (card.lang === "JP") bits.push("japanese");
+    if (card.lang === "CN") bits.push("chinese");
+    return bits.filter(Boolean).join(" ");
+  }
+
   function marketLinks(card) {
     var q = searchTerms(card);
     var tcg = card.tcgUrl || (card.productId ? "https://www.tcgplayer.com/product/" + card.productId : "");
@@ -184,7 +194,7 @@
       tcg: tcg,
       ebaySold: "https://www.ebay.com/sch/i.html?_nkw=" + quote(q) + "&LH_Sold=1&LH_Complete=1",
       ebay: "https://www.ebay.com/sch/i.html?_nkw=" + quote(q),
-      pc: "https://www.pricecharting.com/search-products?q=" + quote(q) + "&type=prices",
+      pc: "https://www.pricecharting.com/search-products?q=" + quote(pcTerms(card)) + "&type=prices",
       cm: "https://www.cardmarket.com/en/Pokemon/Products/Search?searchString=" + quote(q)
     };
   }
