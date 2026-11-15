@@ -1,0 +1,8210 @@
+{
+ "updated": "2026-11-15T20:53:25+0300",
+ "species": [
+  {
+   "key": "1-bulbasaur",
+   "name": "Bulbasaur",
+   "slug": "bulbasaur",
+   "number": 1,
+   "cards": 82,
+   "variants": 134
+  },
+  {
+   "key": "2-ivysaur",
+   "name": "Ivysaur",
+   "slug": "ivysaur",
+   "number": 2,
+   "cards": 57,
+   "variants": 94
+  },
+  {
+   "key": "3-venusaur",
+   "name": "Venusaur",
+   "slug": "venusaur",
+   "number": 3,
+   "cards": 132,
+   "variants": 174
+  },
+  {
+   "key": "4-charmander",
+   "name": "Charmander",
+   "slug": "charmander",
+   "number": 4,
+   "cards": 126,
+   "variants": 214
+  },
+  {
+   "key": "5-charmeleon",
+   "name": "Charmeleon",
+   "slug": "charmeleon",
+   "number": 5,
+   "cards": 97,
+   "variants": 166
+  },
+  {
+   "key": "6-charizard",
+   "name": "Charizard",
+   "slug": "charizard",
+   "number": 6,
+   "cards": 299,
+   "variants": 400
+  },
+  {
+   "key": "7-squirtle",
+   "name": "Squirtle",
+   "slug": "squirtle",
+   "number": 7,
+   "cards": 79,
+   "variants": 136
+  },
+  {
+   "key": "8-wartortle",
+   "name": "Wartortle",
+   "slug": "wartortle",
+   "number": 8,
+   "cards": 54,
+   "variants": 98
+  },
+  {
+   "key": "9-blastoise",
+   "name": "Blastoise",
+   "slug": "blastoise",
+   "number": 9,
+   "cards": 118,
+   "variants": 179
+  },
+  {
+   "key": "10-caterpie",
+   "name": "Caterpie",
+   "slug": "caterpie",
+   "number": 10,
+   "cards": 50,
+   "variants": 89
+  },
+  {
+   "key": "11-metapod",
+   "name": "Metapod",
+   "slug": "metapod",
+   "number": 11,
+   "cards": 44,
+   "variants": 81
+  },
+  {
+   "key": "12-butterfree",
+   "name": "Butterfree",
+   "slug": "butterfree",
+   "number": 12,
+   "cards": 63,
+   "variants": 98
+  },
+  {
+   "key": "13-weedle",
+   "name": "Weedle",
+   "slug": "weedle",
+   "number": 13,
+   "cards": 57,
+   "variants": 108
+  },
+  {
+   "key": "14-kakuna",
+   "name": "Kakuna",
+   "slug": "kakuna",
+   "number": 14,
+   "cards": 50,
+   "variants": 94
+  },
+  {
+   "key": "15-beedrill",
+   "name": "Beedrill",
+   "slug": "beedrill",
+   "number": 15,
+   "cards": 72,
+   "variants": 119
+  },
+  {
+   "key": "16-pidgey",
+   "name": "Pidgey",
+   "slug": "pidgey",
+   "number": 16,
+   "cards": 51,
+   "variants": 93
+  },
+  {
+   "key": "17-pidgeotto",
+   "name": "Pidgeotto",
+   "slug": "pidgeotto",
+   "number": 17,
+   "cards": 46,
+   "variants": 84
+  },
+  {
+   "key": "18-pidgeot",
+   "name": "Pidgeot",
+   "slug": "pidgeot",
+   "number": 18,
+   "cards": 66,
+   "variants": 99
+  },
+  {
+   "key": "19-rattata",
+   "name": "Rattata",
+   "slug": "rattata",
+   "number": 19,
+   "cards": 64,
+   "variants": 124
+  },
+  {
+   "key": "20-raticate",
+   "name": "Raticate",
+   "slug": "raticate",
+   "number": 20,
+   "cards": 73,
+   "variants": 122
+  },
+  {
+   "key": "21-spearow",
+   "name": "Spearow",
+   "slug": "spearow",
+   "number": 21,
+   "cards": 49,
+   "variants": 85
+  },
+  {
+   "key": "22-fearow",
+   "name": "Fearow",
+   "slug": "fearow",
+   "number": 22,
+   "cards": 49,
+   "variants": 84
+  },
+  {
+   "key": "23-ekans",
+   "name": "Ekans",
+   "slug": "ekans",
+   "number": 23,
+   "cards": 44,
+   "variants": 82
+  },
+  {
+   "key": "24-arbok",
+   "name": "Arbok",
+   "slug": "arbok",
+   "number": 24,
+   "cards": 53,
+   "variants": 85
+  },
+  {
+   "key": "25-pikachu",
+   "name": "Pikachu",
+   "slug": "pikachu",
+   "number": 25,
+   "cards": 764,
+   "variants": 991
+  },
+  {
+   "key": "26-raichu",
+   "name": "Raichu",
+   "slug": "raichu",
+   "number": 26,
+   "cards": 193,
+   "variants": 311
+  },
+  {
+   "key": "27-sandshrew",
+   "name": "Sandshrew",
+   "slug": "sandshrew",
+   "number": 27,
+   "cards": 65,
+   "variants": 121
+  },
+  {
+   "key": "28-sandslash",
+   "name": "Sandslash",
+   "slug": "sandslash",
+   "number": 28,
+   "cards": 62,
+   "variants": 106
+  },
+  {
+   "key": "29-nidoran-female",
+   "name": "Nidoran♀",
+   "slug": "nidoran-female",
+   "number": 29,
+   "cards": 40,
+   "variants": 80
+  },
+  {
+   "key": "30-nidorina",
+   "name": "Nidorina",
+   "slug": "nidorina",
+   "number": 30,
+   "cards": 41,
+   "variants": 75
+  },
+  {
+   "key": "31-nidoqueen",
+   "name": "Nidoqueen",
+   "slug": "nidoqueen",
+   "number": 31,
+   "cards": 40,
+   "variants": 79
+  },
+  {
+   "key": "32-nidoran-male",
+   "name": "Nidoran♂",
+   "slug": "nidoran-male",
+   "number": 32,
+   "cards": 36,
+   "variants": 77
+  },
+  {
+   "key": "33-nidorino",
+   "name": "Nidorino",
+   "slug": "nidorino",
+   "number": 33,
+   "cards": 36,
+   "variants": 73
+  },
+  {
+   "key": "34-nidoking",
+   "name": "Nidoking",
+   "slug": "nidoking",
+   "number": 34,
+   "cards": 52,
+   "variants": 93
+  },
+  {
+   "key": "35-clefairy",
+   "name": "Clefairy",
+   "slug": "clefairy",
+   "number": 35,
+   "cards": 102,
+   "variants": 178
+  },
+  {
+   "key": "36-clefable",
+   "name": "Clefable",
+   "slug": "clefable",
+   "number": 36,
+   "cards": 81,
+   "variants": 129
+  },
+  {
+   "key": "37-vulpix",
+   "name": "Vulpix",
+   "slug": "vulpix",
+   "number": 37,
+   "cards": 149,
+   "variants": 251
+  },
+  {
+   "key": "38-ninetales",
+   "name": "Ninetales",
+   "slug": "ninetales",
+   "number": 38,
+   "cards": 151,
+   "variants": 234
+  },
+  {
+   "key": "39-jigglypuff",
+   "name": "Jigglypuff",
+   "slug": "jigglypuff",
+   "number": 39,
+   "cards": 92,
+   "variants": 144
+  },
+  {
+   "key": "40-wigglytuff",
+   "name": "Wigglytuff",
+   "slug": "wigglytuff",
+   "number": 40,
+   "cards": 72,
+   "variants": 110
+  },
+  {
+   "key": "41-zubat",
+   "name": "Zubat",
+   "slug": "zubat",
+   "number": 41,
+   "cards": 73,
+   "variants": 149
+  },
+  {
+   "key": "42-golbat",
+   "name": "Golbat",
+   "slug": "golbat",
+   "number": 42,
+   "cards": 65,
+   "variants": 125
+  },
+  {
+   "key": "43-oddish",
+   "name": "Oddish",
+   "slug": "oddish",
+   "number": 43,
+   "cards": 70,
+   "variants": 131
+  },
+  {
+   "key": "44-gloom",
+   "name": "Gloom",
+   "slug": "gloom",
+   "number": 44,
+   "cards": 65,
+   "variants": 121
+  },
+  {
+   "key": "45-vileplume",
+   "name": "Vileplume",
+   "slug": "vileplume",
+   "number": 45,
+   "cards": 62,
+   "variants": 102
+  },
+  {
+   "key": "46-paras",
+   "name": "Paras",
+   "slug": "paras",
+   "number": 46,
+   "cards": 52,
+   "variants": 93
+  },
+  {
+   "key": "47-parasect",
+   "name": "Parasect",
+   "slug": "parasect",
+   "number": 47,
+   "cards": 47,
+   "variants": 82
+  },
+  {
+   "key": "48-venonat",
+   "name": "Venonat",
+   "slug": "venonat",
+   "number": 48,
+   "cards": 32,
+   "variants": 60
+  },
+  {
+   "key": "49-venomoth",
+   "name": "Venomoth",
+   "slug": "venomoth",
+   "number": 49,
+   "cards": 41,
+   "variants": 67
+  },
+  {
+   "key": "50-diglett",
+   "name": "Diglett",
+   "slug": "diglett",
+   "number": 50,
+   "cards": 80,
+   "variants": 143
+  },
+  {
+   "key": "51-dugtrio",
+   "name": "Dugtrio",
+   "slug": "dugtrio",
+   "number": 51,
+   "cards": 87,
+   "variants": 147
+  },
+  {
+   "key": "52-meowth",
+   "name": "Meowth",
+   "slug": "meowth",
+   "number": 52,
+   "cards": 187,
+   "variants": 271
+  },
+  {
+   "key": "53-persian",
+   "name": "Persian",
+   "slug": "persian",
+   "number": 53,
+   "cards": 96,
+   "variants": 141
+  },
+  {
+   "key": "54-psyduck",
+   "name": "Psyduck",
+   "slug": "psyduck",
+   "number": 54,
+   "cards": 104,
+   "variants": 172
+  },
+  {
+   "key": "55-golduck",
+   "name": "Golduck",
+   "slug": "golduck",
+   "number": 55,
+   "cards": 59,
+   "variants": 108
+  },
+  {
+   "key": "56-mankey",
+   "name": "Mankey",
+   "slug": "mankey",
+   "number": 56,
+   "cards": 67,
+   "variants": 116
+  },
+  {
+   "key": "57-primeape",
+   "name": "Primeape",
+   "slug": "primeape",
+   "number": 57,
+   "cards": 63,
+   "variants": 108
+  },
+  {
+   "key": "58-growlithe",
+   "name": "Growlithe",
+   "slug": "growlithe",
+   "number": 58,
+   "cards": 113,
+   "variants": 188
+  },
+  {
+   "key": "59-arcanine",
+   "name": "Arcanine",
+   "slug": "arcanine",
+   "number": 59,
+   "cards": 112,
+   "variants": 185
+  },
+  {
+   "key": "60-poliwag",
+   "name": "Poliwag",
+   "slug": "poliwag",
+   "number": 60,
+   "cards": 48,
+   "variants": 98
+  },
+  {
+   "key": "61-poliwhirl",
+   "name": "Poliwhirl",
+   "slug": "poliwhirl",
+   "number": 61,
+   "cards": 46,
+   "variants": 91
+  },
+  {
+   "key": "62-poliwrath",
+   "name": "Poliwrath",
+   "slug": "poliwrath",
+   "number": 62,
+   "cards": 46,
+   "variants": 90
+  },
+  {
+   "key": "63-abra",
+   "name": "Abra",
+   "slug": "abra",
+   "number": 63,
+   "cards": 39,
+   "variants": 72
+  },
+  {
+   "key": "64-kadabra",
+   "name": "Kadabra",
+   "slug": "kadabra",
+   "number": 64,
+   "cards": 31,
+   "variants": 58
+  },
+  {
+   "key": "65-alakazam",
+   "name": "Alakazam",
+   "slug": "alakazam",
+   "number": 65,
+   "cards": 78,
+   "variants": 118
+  },
+  {
+   "key": "66-machop",
+   "name": "Machop",
+   "slug": "machop",
+   "number": 66,
+   "cards": 59,
+   "variants": 113
+  },
+  {
+   "key": "67-machoke",
+   "name": "Machoke",
+   "slug": "machoke",
+   "number": 67,
+   "cards": 58,
+   "variants": 106
+  },
+  {
+   "key": "68-machamp",
+   "name": "Machamp",
+   "slug": "machamp",
+   "number": 68,
+   "cards": 120,
+   "variants": 190
+  },
+  {
+   "key": "69-bellsprout",
+   "name": "Bellsprout",
+   "slug": "bellsprout",
+   "number": 69,
+   "cards": 42,
+   "variants": 80
+  },
+  {
+   "key": "70-weepinbell",
+   "name": "Weepinbell",
+   "slug": "weepinbell",
+   "number": 70,
+   "cards": 37,
+   "variants": 68
+  },
+  {
+   "key": "71-victreebel",
+   "name": "Victreebel",
+   "slug": "victreebel",
+   "number": 71,
+   "cards": 37,
+   "variants": 68
+  },
+  {
+   "key": "72-tentacool",
+   "name": "Tentacool",
+   "slug": "tentacool",
+   "number": 72,
+   "cards": 36,
+   "variants": 74
+  },
+  {
+   "key": "73-tentacruel",
+   "name": "Tentacruel",
+   "slug": "tentacruel",
+   "number": 73,
+   "cards": 37,
+   "variants": 71
+  },
+  {
+   "key": "74-geodude",
+   "name": "Geodude",
+   "slug": "geodude",
+   "number": 74,
+   "cards": 59,
+   "variants": 110
+  },
+  {
+   "key": "75-graveler",
+   "name": "Graveler",
+   "slug": "graveler",
+   "number": 75,
+   "cards": 55,
+   "variants": 97
+  },
+  {
+   "key": "76-golem",
+   "name": "Golem",
+   "slug": "golem",
+   "number": 76,
+   "cards": 62,
+   "variants": 98
+  },
+  {
+   "key": "77-ponyta",
+   "name": "Ponyta",
+   "slug": "ponyta",
+   "number": 77,
+   "cards": 90,
+   "variants": 161
+  },
+  {
+   "key": "78-rapidash",
+   "name": "Rapidash",
+   "slug": "rapidash",
+   "number": 78,
+   "cards": 103,
+   "variants": 163
+  },
+  {
+   "key": "79-slowpoke",
+   "name": "Slowpoke",
+   "slug": "slowpoke",
+   "number": 79,
+   "cards": 106,
+   "variants": 186
+  },
+  {
+   "key": "80-slowbro",
+   "name": "Slowbro",
+   "slug": "slowbro",
+   "number": 80,
+   "cards": 67,
+   "variants": 109
+  },
+  {
+   "key": "81-magnemite",
+   "name": "Magnemite",
+   "slug": "magnemite",
+   "number": 81,
+   "cards": 117,
+   "variants": 225
+  },
+  {
+   "key": "82-magneton",
+   "name": "Magneton",
+   "slug": "magneton",
+   "number": 82,
+   "cards": 117,
+   "variants": 217
+  },
+  {
+   "key": "83-farfetchd",
+   "name": "Farfetch'd",
+   "slug": "farfetchd",
+   "number": 83,
+   "cards": 57,
+   "variants": 95
+  },
+  {
+   "key": "84-doduo",
+   "name": "Doduo",
+   "slug": "doduo",
+   "number": 84,
+   "cards": 51,
+   "variants": 101
+  },
+  {
+   "key": "85-dodrio",
+   "name": "Dodrio",
+   "slug": "dodrio",
+   "number": 85,
+   "cards": 46,
+   "variants": 82
+  },
+  {
+   "key": "86-seel",
+   "name": "Seel",
+   "slug": "seel",
+   "number": 86,
+   "cards": 45,
+   "variants": 86
+  },
+  {
+   "key": "87-dewgong",
+   "name": "Dewgong",
+   "slug": "dewgong",
+   "number": 87,
+   "cards": 42,
+   "variants": 76
+  },
+  {
+   "key": "88-grimer",
+   "name": "Grimer",
+   "slug": "grimer",
+   "number": 88,
+   "cards": 62,
+   "variants": 123
+  },
+  {
+   "key": "89-muk",
+   "name": "Muk",
+   "slug": "muk",
+   "number": 89,
+   "cards": 76,
+   "variants": 127
+  },
+  {
+   "key": "90-shellder",
+   "name": "Shellder",
+   "slug": "shellder",
+   "number": 90,
+   "cards": 36,
+   "variants": 68
+  },
+  {
+   "key": "91-cloyster",
+   "name": "Cloyster",
+   "slug": "cloyster",
+   "number": 91,
+   "cards": 36,
+   "variants": 65
+  },
+  {
+   "key": "92-gastly",
+   "name": "Gastly",
+   "slug": "gastly",
+   "number": 92,
+   "cards": 81,
+   "variants": 153
+  },
+  {
+   "key": "93-haunter",
+   "name": "Haunter",
+   "slug": "haunter",
+   "number": 93,
+   "cards": 74,
+   "variants": 139
+  },
+  {
+   "key": "94-gengar",
+   "name": "Gengar",
+   "slug": "gengar",
+   "number": 94,
+   "cards": 143,
+   "variants": 220
+  },
+  {
+   "key": "95-onix",
+   "name": "Onix",
+   "slug": "onix",
+   "number": 95,
+   "cards": 78,
+   "variants": 144
+  },
+  {
+   "key": "96-drowzee",
+   "name": "Drowzee",
+   "slug": "drowzee",
+   "number": 96,
+   "cards": 67,
+   "variants": 124
+  },
+  {
+   "key": "97-hypno",
+   "name": "Hypno",
+   "slug": "hypno",
+   "number": 97,
+   "cards": 64,
+   "variants": 112
+  },
+  {
+   "key": "98-krabby",
+   "name": "Krabby",
+   "slug": "krabby",
+   "number": 98,
+   "cards": 29,
+   "variants": 56
+  },
+  {
+   "key": "99-kingler",
+   "name": "Kingler",
+   "slug": "kingler",
+   "number": 99,
+   "cards": 31,
+   "variants": 54
+  },
+  {
+   "key": "100-voltorb",
+   "name": "Voltorb",
+   "slug": "voltorb",
+   "number": 100,
+   "cards": 110,
+   "variants": 214
+  },
+  {
+   "key": "101-electrode",
+   "name": "Electrode",
+   "slug": "electrode",
+   "number": 101,
+   "cards": 119,
+   "variants": 201
+  },
+  {
+   "key": "102-exeggcute",
+   "name": "Exeggcute",
+   "slug": "exeggcute",
+   "number": 102,
+   "cards": 95,
+   "variants": 164
+  },
+  {
+   "key": "103-exeggutor",
+   "name": "Exeggutor",
+   "slug": "exeggutor",
+   "number": 103,
+   "cards": 133,
+   "variants": 198
+  },
+  {
+   "key": "104-cubone",
+   "name": "Cubone",
+   "slug": "cubone",
+   "number": 104,
+   "cards": 61,
+   "variants": 114
+  },
+  {
+   "key": "105-marowak",
+   "name": "Marowak",
+   "slug": "marowak",
+   "number": 105,
+   "cards": 53,
+   "variants": 100
+  },
+  {
+   "key": "106-hitmonlee",
+   "name": "Hitmonlee",
+   "slug": "hitmonlee",
+   "number": 106,
+   "cards": 34,
+   "variants": 61
+  },
+  {
+   "key": "107-hitmonchan",
+   "name": "Hitmonchan",
+   "slug": "hitmonchan",
+   "number": 107,
+   "cards": 51,
+   "variants": 91
+  },
+  {
+   "key": "108-lickitung",
+   "name": "Lickitung",
+   "slug": "lickitung",
+   "number": 108,
+   "cards": 58,
+   "variants": 97
+  },
+  {
+   "key": "109-koffing",
+   "name": "Koffing",
+   "slug": "koffing",
+   "number": 109,
+   "cards": 74,
+   "variants": 141
+  },
+  {
+   "key": "110-weezing",
+   "name": "Weezing",
+   "slug": "weezing",
+   "number": 110,
+   "cards": 78,
+   "variants": 133
+  },
+  {
+   "key": "111-rhyhorn",
+   "name": "Rhyhorn",
+   "slug": "rhyhorn",
+   "number": 111,
+   "cards": 59,
+   "variants": 110
+  },
+  {
+   "key": "112-rhydon",
+   "name": "Rhydon",
+   "slug": "rhydon",
+   "number": 112,
+   "cards": 51,
+   "variants": 90
+  },
+  {
+   "key": "113-chansey",
+   "name": "Chansey",
+   "slug": "chansey",
+   "number": 113,
+   "cards": 83,
+   "variants": 129
+  },
+  {
+   "key": "114-tangela",
+   "name": "Tangela",
+   "slug": "tangela",
+   "number": 114,
+   "cards": 70,
+   "variants": 123
+  },
+  {
+   "key": "115-kangaskhan",
+   "name": "Kangaskhan",
+   "slug": "kangaskhan",
+   "number": 115,
+   "cards": 103,
+   "variants": 152
+  },
+  {
+   "key": "116-horsea",
+   "name": "Horsea",
+   "slug": "horsea",
+   "number": 116,
+   "cards": 80,
+   "variants": 143
+  },
+  {
+   "key": "117-seadra",
+   "name": "Seadra",
+   "slug": "seadra",
+   "number": 117,
+   "cards": 57,
+   "variants": 113
+  },
+  {
+   "key": "118-goldeen",
+   "name": "Goldeen",
+   "slug": "goldeen",
+   "number": 118,
+   "cards": 50,
+   "variants": 98
+  },
+  {
+   "key": "119-seaking",
+   "name": "Seaking",
+   "slug": "seaking",
+   "number": 119,
+   "cards": 40,
+   "variants": 76
+  },
+  {
+   "key": "120-staryu",
+   "name": "Staryu",
+   "slug": "staryu",
+   "number": 120,
+   "cards": 77,
+   "variants": 147
+  },
+  {
+   "key": "121-starmie",
+   "name": "Starmie",
+   "slug": "starmie",
+   "number": 121,
+   "cards": 89,
+   "variants": 148
+  },
+  {
+   "key": "122-mr-mime",
+   "name": "Mr. Mime",
+   "slug": "mr-mime",
+   "number": 122,
+   "cards": 87,
+   "variants": 141
+  },
+  {
+   "key": "123-scyther",
+   "name": "Scyther",
+   "slug": "scyther",
+   "number": 123,
+   "cards": 82,
+   "variants": 143
+  },
+  {
+   "key": "124-jynx",
+   "name": "Jynx",
+   "slug": "jynx",
+   "number": 124,
+   "cards": 68,
+   "variants": 109
+  },
+  {
+   "key": "125-electabuzz",
+   "name": "Electabuzz",
+   "slug": "electabuzz",
+   "number": 125,
+   "cards": 88,
+   "variants": 150
+  },
+  {
+   "key": "126-magmar",
+   "name": "Magmar",
+   "slug": "magmar",
+   "number": 126,
+   "cards": 75,
+   "variants": 132
+  },
+  {
+   "key": "127-pinsir",
+   "name": "Pinsir",
+   "slug": "pinsir",
+   "number": 127,
+   "cards": 74,
+   "variants": 126
+  },
+  {
+   "key": "128-tauros",
+   "name": "Tauros",
+   "slug": "tauros",
+   "number": 128,
+   "cards": 126,
+   "variants": 190
+  },
+  {
+   "key": "129-magikarp",
+   "name": "Magikarp",
+   "slug": "magikarp",
+   "number": 129,
+   "cards": 113,
+   "variants": 201
+  },
+  {
+   "key": "130-gyarados",
+   "name": "Gyarados",
+   "slug": "gyarados",
+   "number": 130,
+   "cards": 134,
+   "variants": 224
+  },
+  {
+   "key": "131-lapras",
+   "name": "Lapras",
+   "slug": "lapras",
+   "number": 131,
+   "cards": 152,
+   "variants": 215
+  },
+  {
+   "key": "132-ditto",
+   "name": "Ditto",
+   "slug": "ditto",
+   "number": 132,
+   "cards": 84,
+   "variants": 143
+  },
+  {
+   "key": "133-eevee",
+   "name": "Eevee",
+   "slug": "eevee",
+   "number": 133,
+   "cards": 305,
+   "variants": 442
+  },
+  {
+   "key": "134-vaporeon",
+   "name": "Vaporeon",
+   "slug": "vaporeon",
+   "number": 134,
+   "cards": 111,
+   "variants": 180
+  },
+  {
+   "key": "135-jolteon",
+   "name": "Jolteon",
+   "slug": "jolteon",
+   "number": 135,
+   "cards": 120,
+   "variants": 192
+  },
+  {
+   "key": "136-flareon",
+   "name": "Flareon",
+   "slug": "flareon",
+   "number": 136,
+   "cards": 123,
+   "variants": 196
+  },
+  {
+   "key": "137-porygon",
+   "name": "Porygon",
+   "slug": "porygon",
+   "number": 137,
+   "cards": 62,
+   "variants": 120
+  },
+  {
+   "key": "138-omanyte",
+   "name": "Omanyte",
+   "slug": "omanyte",
+   "number": 138,
+   "cards": 34,
+   "variants": 66
+  },
+  {
+   "key": "139-omastar",
+   "name": "Omastar",
+   "slug": "omastar",
+   "number": 139,
+   "cards": 39,
+   "variants": 69
+  },
+  {
+   "key": "140-kabuto",
+   "name": "Kabuto",
+   "slug": "kabuto",
+   "number": 140,
+   "cards": 28,
+   "variants": 57
+  },
+  {
+   "key": "141-kabutops",
+   "name": "Kabutops",
+   "slug": "kabutops",
+   "number": 141,
+   "cards": 38,
+   "variants": 70
+  },
+  {
+   "key": "142-aerodactyl",
+   "name": "Aerodactyl",
+   "slug": "aerodactyl",
+   "number": 142,
+   "cards": 61,
+   "variants": 91
+  },
+  {
+   "key": "143-snorlax",
+   "name": "Snorlax",
+   "slug": "snorlax",
+   "number": 143,
+   "cards": 169,
+   "variants": 262
+  },
+  {
+   "key": "144-articuno",
+   "name": "Articuno",
+   "slug": "articuno",
+   "number": 144,
+   "cards": 138,
+   "variants": 203
+  },
+  {
+   "key": "145-zapdos",
+   "name": "Zapdos",
+   "slug": "zapdos",
+   "number": 145,
+   "cards": 149,
+   "variants": 219
+  },
+  {
+   "key": "146-moltres",
+   "name": "Moltres",
+   "slug": "moltres",
+   "number": 146,
+   "cards": 131,
+   "variants": 194
+  },
+  {
+   "key": "147-dratini",
+   "name": "Dratini",
+   "slug": "dratini",
+   "number": 147,
+   "cards": 70,
+   "variants": 138
+  },
+  {
+   "key": "148-dragonair",
+   "name": "Dragonair",
+   "slug": "dragonair",
+   "number": 148,
+   "cards": 66,
+   "variants": 124
+  },
+  {
+   "key": "149-dragonite",
+   "name": "Dragonite",
+   "slug": "dragonite",
+   "number": 149,
+   "cards": 122,
+   "variants": 193
+  },
+  {
+   "key": "150-mewtwo",
+   "name": "Mewtwo",
+   "slug": "mewtwo",
+   "number": 150,
+   "cards": 261,
+   "variants": 356
+  },
+  {
+   "key": "151-mew",
+   "name": "Mew",
+   "slug": "mew",
+   "number": 151,
+   "cards": 195,
+   "variants": 254
+  },
+  {
+   "key": "152-chikorita",
+   "name": "Chikorita",
+   "slug": "chikorita",
+   "number": 152,
+   "cards": 47,
+   "variants": 82
+  },
+  {
+   "key": "153-bayleef",
+   "name": "Bayleef",
+   "slug": "bayleef",
+   "number": 153,
+   "cards": 26,
+   "variants": 49
+  },
+  {
+   "key": "154-meganium",
+   "name": "Meganium",
+   "slug": "meganium",
+   "number": 154,
+   "cards": 40,
+   "variants": 74
+  },
+  {
+   "key": "155-cyndaquil",
+   "name": "Cyndaquil",
+   "slug": "cyndaquil",
+   "number": 155,
+   "cards": 51,
+   "variants": 97
+  },
+  {
+   "key": "156-quilava",
+   "name": "Quilava",
+   "slug": "quilava",
+   "number": 156,
+   "cards": 33,
+   "variants": 62
+  },
+  {
+   "key": "157-typhlosion",
+   "name": "Typhlosion",
+   "slug": "typhlosion",
+   "number": 157,
+   "cards": 71,
+   "variants": 114
+  },
+  {
+   "key": "158-totodile",
+   "name": "Totodile",
+   "slug": "totodile",
+   "number": 158,
+   "cards": 55,
+   "variants": 99
+  },
+  {
+   "key": "159-croconaw",
+   "name": "Croconaw",
+   "slug": "croconaw",
+   "number": 159,
+   "cards": 40,
+   "variants": 72
+  },
+  {
+   "key": "160-feraligatr",
+   "name": "Feraligatr",
+   "slug": "feraligatr",
+   "number": 160,
+   "cards": 55,
+   "variants": 99
+  },
+  {
+   "key": "161-sentret",
+   "name": "Sentret",
+   "slug": "sentret",
+   "number": 161,
+   "cards": 29,
+   "variants": 55
+  },
+  {
+   "key": "162-furret",
+   "name": "Furret",
+   "slug": "furret",
+   "number": 162,
+   "cards": 34,
+   "variants": 55
+  },
+  {
+   "key": "163-hoothoot",
+   "name": "Hoothoot",
+   "slug": "hoothoot",
+   "number": 163,
+   "cards": 46,
+   "variants": 84
+  },
+  {
+   "key": "164-noctowl",
+   "name": "Noctowl",
+   "slug": "noctowl",
+   "number": 164,
+   "cards": 54,
+   "variants": 95
+  },
+  {
+   "key": "165-ledyba",
+   "name": "Ledyba",
+   "slug": "ledyba",
+   "number": 165,
+   "cards": 31,
+   "variants": 56
+  },
+  {
+   "key": "166-ledian",
+   "name": "Ledian",
+   "slug": "ledian",
+   "number": 166,
+   "cards": 39,
+   "variants": 62
+  },
+  {
+   "key": "167-spinarak",
+   "name": "Spinarak",
+   "slug": "spinarak",
+   "number": 167,
+   "cards": 48,
+   "variants": 92
+  },
+  {
+   "key": "168-ariados",
+   "name": "Ariados",
+   "slug": "ariados",
+   "number": 168,
+   "cards": 50,
+   "variants": 85
+  },
+  {
+   "key": "169-crobat",
+   "name": "Crobat",
+   "slug": "crobat",
+   "number": 169,
+   "cards": 109,
+   "variants": 174
+  },
+  {
+   "key": "170-chinchou",
+   "name": "Chinchou",
+   "slug": "chinchou",
+   "number": 170,
+   "cards": 66,
+   "variants": 127
+  },
+  {
+   "key": "171-lanturn",
+   "name": "Lanturn",
+   "slug": "lanturn",
+   "number": 171,
+   "cards": 67,
+   "variants": 120
+  },
+  {
+   "key": "172-pichu",
+   "name": "Pichu",
+   "slug": "pichu",
+   "number": 172,
+   "cards": 52,
+   "variants": 85
+  },
+  {
+   "key": "173-cleffa",
+   "name": "Cleffa",
+   "slug": "cleffa",
+   "number": 173,
+   "cards": 46,
+   "variants": 67
+  },
+  {
+   "key": "174-igglybuff",
+   "name": "Igglybuff",
+   "slug": "igglybuff",
+   "number": 174,
+   "cards": 29,
+   "variants": 43
+  },
+  {
+   "key": "175-togepi",
+   "name": "Togepi",
+   "slug": "togepi",
+   "number": 175,
+   "cards": 55,
+   "variants": 93
+  },
+  {
+   "key": "176-togetic",
+   "name": "Togetic",
+   "slug": "togetic",
+   "number": 176,
+   "cards": 40,
+   "variants": 73
+  },
+  {
+   "key": "177-natu",
+   "name": "Natu",
+   "slug": "natu",
+   "number": 177,
+   "cards": 53,
+   "variants": 107
+  },
+  {
+   "key": "178-xatu",
+   "name": "Xatu",
+   "slug": "xatu",
+   "number": 178,
+   "cards": 54,
+   "variants": 101
+  },
+  {
+   "key": "179-mareep",
+   "name": "Mareep",
+   "slug": "mareep",
+   "number": 179,
+   "cards": 82,
+   "variants": 143
+  },
+  {
+   "key": "180-flaaffy",
+   "name": "Flaaffy",
+   "slug": "flaaffy",
+   "number": 180,
+   "cards": 85,
+   "variants": 141
+  },
+  {
+   "key": "181-ampharos",
+   "name": "Ampharos",
+   "slug": "ampharos",
+   "number": 181,
+   "cards": 91,
+   "variants": 145
+  },
+  {
+   "key": "182-bellossom",
+   "name": "Bellossom",
+   "slug": "bellossom",
+   "number": 182,
+   "cards": 28,
+   "variants": 56
+  },
+  {
+   "key": "183-marill",
+   "name": "Marill",
+   "slug": "marill",
+   "number": 183,
+   "cards": 68,
+   "variants": 115
+  },
+  {
+   "key": "184-azumarill",
+   "name": "Azumarill",
+   "slug": "azumarill",
+   "number": 184,
+   "cards": 56,
+   "variants": 97
+  },
+  {
+   "key": "185-sudowoodo",
+   "name": "Sudowoodo",
+   "slug": "sudowoodo",
+   "number": 185,
+   "cards": 60,
+   "variants": 95
+  },
+  {
+   "key": "186-politoed",
+   "name": "Politoed",
+   "slug": "politoed",
+   "number": 186,
+   "cards": 23,
+   "variants": 42
+  },
+  {
+   "key": "187-hoppip",
+   "name": "Hoppip",
+   "slug": "hoppip",
+   "number": 187,
+   "cards": 38,
+   "variants": 72
+  },
+  {
+   "key": "188-skiploom",
+   "name": "Skiploom",
+   "slug": "skiploom",
+   "number": 188,
+   "cards": 31,
+   "variants": 57
+  },
+  {
+   "key": "189-jumpluff",
+   "name": "Jumpluff",
+   "slug": "jumpluff",
+   "number": 189,
+   "cards": 34,
+   "variants": 59
+  },
+  {
+   "key": "190-aipom",
+   "name": "Aipom",
+   "slug": "aipom",
+   "number": 190,
+   "cards": 46,
+   "variants": 83
+  },
+  {
+   "key": "191-sunkern",
+   "name": "Sunkern",
+   "slug": "sunkern",
+   "number": 191,
+   "cards": 26,
+   "variants": 47
+  },
+  {
+   "key": "192-sunflora",
+   "name": "Sunflora",
+   "slug": "sunflora",
+   "number": 192,
+   "cards": 31,
+   "variants": 48
+  },
+  {
+   "key": "193-yanma",
+   "name": "Yanma",
+   "slug": "yanma",
+   "number": 193,
+   "cards": 54,
+   "variants": 101
+  },
+  {
+   "key": "194-wooper",
+   "name": "Wooper",
+   "slug": "wooper",
+   "number": 194,
+   "cards": 83,
+   "variants": 134
+  },
+  {
+   "key": "195-quagsire",
+   "name": "Quagsire",
+   "slug": "quagsire",
+   "number": 195,
+   "cards": 44,
+   "variants": 74
+  },
+  {
+   "key": "196-espeon",
+   "name": "Espeon",
+   "slug": "espeon",
+   "number": 196,
+   "cards": 133,
+   "variants": 190
+  },
+  {
+   "key": "197-umbreon",
+   "name": "Umbreon",
+   "slug": "umbreon",
+   "number": 197,
+   "cards": 148,
+   "variants": 207
+  },
+  {
+   "key": "198-murkrow",
+   "name": "Murkrow",
+   "slug": "murkrow",
+   "number": 198,
+   "cards": 87,
+   "variants": 140
+  },
+  {
+   "key": "199-slowking",
+   "name": "Slowking",
+   "slug": "slowking",
+   "number": 199,
+   "cards": 75,
+   "variants": 111
+  },
+  {
+   "key": "200-misdreavus",
+   "name": "Misdreavus",
+   "slug": "misdreavus",
+   "number": 200,
+   "cards": 49,
+   "variants": 90
+  },
+  {
+   "key": "201-unown",
+   "name": "Unown",
+   "slug": "unown",
+   "number": 201,
+   "cards": 207,
+   "variants": 381
+  },
+  {
+   "key": "202-wobbuffet",
+   "name": "Wobbuffet",
+   "slug": "wobbuffet",
+   "number": 202,
+   "cards": 71,
+   "variants": 110
+  },
+  {
+   "key": "203-girafarig",
+   "name": "Girafarig",
+   "slug": "girafarig",
+   "number": 203,
+   "cards": 40,
+   "variants": 73
+  },
+  {
+   "key": "204-pineco",
+   "name": "Pineco",
+   "slug": "pineco",
+   "number": 204,
+   "cards": 47,
+   "variants": 91
+  },
+  {
+   "key": "205-forretress",
+   "name": "Forretress",
+   "slug": "forretress",
+   "number": 205,
+   "cards": 57,
+   "variants": 96
+  },
+  {
+   "key": "206-dunsparce",
+   "name": "Dunsparce",
+   "slug": "dunsparce",
+   "number": 206,
+   "cards": 64,
+   "variants": 120
+  },
+  {
+   "key": "207-gligar",
+   "name": "Gligar",
+   "slug": "gligar",
+   "number": 207,
+   "cards": 43,
+   "variants": 81
+  },
+  {
+   "key": "208-steelix",
+   "name": "Steelix",
+   "slug": "steelix",
+   "number": 208,
+   "cards": 90,
+   "variants": 146
+  },
+  {
+   "key": "209-snubbull",
+   "name": "Snubbull",
+   "slug": "snubbull",
+   "number": 209,
+   "cards": 46,
+   "variants": 74
+  },
+  {
+   "key": "210-granbull",
+   "name": "Granbull",
+   "slug": "granbull",
+   "number": 210,
+   "cards": 44,
+   "variants": 66
+  },
+  {
+   "key": "211-qwilfish",
+   "name": "Qwilfish",
+   "slug": "qwilfish",
+   "number": 211,
+   "cards": 35,
+   "variants": 59
+  },
+  {
+   "key": "212-scizor",
+   "name": "Scizor",
+   "slug": "scizor",
+   "number": 212,
+   "cards": 94,
+   "variants": 136
+  },
+  {
+   "key": "213-shuckle",
+   "name": "Shuckle",
+   "slug": "shuckle",
+   "number": 213,
+   "cards": 45,
+   "variants": 72
+  },
+  {
+   "key": "214-heracross",
+   "name": "Heracross",
+   "slug": "heracross",
+   "number": 214,
+   "cards": 74,
+   "variants": 119
+  },
+  {
+   "key": "215-sneasel",
+   "name": "Sneasel",
+   "slug": "sneasel",
+   "number": 215,
+   "cards": 82,
+   "variants": 143
+  },
+  {
+   "key": "216-teddiursa",
+   "name": "Teddiursa",
+   "slug": "teddiursa",
+   "number": 216,
+   "cards": 32,
+   "variants": 56
+  },
+  {
+   "key": "217-ursaring",
+   "name": "Ursaring",
+   "slug": "ursaring",
+   "number": 217,
+   "cards": 35,
+   "variants": 58
+  },
+  {
+   "key": "218-slugma",
+   "name": "Slugma",
+   "slug": "slugma",
+   "number": 218,
+   "cards": 64,
+   "variants": 137
+  },
+  {
+   "key": "219-magcargo",
+   "name": "Magcargo",
+   "slug": "magcargo",
+   "number": 219,
+   "cards": 79,
+   "variants": 142
+  },
+  {
+   "key": "220-swinub",
+   "name": "Swinub",
+   "slug": "swinub",
+   "number": 220,
+   "cards": 43,
+   "variants": 76
+  },
+  {
+   "key": "221-piloswine",
+   "name": "Piloswine",
+   "slug": "piloswine",
+   "number": 221,
+   "cards": 37,
+   "variants": 69
+  },
+  {
+   "key": "222-corsola",
+   "name": "Corsola",
+   "slug": "corsola",
+   "number": 222,
+   "cards": 36,
+   "variants": 62
+  },
+  {
+   "key": "223-remoraid",
+   "name": "Remoraid",
+   "slug": "remoraid",
+   "number": 223,
+   "cards": 45,
+   "variants": 91
+  },
+  {
+   "key": "224-octillery",
+   "name": "Octillery",
+   "slug": "octillery",
+   "number": 224,
+   "cards": 52,
+   "variants": 93
+  },
+  {
+   "key": "225-delibird",
+   "name": "Delibird",
+   "slug": "delibird",
+   "number": 225,
+   "cards": 39,
+   "variants": 70
+  },
+  {
+   "key": "226-mantine",
+   "name": "Mantine",
+   "slug": "mantine",
+   "number": 226,
+   "cards": 44,
+   "variants": 74
+  },
+  {
+   "key": "227-skarmory",
+   "name": "Skarmory",
+   "slug": "skarmory",
+   "number": 227,
+   "cards": 91,
+   "variants": 150
+  },
+  {
+   "key": "228-houndour",
+   "name": "Houndour",
+   "slug": "houndour",
+   "number": 228,
+   "cards": 84,
+   "variants": 163
+  },
+  {
+   "key": "229-houndoom",
+   "name": "Houndoom",
+   "slug": "houndoom",
+   "number": 229,
+   "cards": 132,
+   "variants": 209
+  },
+  {
+   "key": "230-kingdra",
+   "name": "Kingdra",
+   "slug": "kingdra",
+   "number": 230,
+   "cards": 74,
+   "variants": 119
+  },
+  {
+   "key": "231-phanpy",
+   "name": "Phanpy",
+   "slug": "phanpy",
+   "number": 231,
+   "cards": 57,
+   "variants": 95
+  },
+  {
+   "key": "232-donphan",
+   "name": "Donphan",
+   "slug": "donphan",
+   "number": 232,
+   "cards": 49,
+   "variants": 86
+  },
+  {
+   "key": "233-porygon2",
+   "name": "Porygon2",
+   "slug": "porygon2",
+   "number": 233,
+   "cards": 44,
+   "variants": 80
+  },
+  {
+   "key": "234-stantler",
+   "name": "Stantler",
+   "slug": "stantler",
+   "number": 234,
+   "cards": 30,
+   "variants": 53
+  },
+  {
+   "key": "235-smeargle",
+   "name": "Smeargle",
+   "slug": "smeargle",
+   "number": 235,
+   "cards": 40,
+   "variants": 71
+  },
+  {
+   "key": "236-tyrogue",
+   "name": "Tyrogue",
+   "slug": "tyrogue",
+   "number": 236,
+   "cards": 18,
+   "variants": 33
+  },
+  {
+   "key": "237-hitmontop",
+   "name": "Hitmontop",
+   "slug": "hitmontop",
+   "number": 237,
+   "cards": 33,
+   "variants": 57
+  },
+  {
+   "key": "238-smoochum",
+   "name": "Smoochum",
+   "slug": "smoochum",
+   "number": 238,
+   "cards": 17,
+   "variants": 31
+  },
+  {
+   "key": "239-elekid",
+   "name": "Elekid",
+   "slug": "elekid",
+   "number": 239,
+   "cards": 17,
+   "variants": 35
+  },
+  {
+   "key": "240-magby",
+   "name": "Magby",
+   "slug": "magby",
+   "number": 240,
+   "cards": 23,
+   "variants": 41
+  },
+  {
+   "key": "241-miltank",
+   "name": "Miltank",
+   "slug": "miltank",
+   "number": 241,
+   "cards": 48,
+   "variants": 79
+  },
+  {
+   "key": "242-blissey",
+   "name": "Blissey",
+   "slug": "blissey",
+   "number": 242,
+   "cards": 62,
+   "variants": 99
+  },
+  {
+   "key": "243-raikou",
+   "name": "Raikou",
+   "slug": "raikou",
+   "number": 243,
+   "cards": 76,
+   "variants": 112
+  },
+  {
+   "key": "244-entei",
+   "name": "Entei",
+   "slug": "entei",
+   "number": 244,
+   "cards": 103,
+   "variants": 151
+  },
+  {
+   "key": "245-suicune",
+   "name": "Suicune",
+   "slug": "suicune",
+   "number": 245,
+   "cards": 92,
+   "variants": 137
+  },
+  {
+   "key": "246-larvitar",
+   "name": "Larvitar",
+   "slug": "larvitar",
+   "number": 246,
+   "cards": 74,
+   "variants": 148
+  },
+  {
+   "key": "247-pupitar",
+   "name": "Pupitar",
+   "slug": "pupitar",
+   "number": 247,
+   "cards": 63,
+   "variants": 127
+  },
+  {
+   "key": "248-tyranitar",
+   "name": "Tyranitar",
+   "slug": "tyranitar",
+   "number": 248,
+   "cards": 125,
+   "variants": 198
+  },
+  {
+   "key": "249-lugia",
+   "name": "Lugia",
+   "slug": "lugia",
+   "number": 249,
+   "cards": 116,
+   "variants": 160
+  },
+  {
+   "key": "250-ho-oh",
+   "name": "Ho-Oh",
+   "slug": "ho-oh",
+   "number": 250,
+   "cards": 101,
+   "variants": 137
+  },
+  {
+   "key": "251-celebi",
+   "name": "Celebi",
+   "slug": "celebi",
+   "number": 251,
+   "cards": 101,
+   "variants": 129
+  },
+  {
+   "key": "252-treecko",
+   "name": "Treecko",
+   "slug": "treecko",
+   "number": 252,
+   "cards": 55,
+   "variants": 98
+  },
+  {
+   "key": "253-grovyle",
+   "name": "Grovyle",
+   "slug": "grovyle",
+   "number": 253,
+   "cards": 38,
+   "variants": 69
+  },
+  {
+   "key": "254-sceptile",
+   "name": "Sceptile",
+   "slug": "sceptile",
+   "number": 254,
+   "cards": 56,
+   "variants": 86
+  },
+  {
+   "key": "255-torchic",
+   "name": "Torchic",
+   "slug": "torchic",
+   "number": 255,
+   "cards": 71,
+   "variants": 130
+  },
+  {
+   "key": "256-combusken",
+   "name": "Combusken",
+   "slug": "combusken",
+   "number": 256,
+   "cards": 50,
+   "variants": 97
+  },
+  {
+   "key": "257-blaziken",
+   "name": "Blaziken",
+   "slug": "blaziken",
+   "number": 257,
+   "cards": 89,
+   "variants": 136
+  },
+  {
+   "key": "258-mudkip",
+   "name": "Mudkip",
+   "slug": "mudkip",
+   "number": 258,
+   "cards": 51,
+   "variants": 90
+  },
+  {
+   "key": "259-marshtomp",
+   "name": "Marshtomp",
+   "slug": "marshtomp",
+   "number": 259,
+   "cards": 32,
+   "variants": 59
+  },
+  {
+   "key": "260-swampert",
+   "name": "Swampert",
+   "slug": "swampert",
+   "number": 260,
+   "cards": 35,
+   "variants": 66
+  },
+  {
+   "key": "261-poochyena",
+   "name": "Poochyena",
+   "slug": "poochyena",
+   "number": 261,
+   "cards": 55,
+   "variants": 113
+  },
+  {
+   "key": "262-mightyena",
+   "name": "Mightyena",
+   "slug": "mightyena",
+   "number": 262,
+   "cards": 56,
+   "variants": 99
+  },
+  {
+   "key": "263-zigzagoon",
+   "name": "Zigzagoon",
+   "slug": "zigzagoon",
+   "number": 263,
+   "cards": 41,
+   "variants": 77
+  },
+  {
+   "key": "264-linoone",
+   "name": "Linoone",
+   "slug": "linoone",
+   "number": 264,
+   "cards": 39,
+   "variants": 66
+  },
+  {
+   "key": "265-wurmple",
+   "name": "Wurmple",
+   "slug": "wurmple",
+   "number": 265,
+   "cards": 28,
+   "variants": 67
+  },
+  {
+   "key": "266-silcoon",
+   "name": "Silcoon",
+   "slug": "silcoon",
+   "number": 266,
+   "cards": 19,
+   "variants": 43
+  },
+  {
+   "key": "267-beautifly",
+   "name": "Beautifly",
+   "slug": "beautifly",
+   "number": 267,
+   "cards": 24,
+   "variants": 43
+  },
+  {
+   "key": "268-cascoon",
+   "name": "Cascoon",
+   "slug": "cascoon",
+   "number": 268,
+   "cards": 20,
+   "variants": 43
+  },
+  {
+   "key": "269-dustox",
+   "name": "Dustox",
+   "slug": "dustox",
+   "number": 269,
+   "cards": 24,
+   "variants": 45
+  },
+  {
+   "key": "270-lotad",
+   "name": "Lotad",
+   "slug": "lotad",
+   "number": 270,
+   "cards": 37,
+   "variants": 76
+  },
+  {
+   "key": "271-lombre",
+   "name": "Lombre",
+   "slug": "lombre",
+   "number": 271,
+   "cards": 34,
+   "variants": 63
+  },
+  {
+   "key": "272-ludicolo",
+   "name": "Ludicolo",
+   "slug": "ludicolo",
+   "number": 272,
+   "cards": 40,
+   "variants": 67
+  },
+  {
+   "key": "273-seedot",
+   "name": "Seedot",
+   "slug": "seedot",
+   "number": 273,
+   "cards": 44,
+   "variants": 95
+  },
+  {
+   "key": "274-nuzleaf",
+   "name": "Nuzleaf",
+   "slug": "nuzleaf",
+   "number": 274,
+   "cards": 44,
+   "variants": 87
+  },
+  {
+   "key": "275-shiftry",
+   "name": "Shiftry",
+   "slug": "shiftry",
+   "number": 275,
+   "cards": 51,
+   "variants": 85
+  },
+  {
+   "key": "276-taillow",
+   "name": "Taillow",
+   "slug": "taillow",
+   "number": 276,
+   "cards": 31,
+   "variants": 73
+  },
+  {
+   "key": "277-swellow",
+   "name": "Swellow",
+   "slug": "swellow",
+   "number": 277,
+   "cards": 32,
+   "variants": 63
+  },
+  {
+   "key": "278-wingull",
+   "name": "Wingull",
+   "slug": "wingull",
+   "number": 278,
+   "cards": 35,
+   "variants": 71
+  },
+  {
+   "key": "279-pelipper",
+   "name": "Pelipper",
+   "slug": "pelipper",
+   "number": 279,
+   "cards": 38,
+   "variants": 68
+  },
+  {
+   "key": "280-ralts",
+   "name": "Ralts",
+   "slug": "ralts",
+   "number": 280,
+   "cards": 86,
+   "variants": 170
+  },
+  {
+   "key": "281-kirlia",
+   "name": "Kirlia",
+   "slug": "kirlia",
+   "number": 281,
+   "cards": 86,
+   "variants": 162
+  },
+  {
+   "key": "282-gardevoir",
+   "name": "Gardevoir",
+   "slug": "gardevoir",
+   "number": 282,
+   "cards": 161,
+   "variants": 219
+  },
+  {
+   "key": "283-surskit",
+   "name": "Surskit",
+   "slug": "surskit",
+   "number": 283,
+   "cards": 34,
+   "variants": 65
+  },
+  {
+   "key": "284-masquerain",
+   "name": "Masquerain",
+   "slug": "masquerain",
+   "number": 284,
+   "cards": 35,
+   "variants": 63
+  },
+  {
+   "key": "285-shroomish",
+   "name": "Shroomish",
+   "slug": "shroomish",
+   "number": 285,
+   "cards": 42,
+   "variants": 84
+  },
+  {
+   "key": "286-breloom",
+   "name": "Breloom",
+   "slug": "breloom",
+   "number": 286,
+   "cards": 44,
+   "variants": 75
+  },
+  {
+   "key": "287-slakoth",
+   "name": "Slakoth",
+   "slug": "slakoth",
+   "number": 287,
+   "cards": 47,
+   "variants": 83
+  },
+  {
+   "key": "288-vigoroth",
+   "name": "Vigoroth",
+   "slug": "vigoroth",
+   "number": 288,
+   "cards": 35,
+   "variants": 65
+  },
+  {
+   "key": "289-slaking",
+   "name": "Slaking",
+   "slug": "slaking",
+   "number": 289,
+   "cards": 42,
+   "variants": 66
+  },
+  {
+   "key": "290-nincada",
+   "name": "Nincada",
+   "slug": "nincada",
+   "number": 290,
+   "cards": 25,
+   "variants": 57
+  },
+  {
+   "key": "291-ninjask",
+   "name": "Ninjask",
+   "slug": "ninjask",
+   "number": 291,
+   "cards": 24,
+   "variants": 44
+  },
+  {
+   "key": "292-shedinja",
+   "name": "Shedinja",
+   "slug": "shedinja",
+   "number": 292,
+   "cards": 23,
+   "variants": 41
+  },
+  {
+   "key": "293-whismur",
+   "name": "Whismur",
+   "slug": "whismur",
+   "number": 293,
+   "cards": 33,
+   "variants": 65
+  },
+  {
+   "key": "294-loudred",
+   "name": "Loudred",
+   "slug": "loudred",
+   "number": 294,
+   "cards": 29,
+   "variants": 55
+  },
+  {
+   "key": "295-exploud",
+   "name": "Exploud",
+   "slug": "exploud",
+   "number": 295,
+   "cards": 26,
+   "variants": 49
+  },
+  {
+   "key": "296-makuhita",
+   "name": "Makuhita",
+   "slug": "makuhita",
+   "number": 296,
+   "cards": 44,
+   "variants": 95
+  },
+  {
+   "key": "297-hariyama",
+   "name": "Hariyama",
+   "slug": "hariyama",
+   "number": 297,
+   "cards": 37,
+   "variants": 72
+  },
+  {
+   "key": "298-azurill",
+   "name": "Azurill",
+   "slug": "azurill",
+   "number": 298,
+   "cards": 13,
+   "variants": 24
+  },
+  {
+   "key": "299-nosepass",
+   "name": "Nosepass",
+   "slug": "nosepass",
+   "number": 299,
+   "cards": 46,
+   "variants": 83
+  },
+  {
+   "key": "300-skitty",
+   "name": "Skitty",
+   "slug": "skitty",
+   "number": 300,
+   "cards": 47,
+   "variants": 97
+  },
+  {
+   "key": "301-delcatty",
+   "name": "Delcatty",
+   "slug": "delcatty",
+   "number": 301,
+   "cards": 44,
+   "variants": 85
+  },
+  {
+   "key": "302-sableye",
+   "name": "Sableye",
+   "slug": "sableye",
+   "number": 302,
+   "cards": 92,
+   "variants": 149
+  },
+  {
+   "key": "303-mawile",
+   "name": "Mawile",
+   "slug": "mawile",
+   "number": 303,
+   "cards": 100,
+   "variants": 151
+  },
+  {
+   "key": "304-aron",
+   "name": "Aron",
+   "slug": "aron",
+   "number": 304,
+   "cards": 58,
+   "variants": 113
+  },
+  {
+   "key": "305-lairon",
+   "name": "Lairon",
+   "slug": "lairon",
+   "number": 305,
+   "cards": 63,
+   "variants": 110
+  },
+  {
+   "key": "306-aggron",
+   "name": "Aggron",
+   "slug": "aggron",
+   "number": 306,
+   "cards": 62,
+   "variants": 106
+  },
+  {
+   "key": "307-meditite",
+   "name": "Meditite",
+   "slug": "meditite",
+   "number": 307,
+   "cards": 66,
+   "variants": 123
+  },
+  {
+   "key": "308-medicham",
+   "name": "Medicham",
+   "slug": "medicham",
+   "number": 308,
+   "cards": 72,
+   "variants": 120
+  },
+  {
+   "key": "309-electrike",
+   "name": "Electrike",
+   "slug": "electrike",
+   "number": 309,
+   "cards": 72,
+   "variants": 143
+  },
+  {
+   "key": "310-manectric",
+   "name": "Manectric",
+   "slug": "manectric",
+   "number": 310,
+   "cards": 84,
+   "variants": 145
+  },
+  {
+   "key": "311-plusle",
+   "name": "Plusle",
+   "slug": "plusle",
+   "number": 311,
+   "cards": 49,
+   "variants": 83
+  },
+  {
+   "key": "312-minun",
+   "name": "Minun",
+   "slug": "minun",
+   "number": 312,
+   "cards": 49,
+   "variants": 82
+  },
+  {
+   "key": "313-volbeat",
+   "name": "Volbeat",
+   "slug": "volbeat",
+   "number": 313,
+   "cards": 22,
+   "variants": 39
+  },
+  {
+   "key": "314-illumise",
+   "name": "Illumise",
+   "slug": "illumise",
+   "number": 314,
+   "cards": 22,
+   "variants": 39
+  },
+  {
+   "key": "315-roselia",
+   "name": "Roselia",
+   "slug": "roselia",
+   "number": 315,
+   "cards": 43,
+   "variants": 78
+  },
+  {
+   "key": "316-gulpin",
+   "name": "Gulpin",
+   "slug": "gulpin",
+   "number": 316,
+   "cards": 31,
+   "variants": 54
+  },
+  {
+   "key": "317-swalot",
+   "name": "Swalot",
+   "slug": "swalot",
+   "number": 317,
+   "cards": 18,
+   "variants": 36
+  },
+  {
+   "key": "318-carvanha",
+   "name": "Carvanha",
+   "slug": "carvanha",
+   "number": 318,
+   "cards": 58,
+   "variants": 105
+  },
+  {
+   "key": "319-sharpedo",
+   "name": "Sharpedo",
+   "slug": "sharpedo",
+   "number": 319,
+   "cards": 66,
+   "variants": 107
+  },
+  {
+   "key": "320-wailmer",
+   "name": "Wailmer",
+   "slug": "wailmer",
+   "number": 320,
+   "cards": 40,
+   "variants": 77
+  },
+  {
+   "key": "321-wailord",
+   "name": "Wailord",
+   "slug": "wailord",
+   "number": 321,
+   "cards": 61,
+   "variants": 97
+  },
+  {
+   "key": "322-numel",
+   "name": "Numel",
+   "slug": "numel",
+   "number": 322,
+   "cards": 52,
+   "variants": 114
+  },
+  {
+   "key": "323-camerupt",
+   "name": "Camerupt",
+   "slug": "camerupt",
+   "number": 323,
+   "cards": 58,
+   "variants": 104
+  },
+  {
+   "key": "324-torkoal",
+   "name": "Torkoal",
+   "slug": "torkoal",
+   "number": 324,
+   "cards": 70,
+   "variants": 106
+  },
+  {
+   "key": "325-spoink",
+   "name": "Spoink",
+   "slug": "spoink",
+   "number": 325,
+   "cards": 40,
+   "variants": 81
+  },
+  {
+   "key": "326-grumpig",
+   "name": "Grumpig",
+   "slug": "grumpig",
+   "number": 326,
+   "cards": 37,
+   "variants": 67
+  },
+  {
+   "key": "327-spinda",
+   "name": "Spinda",
+   "slug": "spinda",
+   "number": 327,
+   "cards": 27,
+   "variants": 46
+  },
+  {
+   "key": "328-trapinch",
+   "name": "Trapinch",
+   "slug": "trapinch",
+   "number": 328,
+   "cards": 49,
+   "variants": 100
+  },
+  {
+   "key": "329-vibrava",
+   "name": "Vibrava",
+   "slug": "vibrava",
+   "number": 329,
+   "cards": 52,
+   "variants": 94
+  },
+  {
+   "key": "330-flygon",
+   "name": "Flygon",
+   "slug": "flygon",
+   "number": 330,
+   "cards": 70,
+   "variants": 110
+  },
+  {
+   "key": "331-cacnea",
+   "name": "Cacnea",
+   "slug": "cacnea",
+   "number": 331,
+   "cards": 40,
+   "variants": 77
+  },
+  {
+   "key": "332-cacturne",
+   "name": "Cacturne",
+   "slug": "cacturne",
+   "number": 332,
+   "cards": 33,
+   "variants": 59
+  },
+  {
+   "key": "333-swablu",
+   "name": "Swablu",
+   "slug": "swablu",
+   "number": 333,
+   "cards": 74,
+   "variants": 137
+  },
+  {
+   "key": "334-altaria",
+   "name": "Altaria",
+   "slug": "altaria",
+   "number": 334,
+   "cards": 110,
+   "variants": 166
+  },
+  {
+   "key": "335-zangoose",
+   "name": "Zangoose",
+   "slug": "zangoose",
+   "number": 335,
+   "cards": 50,
+   "variants": 85
+  },
+  {
+   "key": "336-seviper",
+   "name": "Seviper",
+   "slug": "seviper",
+   "number": 336,
+   "cards": 45,
+   "variants": 76
+  },
+  {
+   "key": "337-lunatone",
+   "name": "Lunatone",
+   "slug": "lunatone",
+   "number": 337,
+   "cards": 44,
+   "variants": 91
+  },
+  {
+   "key": "338-solrock",
+   "name": "Solrock",
+   "slug": "solrock",
+   "number": 338,
+   "cards": 48,
+   "variants": 98
+  },
+  {
+   "key": "339-barboach",
+   "name": "Barboach",
+   "slug": "barboach",
+   "number": 339,
+   "cards": 23,
+   "variants": 49
+  },
+  {
+   "key": "340-whiscash",
+   "name": "Whiscash",
+   "slug": "whiscash",
+   "number": 340,
+   "cards": 24,
+   "variants": 46
+  },
+  {
+   "key": "341-corphish",
+   "name": "Corphish",
+   "slug": "corphish",
+   "number": 341,
+   "cards": 40,
+   "variants": 80
+  },
+  {
+   "key": "342-crawdaunt",
+   "name": "Crawdaunt",
+   "slug": "crawdaunt",
+   "number": 342,
+   "cards": 32,
+   "variants": 55
+  },
+  {
+   "key": "343-baltoy",
+   "name": "Baltoy",
+   "slug": "baltoy",
+   "number": 343,
+   "cards": 65,
+   "variants": 136
+  },
+  {
+   "key": "344-claydol",
+   "name": "Claydol",
+   "slug": "claydol",
+   "number": 344,
+   "cards": 59,
+   "variants": 111
+  },
+  {
+   "key": "345-lileep",
+   "name": "Lileep",
+   "slug": "lileep",
+   "number": 345,
+   "cards": 29,
+   "variants": 53
+  },
+  {
+   "key": "346-cradily",
+   "name": "Cradily",
+   "slug": "cradily",
+   "number": 346,
+   "cards": 20,
+   "variants": 38
+  },
+  {
+   "key": "347-anorith",
+   "name": "Anorith",
+   "slug": "anorith",
+   "number": 347,
+   "cards": 20,
+   "variants": 40
+  },
+  {
+   "key": "348-armaldo",
+   "name": "Armaldo",
+   "slug": "armaldo",
+   "number": 348,
+   "cards": 20,
+   "variants": 37
+  },
+  {
+   "key": "349-feebas",
+   "name": "Feebas",
+   "slug": "feebas",
+   "number": 349,
+   "cards": 53,
+   "variants": 104
+  },
+  {
+   "key": "350-milotic",
+   "name": "Milotic",
+   "slug": "milotic",
+   "number": 350,
+   "cards": 71,
+   "variants": 122
+  },
+  {
+   "key": "351-castform",
+   "name": "Castform",
+   "slug": "castform",
+   "number": 351,
+   "cards": 67,
+   "variants": 118
+  },
+  {
+   "key": "352-kecleon",
+   "name": "Kecleon",
+   "slug": "kecleon",
+   "number": 352,
+   "cards": 41,
+   "variants": 62
+  },
+  {
+   "key": "353-shuppet",
+   "name": "Shuppet",
+   "slug": "shuppet",
+   "number": 353,
+   "cards": 47,
+   "variants": 93
+  },
+  {
+   "key": "354-banette",
+   "name": "Banette",
+   "slug": "banette",
+   "number": 354,
+   "cards": 69,
+   "variants": 108
+  },
+  {
+   "key": "355-duskull",
+   "name": "Duskull",
+   "slug": "duskull",
+   "number": 355,
+   "cards": 54,
+   "variants": 120
+  },
+  {
+   "key": "356-dusclops",
+   "name": "Dusclops",
+   "slug": "dusclops",
+   "number": 356,
+   "cards": 48,
+   "variants": 98
+  },
+  {
+   "key": "357-tropius",
+   "name": "Tropius",
+   "slug": "tropius",
+   "number": 357,
+   "cards": 59,
+   "variants": 100
+  },
+  {
+   "key": "358-chimecho",
+   "name": "Chimecho",
+   "slug": "chimecho",
+   "number": 358,
+   "cards": 45,
+   "variants": 72
+  },
+  {
+   "key": "359-absol",
+   "name": "Absol",
+   "slug": "absol",
+   "number": 359,
+   "cards": 97,
+   "variants": 141
+  },
+  {
+   "key": "360-wynaut",
+   "name": "Wynaut",
+   "slug": "wynaut",
+   "number": 360,
+   "cards": 11,
+   "variants": 22
+  },
+  {
+   "key": "361-snorunt",
+   "name": "Snorunt",
+   "slug": "snorunt",
+   "number": 361,
+   "cards": 55,
+   "variants": 103
+  },
+  {
+   "key": "362-glalie",
+   "name": "Glalie",
+   "slug": "glalie",
+   "number": 362,
+   "cards": 33,
+   "variants": 58
+  },
+  {
+   "key": "363-spheal",
+   "name": "Spheal",
+   "slug": "spheal",
+   "number": 363,
+   "cards": 46,
+   "variants": 81
+  },
+  {
+   "key": "364-sealeo",
+   "name": "Sealeo",
+   "slug": "sealeo",
+   "number": 364,
+   "cards": 33,
+   "variants": 61
+  },
+  {
+   "key": "365-walrein",
+   "name": "Walrein",
+   "slug": "walrein",
+   "number": 365,
+   "cards": 33,
+   "variants": 57
+  },
+  {
+   "key": "366-clamperl",
+   "name": "Clamperl",
+   "slug": "clamperl",
+   "number": 366,
+   "cards": 26,
+   "variants": 45
+  },
+  {
+   "key": "367-huntail",
+   "name": "Huntail",
+   "slug": "huntail",
+   "number": 367,
+   "cards": 17,
+   "variants": 31
+  },
+  {
+   "key": "368-gorebyss",
+   "name": "Gorebyss",
+   "slug": "gorebyss",
+   "number": 368,
+   "cards": 18,
+   "variants": 34
+  },
+  {
+   "key": "369-relicanth",
+   "name": "Relicanth",
+   "slug": "relicanth",
+   "number": 369,
+   "cards": 47,
+   "variants": 80
+  },
+  {
+   "key": "370-luvdisc",
+   "name": "Luvdisc",
+   "slug": "luvdisc",
+   "number": 370,
+   "cards": 32,
+   "variants": 62
+  },
+  {
+   "key": "371-bagon",
+   "name": "Bagon",
+   "slug": "bagon",
+   "number": 371,
+   "cards": 47,
+   "variants": 103
+  },
+  {
+   "key": "372-shelgon",
+   "name": "Shelgon",
+   "slug": "shelgon",
+   "number": 372,
+   "cards": 40,
+   "variants": 78
+  },
+  {
+   "key": "373-salamence",
+   "name": "Salamence",
+   "slug": "salamence",
+   "number": 373,
+   "cards": 76,
+   "variants": 112
+  },
+  {
+   "key": "374-beldum",
+   "name": "Beldum",
+   "slug": "beldum",
+   "number": 374,
+   "cards": 72,
+   "variants": 136
+  },
+  {
+   "key": "375-metang",
+   "name": "Metang",
+   "slug": "metang",
+   "number": 375,
+   "cards": 67,
+   "variants": 125
+  },
+  {
+   "key": "376-metagross",
+   "name": "Metagross",
+   "slug": "metagross",
+   "number": 376,
+   "cards": 93,
+   "variants": 144
+  },
+  {
+   "key": "377-regirock",
+   "name": "Regirock",
+   "slug": "regirock",
+   "number": 377,
+   "cards": 50,
+   "variants": 75
+  },
+  {
+   "key": "378-regice",
+   "name": "Regice",
+   "slug": "regice",
+   "number": 378,
+   "cards": 31,
+   "variants": 50
+  },
+  {
+   "key": "379-registeel",
+   "name": "Registeel",
+   "slug": "registeel",
+   "number": 379,
+   "cards": 35,
+   "variants": 57
+  },
+  {
+   "key": "380-latias",
+   "name": "Latias",
+   "slug": "latias",
+   "number": 380,
+   "cards": 97,
+   "variants": 138
+  },
+  {
+   "key": "381-latios",
+   "name": "Latios",
+   "slug": "latios",
+   "number": 381,
+   "cards": 109,
+   "variants": 147
+  },
+  {
+   "key": "382-kyogre",
+   "name": "Kyogre",
+   "slug": "kyogre",
+   "number": 382,
+   "cards": 87,
+   "variants": 130
+  },
+  {
+   "key": "383-groudon",
+   "name": "Groudon",
+   "slug": "groudon",
+   "number": 383,
+   "cards": 88,
+   "variants": 139
+  },
+  {
+   "key": "384-rayquaza",
+   "name": "Rayquaza",
+   "slug": "rayquaza",
+   "number": 384,
+   "cards": 178,
+   "variants": 237
+  },
+  {
+   "key": "385-jirachi",
+   "name": "Jirachi",
+   "slug": "jirachi",
+   "number": 385,
+   "cards": 94,
+   "variants": 137
+  },
+  {
+   "key": "386-deoxys",
+   "name": "Deoxys",
+   "slug": "deoxys",
+   "number": 386,
+   "cards": 114,
+   "variants": 170
+  },
+  {
+   "key": "387-turtwig",
+   "name": "Turtwig",
+   "slug": "turtwig",
+   "number": 387,
+   "cards": 50,
+   "variants": 84
+  },
+  {
+   "key": "388-grotle",
+   "name": "Grotle",
+   "slug": "grotle",
+   "number": 388,
+   "cards": 36,
+   "variants": 59
+  },
+  {
+   "key": "389-torterra",
+   "name": "Torterra",
+   "slug": "torterra",
+   "number": 389,
+   "cards": 35,
+   "variants": 60
+  },
+  {
+   "key": "390-chimchar",
+   "name": "Chimchar",
+   "slug": "chimchar",
+   "number": 390,
+   "cards": 44,
+   "variants": 76
+  },
+  {
+   "key": "391-monferno",
+   "name": "Monferno",
+   "slug": "monferno",
+   "number": 391,
+   "cards": 25,
+   "variants": 45
+  },
+  {
+   "key": "392-infernape",
+   "name": "Infernape",
+   "slug": "infernape",
+   "number": 392,
+   "cards": 47,
+   "variants": 80
+  },
+  {
+   "key": "393-piplup",
+   "name": "Piplup",
+   "slug": "piplup",
+   "number": 393,
+   "cards": 72,
+   "variants": 110
+  },
+  {
+   "key": "394-prinplup",
+   "name": "Prinplup",
+   "slug": "prinplup",
+   "number": 394,
+   "cards": 30,
+   "variants": 54
+  },
+  {
+   "key": "395-empoleon",
+   "name": "Empoleon",
+   "slug": "empoleon",
+   "number": 395,
+   "cards": 58,
+   "variants": 94
+  },
+  {
+   "key": "396-starly",
+   "name": "Starly",
+   "slug": "starly",
+   "number": 396,
+   "cards": 36,
+   "variants": 58
+  },
+  {
+   "key": "397-staravia",
+   "name": "Staravia",
+   "slug": "staravia",
+   "number": 397,
+   "cards": 29,
+   "variants": 49
+  },
+  {
+   "key": "398-staraptor",
+   "name": "Staraptor",
+   "slug": "staraptor",
+   "number": 398,
+   "cards": 29,
+   "variants": 50
+  },
+  {
+   "key": "399-bidoof",
+   "name": "Bidoof",
+   "slug": "bidoof",
+   "number": 399,
+   "cards": 45,
+   "variants": 73
+  },
+  {
+   "key": "400-bibarel",
+   "name": "Bibarel",
+   "slug": "bibarel",
+   "number": 400,
+   "cards": 38,
+   "variants": 61
+  },
+  {
+   "key": "401-kricketot",
+   "name": "Kricketot",
+   "slug": "kricketot",
+   "number": 401,
+   "cards": 21,
+   "variants": 40
+  },
+  {
+   "key": "402-kricketune",
+   "name": "Kricketune",
+   "slug": "kricketune",
+   "number": 402,
+   "cards": 32,
+   "variants": 51
+  },
+  {
+   "key": "403-shinx",
+   "name": "Shinx",
+   "slug": "shinx",
+   "number": 403,
+   "cards": 71,
+   "variants": 117
+  },
+  {
+   "key": "404-luxio",
+   "name": "Luxio",
+   "slug": "luxio",
+   "number": 404,
+   "cards": 64,
+   "variants": 103
+  },
+  {
+   "key": "405-luxray",
+   "name": "Luxray",
+   "slug": "luxray",
+   "number": 405,
+   "cards": 74,
+   "variants": 129
+  },
+  {
+   "key": "406-budew",
+   "name": "Budew",
+   "slug": "budew",
+   "number": 406,
+   "cards": 13,
+   "variants": 35
+  },
+  {
+   "key": "407-roserade",
+   "name": "Roserade",
+   "slug": "roserade",
+   "number": 407,
+   "cards": 52,
+   "variants": 86
+  },
+  {
+   "key": "408-cranidos",
+   "name": "Cranidos",
+   "slug": "cranidos",
+   "number": 408,
+   "cards": 16,
+   "variants": 26
+  },
+  {
+   "key": "409-rampardos",
+   "name": "Rampardos",
+   "slug": "rampardos",
+   "number": 409,
+   "cards": 18,
+   "variants": 30
+  },
+  {
+   "key": "410-shieldon",
+   "name": "Shieldon",
+   "slug": "shieldon",
+   "number": 410,
+   "cards": 16,
+   "variants": 27
+  },
+  {
+   "key": "411-bastiodon",
+   "name": "Bastiodon",
+   "slug": "bastiodon",
+   "number": 411,
+   "cards": 22,
+   "variants": 38
+  },
+  {
+   "key": "412-burmy",
+   "name": "Burmy",
+   "slug": "burmy",
+   "number": 412,
+   "cards": 26,
+   "variants": 46
+  },
+  {
+   "key": "413-wormadam",
+   "name": "Wormadam",
+   "slug": "wormadam",
+   "number": 413,
+   "cards": 29,
+   "variants": 57
+  },
+  {
+   "key": "414-mothim",
+   "name": "Mothim",
+   "slug": "mothim",
+   "number": 414,
+   "cards": 14,
+   "variants": 27
+  },
+  {
+   "key": "415-combee",
+   "name": "Combee",
+   "slug": "combee",
+   "number": 415,
+   "cards": 33,
+   "variants": 65
+  },
+  {
+   "key": "416-vespiquen",
+   "name": "Vespiquen",
+   "slug": "vespiquen",
+   "number": 416,
+   "cards": 33,
+   "variants": 60
+  },
+  {
+   "key": "417-pachirisu",
+   "name": "Pachirisu",
+   "slug": "pachirisu",
+   "number": 417,
+   "cards": 58,
+   "variants": 93
+  },
+  {
+   "key": "418-buizel",
+   "name": "Buizel",
+   "slug": "buizel",
+   "number": 418,
+   "cards": 46,
+   "variants": 74
+  },
+  {
+   "key": "419-floatzel",
+   "name": "Floatzel",
+   "slug": "floatzel",
+   "number": 419,
+   "cards": 40,
+   "variants": 69
+  },
+  {
+   "key": "420-cherubi",
+   "name": "Cherubi",
+   "slug": "cherubi",
+   "number": 420,
+   "cards": 35,
+   "variants": 54
+  },
+  {
+   "key": "421-cherrim",
+   "name": "Cherrim",
+   "slug": "cherrim",
+   "number": 421,
+   "cards": 31,
+   "variants": 49
+  },
+  {
+   "key": "422-shellos",
+   "name": "Shellos",
+   "slug": "shellos",
+   "number": 422,
+   "cards": 25,
+   "variants": 47
+  },
+  {
+   "key": "423-gastrodon",
+   "name": "Gastrodon",
+   "slug": "gastrodon",
+   "number": 423,
+   "cards": 21,
+   "variants": 40
+  },
+  {
+   "key": "424-ambipom",
+   "name": "Ambipom",
+   "slug": "ambipom",
+   "number": 424,
+   "cards": 31,
+   "variants": 59
+  },
+  {
+   "key": "425-drifloon",
+   "name": "Drifloon",
+   "slug": "drifloon",
+   "number": 425,
+   "cards": 55,
+   "variants": 94
+  },
+  {
+   "key": "426-drifblim",
+   "name": "Drifblim",
+   "slug": "drifblim",
+   "number": 426,
+   "cards": 48,
+   "variants": 84
+  },
+  {
+   "key": "427-buneary",
+   "name": "Buneary",
+   "slug": "buneary",
+   "number": 427,
+   "cards": 38,
+   "variants": 64
+  },
+  {
+   "key": "428-lopunny",
+   "name": "Lopunny",
+   "slug": "lopunny",
+   "number": 428,
+   "cards": 49,
+   "variants": 73
+  },
+  {
+   "key": "429-mismagius",
+   "name": "Mismagius",
+   "slug": "mismagius",
+   "number": 429,
+   "cards": 53,
+   "variants": 90
+  },
+  {
+   "key": "430-honchkrow",
+   "name": "Honchkrow",
+   "slug": "honchkrow",
+   "number": 430,
+   "cards": 61,
+   "variants": 97
+  },
+  {
+   "key": "431-glameow",
+   "name": "Glameow",
+   "slug": "glameow",
+   "number": 431,
+   "cards": 28,
+   "variants": 49
+  },
+  {
+   "key": "432-purugly",
+   "name": "Purugly",
+   "slug": "purugly",
+   "number": 432,
+   "cards": 25,
+   "variants": 44
+  },
+  {
+   "key": "433-chingling",
+   "name": "Chingling",
+   "slug": "chingling",
+   "number": 433,
+   "cards": 10,
+   "variants": 19
+  },
+  {
+   "key": "434-stunky",
+   "name": "Stunky",
+   "slug": "stunky",
+   "number": 434,
+   "cards": 22,
+   "variants": 38
+  },
+  {
+   "key": "435-skuntank",
+   "name": "Skuntank",
+   "slug": "skuntank",
+   "number": 435,
+   "cards": 30,
+   "variants": 46
+  },
+  {
+   "key": "436-bronzor",
+   "name": "Bronzor",
+   "slug": "bronzor",
+   "number": 436,
+   "cards": 69,
+   "variants": 124
+  },
+  {
+   "key": "437-bronzong",
+   "name": "Bronzong",
+   "slug": "bronzong",
+   "number": 437,
+   "cards": 84,
+   "variants": 145
+  },
+  {
+   "key": "438-bonsly",
+   "name": "Bonsly",
+   "slug": "bonsly",
+   "number": 438,
+   "cards": 7,
+   "variants": 12
+  },
+  {
+   "key": "439-mime-jr",
+   "name": "Mime Jr.",
+   "slug": "mime-jr",
+   "number": 439,
+   "cards": 19,
+   "variants": 30
+  },
+  {
+   "key": "440-happiny",
+   "name": "Happiny",
+   "slug": "happiny",
+   "number": 440,
+   "cards": 9,
+   "variants": 18
+  },
+  {
+   "key": "441-chatot",
+   "name": "Chatot",
+   "slug": "chatot",
+   "number": 441,
+   "cards": 56,
+   "variants": 89
+  },
+  {
+   "key": "442-spiritomb",
+   "name": "Spiritomb",
+   "slug": "spiritomb",
+   "number": 442,
+   "cards": 73,
+   "variants": 129
+  },
+  {
+   "key": "443-gible",
+   "name": "Gible",
+   "slug": "gible",
+   "number": 443,
+   "cards": 46,
+   "variants": 86
+  },
+  {
+   "key": "444-gabite",
+   "name": "Gabite",
+   "slug": "gabite",
+   "number": 444,
+   "cards": 42,
+   "variants": 85
+  },
+  {
+   "key": "445-garchomp",
+   "name": "Garchomp",
+   "slug": "garchomp",
+   "number": 445,
+   "cards": 106,
+   "variants": 152
+  },
+  {
+   "key": "446-munchlax",
+   "name": "Munchlax",
+   "slug": "munchlax",
+   "number": 446,
+   "cards": 20,
+   "variants": 30
+  },
+  {
+   "key": "447-riolu",
+   "name": "Riolu",
+   "slug": "riolu",
+   "number": 447,
+   "cards": 102,
+   "variants": 168
+  },
+  {
+   "key": "448-lucario",
+   "name": "Lucario",
+   "slug": "lucario",
+   "number": 448,
+   "cards": 190,
+   "variants": 279
+  },
+  {
+   "key": "449-hippopotas",
+   "name": "Hippopotas",
+   "slug": "hippopotas",
+   "number": 449,
+   "cards": 35,
+   "variants": 62
+  },
+  {
+   "key": "450-hippowdon",
+   "name": "Hippowdon",
+   "slug": "hippowdon",
+   "number": 450,
+   "cards": 34,
+   "variants": 62
+  },
+  {
+   "key": "451-skorupi",
+   "name": "Skorupi",
+   "slug": "skorupi",
+   "number": 451,
+   "cards": 26,
+   "variants": 47
+  },
+  {
+   "key": "452-drapion",
+   "name": "Drapion",
+   "slug": "drapion",
+   "number": 452,
+   "cards": 54,
+   "variants": 79
+  },
+  {
+   "key": "453-croagunk",
+   "name": "Croagunk",
+   "slug": "croagunk",
+   "number": 453,
+   "cards": 58,
+   "variants": 96
+  },
+  {
+   "key": "454-toxicroak",
+   "name": "Toxicroak",
+   "slug": "toxicroak",
+   "number": 454,
+   "cards": 56,
+   "variants": 94
+  },
+  {
+   "key": "455-carnivine",
+   "name": "Carnivine",
+   "slug": "carnivine",
+   "number": 455,
+   "cards": 40,
+   "variants": 65
+  },
+  {
+   "key": "456-finneon",
+   "name": "Finneon",
+   "slug": "finneon",
+   "number": 456,
+   "cards": 17,
+   "variants": 30
+  },
+  {
+   "key": "457-lumineon",
+   "name": "Lumineon",
+   "slug": "lumineon",
+   "number": 457,
+   "cards": 39,
+   "variants": 56
+  },
+  {
+   "key": "458-mantyke",
+   "name": "Mantyke",
+   "slug": "mantyke",
+   "number": 458,
+   "cards": 10,
+   "variants": 15
+  },
+  {
+   "key": "459-snover",
+   "name": "Snover",
+   "slug": "snover",
+   "number": 459,
+   "cards": 42,
+   "variants": 69
+  },
+  {
+   "key": "460-abomasnow",
+   "name": "Abomasnow",
+   "slug": "abomasnow",
+   "number": 460,
+   "cards": 45,
+   "variants": 72
+  },
+  {
+   "key": "461-weavile",
+   "name": "Weavile",
+   "slug": "weavile",
+   "number": 461,
+   "cards": 66,
+   "variants": 102
+  },
+  {
+   "key": "462-magnezone",
+   "name": "Magnezone",
+   "slug": "magnezone",
+   "number": 462,
+   "cards": 78,
+   "variants": 123
+  },
+  {
+   "key": "463-lickilicky",
+   "name": "Lickilicky",
+   "slug": "lickilicky",
+   "number": 463,
+   "cards": 27,
+   "variants": 50
+  },
+  {
+   "key": "464-rhyperior",
+   "name": "Rhyperior",
+   "slug": "rhyperior",
+   "number": 464,
+   "cards": 35,
+   "variants": 62
+  },
+  {
+   "key": "465-tangrowth",
+   "name": "Tangrowth",
+   "slug": "tangrowth",
+   "number": 465,
+   "cards": 41,
+   "variants": 68
+  },
+  {
+   "key": "466-electivire",
+   "name": "Electivire",
+   "slug": "electivire",
+   "number": 466,
+   "cards": 62,
+   "variants": 106
+  },
+  {
+   "key": "467-magmortar",
+   "name": "Magmortar",
+   "slug": "magmortar",
+   "number": 467,
+   "cards": 48,
+   "variants": 92
+  },
+  {
+   "key": "468-togekiss",
+   "name": "Togekiss",
+   "slug": "togekiss",
+   "number": 468,
+   "cards": 46,
+   "variants": 81
+  },
+  {
+   "key": "469-yanmega",
+   "name": "Yanmega",
+   "slug": "yanmega",
+   "number": 469,
+   "cards": 56,
+   "variants": 97
+  },
+  {
+   "key": "470-leafeon",
+   "name": "Leafeon",
+   "slug": "leafeon",
+   "number": 470,
+   "cards": 112,
+   "variants": 157
+  },
+  {
+   "key": "471-glaceon",
+   "name": "Glaceon",
+   "slug": "glaceon",
+   "number": 471,
+   "cards": 107,
+   "variants": 149
+  },
+  {
+   "key": "472-gliscor",
+   "name": "Gliscor",
+   "slug": "gliscor",
+   "number": 472,
+   "cards": 39,
+   "variants": 72
+  },
+  {
+   "key": "473-mamoswine",
+   "name": "Mamoswine",
+   "slug": "mamoswine",
+   "number": 473,
+   "cards": 28,
+   "variants": 51
+  },
+  {
+   "key": "474-porygon-z",
+   "name": "Porygon-Z",
+   "slug": "porygon-z",
+   "number": 474,
+   "cards": 50,
+   "variants": 85
+  },
+  {
+   "key": "475-gallade",
+   "name": "Gallade",
+   "slug": "gallade",
+   "number": 475,
+   "cards": 52,
+   "variants": 85
+  },
+  {
+   "key": "476-probopass",
+   "name": "Probopass",
+   "slug": "probopass",
+   "number": 476,
+   "cards": 53,
+   "variants": 83
+  },
+  {
+   "key": "477-dusknoir",
+   "name": "Dusknoir",
+   "slug": "dusknoir",
+   "number": 477,
+   "cards": 57,
+   "variants": 107
+  },
+  {
+   "key": "478-froslass",
+   "name": "Froslass",
+   "slug": "froslass",
+   "number": 478,
+   "cards": 54,
+   "variants": 79
+  },
+  {
+   "key": "479-rotom",
+   "name": "Rotom",
+   "slug": "rotom",
+   "number": 479,
+   "cards": 153,
+   "variants": 270
+  },
+  {
+   "key": "480-uxie",
+   "name": "Uxie",
+   "slug": "uxie",
+   "number": 480,
+   "cards": 25,
+   "variants": 50
+  },
+  {
+   "key": "481-mesprit",
+   "name": "Mesprit",
+   "slug": "mesprit",
+   "number": 481,
+   "cards": 29,
+   "variants": 44
+  },
+  {
+   "key": "482-azelf",
+   "name": "Azelf",
+   "slug": "azelf",
+   "number": 482,
+   "cards": 21,
+   "variants": 44
+  },
+  {
+   "key": "483-dialga",
+   "name": "Dialga",
+   "slug": "dialga",
+   "number": 483,
+   "cards": 128,
+   "variants": 182
+  },
+  {
+   "key": "484-palkia",
+   "name": "Palkia",
+   "slug": "palkia",
+   "number": 484,
+   "cards": 117,
+   "variants": 160
+  },
+  {
+   "key": "485-heatran",
+   "name": "Heatran",
+   "slug": "heatran",
+   "number": 485,
+   "cards": 85,
+   "variants": 124
+  },
+  {
+   "key": "486-regigigas",
+   "name": "Regigigas",
+   "slug": "regigigas",
+   "number": 486,
+   "cards": 53,
+   "variants": 87
+  },
+  {
+   "key": "487-giratina",
+   "name": "Giratina",
+   "slug": "giratina",
+   "number": 487,
+   "cards": 88,
+   "variants": 126
+  },
+  {
+   "key": "488-cresselia",
+   "name": "Cresselia",
+   "slug": "cresselia",
+   "number": 488,
+   "cards": 64,
+   "variants": 92
+  },
+  {
+   "key": "489-phione",
+   "name": "Phione",
+   "slug": "phione",
+   "number": 489,
+   "cards": 28,
+   "variants": 45
+  },
+  {
+   "key": "490-manaphy",
+   "name": "Manaphy",
+   "slug": "manaphy",
+   "number": 490,
+   "cards": 60,
+   "variants": 90
+  },
+  {
+   "key": "491-darkrai",
+   "name": "Darkrai",
+   "slug": "darkrai",
+   "number": 491,
+   "cards": 131,
+   "variants": 172
+  },
+  {
+   "key": "492-shaymin",
+   "name": "Shaymin",
+   "slug": "shaymin",
+   "number": 492,
+   "cards": 117,
+   "variants": 176
+  },
+  {
+   "key": "493-arceus",
+   "name": "Arceus",
+   "slug": "arceus",
+   "number": 493,
+   "cards": 101,
+   "variants": 123
+  },
+  {
+   "key": "494-victini",
+   "name": "Victini",
+   "slug": "victini",
+   "number": 494,
+   "cards": 125,
+   "variants": 176
+  },
+  {
+   "key": "495-snivy",
+   "name": "Snivy",
+   "slug": "snivy",
+   "number": 495,
+   "cards": 52,
+   "variants": 76
+  },
+  {
+   "key": "496-servine",
+   "name": "Servine",
+   "slug": "servine",
+   "number": 496,
+   "cards": 24,
+   "variants": 43
+  },
+  {
+   "key": "497-serperior",
+   "name": "Serperior",
+   "slug": "serperior",
+   "number": 497,
+   "cards": 50,
+   "variants": 68
+  },
+  {
+   "key": "498-tepig",
+   "name": "Tepig",
+   "slug": "tepig",
+   "number": 498,
+   "cards": 47,
+   "variants": 80
+  },
+  {
+   "key": "499-pignite",
+   "name": "Pignite",
+   "slug": "pignite",
+   "number": 499,
+   "cards": 28,
+   "variants": 54
+  },
+  {
+   "key": "500-emboar",
+   "name": "Emboar",
+   "slug": "emboar",
+   "number": 500,
+   "cards": 35,
+   "variants": 68
+  },
+  {
+   "key": "501-oshawott",
+   "name": "Oshawott",
+   "slug": "oshawott",
+   "number": 501,
+   "cards": 44,
+   "variants": 72
+  },
+  {
+   "key": "502-dewott",
+   "name": "Dewott",
+   "slug": "dewott",
+   "number": 502,
+   "cards": 25,
+   "variants": 47
+  },
+  {
+   "key": "503-samurott",
+   "name": "Samurott",
+   "slug": "samurott",
+   "number": 503,
+   "cards": 54,
+   "variants": 82
+  },
+  {
+   "key": "504-patrat",
+   "name": "Patrat",
+   "slug": "patrat",
+   "number": 504,
+   "cards": 31,
+   "variants": 51
+  },
+  {
+   "key": "505-watchog",
+   "name": "Watchog",
+   "slug": "watchog",
+   "number": 505,
+   "cards": 25,
+   "variants": 45
+  },
+  {
+   "key": "506-lillipup",
+   "name": "Lillipup",
+   "slug": "lillipup",
+   "number": 506,
+   "cards": 34,
+   "variants": 58
+  },
+  {
+   "key": "507-herdier",
+   "name": "Herdier",
+   "slug": "herdier",
+   "number": 507,
+   "cards": 27,
+   "variants": 49
+  },
+  {
+   "key": "508-stoutland",
+   "name": "Stoutland",
+   "slug": "stoutland",
+   "number": 508,
+   "cards": 39,
+   "variants": 61
+  },
+  {
+   "key": "509-purrloin",
+   "name": "Purrloin",
+   "slug": "purrloin",
+   "number": 509,
+   "cards": 53,
+   "variants": 92
+  },
+  {
+   "key": "510-liepard",
+   "name": "Liepard",
+   "slug": "liepard",
+   "number": 510,
+   "cards": 53,
+   "variants": 90
+  },
+  {
+   "key": "511-pansage",
+   "name": "Pansage",
+   "slug": "pansage",
+   "number": 511,
+   "cards": 39,
+   "variants": 65
+  },
+  {
+   "key": "512-simisage",
+   "name": "Simisage",
+   "slug": "simisage",
+   "number": 512,
+   "cards": 29,
+   "variants": 53
+  },
+  {
+   "key": "513-pansear",
+   "name": "Pansear",
+   "slug": "pansear",
+   "number": 513,
+   "cards": 46,
+   "variants": 80
+  },
+  {
+   "key": "514-simisear",
+   "name": "Simisear",
+   "slug": "simisear",
+   "number": 514,
+   "cards": 50,
+   "variants": 83
+  },
+  {
+   "key": "515-panpour",
+   "name": "Panpour",
+   "slug": "panpour",
+   "number": 515,
+   "cards": 31,
+   "variants": 56
+  },
+  {
+   "key": "516-simipour",
+   "name": "Simipour",
+   "slug": "simipour",
+   "number": 516,
+   "cards": 27,
+   "variants": 51
+  },
+  {
+   "key": "517-munna",
+   "name": "Munna",
+   "slug": "munna",
+   "number": 517,
+   "cards": 26,
+   "variants": 49
+  },
+  {
+   "key": "518-musharna",
+   "name": "Musharna",
+   "slug": "musharna",
+   "number": 518,
+   "cards": 24,
+   "variants": 47
+  },
+  {
+   "key": "519-pidove",
+   "name": "Pidove",
+   "slug": "pidove",
+   "number": 519,
+   "cards": 35,
+   "variants": 60
+  },
+  {
+   "key": "520-tranquill",
+   "name": "Tranquill",
+   "slug": "tranquill",
+   "number": 520,
+   "cards": 27,
+   "variants": 50
+  },
+  {
+   "key": "521-unfezant",
+   "name": "Unfezant",
+   "slug": "unfezant",
+   "number": 521,
+   "cards": 28,
+   "variants": 54
+  },
+  {
+   "key": "522-blitzle",
+   "name": "Blitzle",
+   "slug": "blitzle",
+   "number": 522,
+   "cards": 62,
+   "variants": 94
+  },
+  {
+   "key": "523-zebstrika",
+   "name": "Zebstrika",
+   "slug": "zebstrika",
+   "number": 523,
+   "cards": 50,
+   "variants": 88
+  },
+  {
+   "key": "524-roggenrola",
+   "name": "Roggenrola",
+   "slug": "roggenrola",
+   "number": 524,
+   "cards": 19,
+   "variants": 38
+  },
+  {
+   "key": "525-boldore",
+   "name": "Boldore",
+   "slug": "boldore",
+   "number": 525,
+   "cards": 19,
+   "variants": 38
+  },
+  {
+   "key": "526-gigalith",
+   "name": "Gigalith",
+   "slug": "gigalith",
+   "number": 526,
+   "cards": 19,
+   "variants": 39
+  },
+  {
+   "key": "527-woobat",
+   "name": "Woobat",
+   "slug": "woobat",
+   "number": 527,
+   "cards": 35,
+   "variants": 59
+  },
+  {
+   "key": "528-swoobat",
+   "name": "Swoobat",
+   "slug": "swoobat",
+   "number": 528,
+   "cards": 30,
+   "variants": 53
+  },
+  {
+   "key": "529-drilbur",
+   "name": "Drilbur",
+   "slug": "drilbur",
+   "number": 529,
+   "cards": 46,
+   "variants": 81
+  },
+  {
+   "key": "530-excadrill",
+   "name": "Excadrill",
+   "slug": "excadrill",
+   "number": 530,
+   "cards": 67,
+   "variants": 94
+  },
+  {
+   "key": "531-audino",
+   "name": "Audino",
+   "slug": "audino",
+   "number": 531,
+   "cards": 42,
+   "variants": 68
+  },
+  {
+   "key": "532-timburr",
+   "name": "Timburr",
+   "slug": "timburr",
+   "number": 532,
+   "cards": 37,
+   "variants": 58
+  },
+  {
+   "key": "533-gurdurr",
+   "name": "Gurdurr",
+   "slug": "gurdurr",
+   "number": 533,
+   "cards": 23,
+   "variants": 43
+  },
+  {
+   "key": "534-conkeldurr",
+   "name": "Conkeldurr",
+   "slug": "conkeldurr",
+   "number": 534,
+   "cards": 28,
+   "variants": 48
+  },
+  {
+   "key": "535-tympole",
+   "name": "Tympole",
+   "slug": "tympole",
+   "number": 535,
+   "cards": 30,
+   "variants": 55
+  },
+  {
+   "key": "536-palpitoad",
+   "name": "Palpitoad",
+   "slug": "palpitoad",
+   "number": 536,
+   "cards": 29,
+   "variants": 54
+  },
+  {
+   "key": "537-seismitoad",
+   "name": "Seismitoad",
+   "slug": "seismitoad",
+   "number": 537,
+   "cards": 37,
+   "variants": 64
+  },
+  {
+   "key": "538-throh",
+   "name": "Throh",
+   "slug": "throh",
+   "number": 538,
+   "cards": 21,
+   "variants": 38
+  },
+  {
+   "key": "539-sawk",
+   "name": "Sawk",
+   "slug": "sawk",
+   "number": 539,
+   "cards": 23,
+   "variants": 40
+  },
+  {
+   "key": "540-sewaddle",
+   "name": "Sewaddle",
+   "slug": "sewaddle",
+   "number": 540,
+   "cards": 28,
+   "variants": 54
+  },
+  {
+   "key": "541-swadloon",
+   "name": "Swadloon",
+   "slug": "swadloon",
+   "number": 541,
+   "cards": 25,
+   "variants": 49
+  },
+  {
+   "key": "542-leavanny",
+   "name": "Leavanny",
+   "slug": "leavanny",
+   "number": 542,
+   "cards": 24,
+   "variants": 49
+  },
+  {
+   "key": "543-venipede",
+   "name": "Venipede",
+   "slug": "venipede",
+   "number": 543,
+   "cards": 27,
+   "variants": 46
+  },
+  {
+   "key": "544-whirlipede",
+   "name": "Whirlipede",
+   "slug": "whirlipede",
+   "number": 544,
+   "cards": 27,
+   "variants": 47
+  },
+  {
+   "key": "545-scolipede",
+   "name": "Scolipede",
+   "slug": "scolipede",
+   "number": 545,
+   "cards": 25,
+   "variants": 46
+  },
+  {
+   "key": "546-cottonee",
+   "name": "Cottonee",
+   "slug": "cottonee",
+   "number": 546,
+   "cards": 47,
+   "variants": 89
+  },
+  {
+   "key": "547-whimsicott",
+   "name": "Whimsicott",
+   "slug": "whimsicott",
+   "number": 547,
+   "cards": 68,
+   "variants": 105
+  },
+  {
+   "key": "548-petilil",
+   "name": "Petilil",
+   "slug": "petilil",
+   "number": 548,
+   "cards": 32,
+   "variants": 59
+  },
+  {
+   "key": "549-lilligant",
+   "name": "Lilligant",
+   "slug": "lilligant",
+   "number": 549,
+   "cards": 52,
+   "variants": 79
+  },
+  {
+   "key": "550-basculin",
+   "name": "Basculin",
+   "slug": "basculin",
+   "number": 550,
+   "cards": 38,
+   "variants": 64
+  },
+  {
+   "key": "551-sandile",
+   "name": "Sandile",
+   "slug": "sandile",
+   "number": 551,
+   "cards": 49,
+   "variants": 77
+  },
+  {
+   "key": "552-krokorok",
+   "name": "Krokorok",
+   "slug": "krokorok",
+   "number": 552,
+   "cards": 44,
+   "variants": 73
+  },
+  {
+   "key": "553-krookodile",
+   "name": "Krookodile",
+   "slug": "krookodile",
+   "number": 553,
+   "cards": 41,
+   "variants": 72
+  },
+  {
+   "key": "554-darumaka",
+   "name": "Darumaka",
+   "slug": "darumaka",
+   "number": 554,
+   "cards": 56,
+   "variants": 97
+  },
+  {
+   "key": "555-darmanitan",
+   "name": "Darmanitan",
+   "slug": "darmanitan",
+   "number": 555,
+   "cards": 64,
+   "variants": 110
+  },
+  {
+   "key": "556-maractus",
+   "name": "Maractus",
+   "slug": "maractus",
+   "number": 556,
+   "cards": 35,
+   "variants": 61
+  },
+  {
+   "key": "557-dwebble",
+   "name": "Dwebble",
+   "slug": "dwebble",
+   "number": 557,
+   "cards": 31,
+   "variants": 54
+  },
+  {
+   "key": "558-crustle",
+   "name": "Crustle",
+   "slug": "crustle",
+   "number": 558,
+   "cards": 42,
+   "variants": 66
+  },
+  {
+   "key": "559-scraggy",
+   "name": "Scraggy",
+   "slug": "scraggy",
+   "number": 559,
+   "cards": 58,
+   "variants": 97
+  },
+  {
+   "key": "560-scrafty",
+   "name": "Scrafty",
+   "slug": "scrafty",
+   "number": 560,
+   "cards": 51,
+   "variants": 85
+  },
+  {
+   "key": "561-sigilyph",
+   "name": "Sigilyph",
+   "slug": "sigilyph",
+   "number": 561,
+   "cards": 54,
+   "variants": 94
+  },
+  {
+   "key": "562-yamask",
+   "name": "Yamask",
+   "slug": "yamask",
+   "number": 562,
+   "cards": 41,
+   "variants": 67
+  },
+  {
+   "key": "563-cofagrigus",
+   "name": "Cofagrigus",
+   "slug": "cofagrigus",
+   "number": 563,
+   "cards": 30,
+   "variants": 50
+  },
+  {
+   "key": "564-tirtouga",
+   "name": "Tirtouga",
+   "slug": "tirtouga",
+   "number": 564,
+   "cards": 16,
+   "variants": 31
+  },
+  {
+   "key": "565-carracosta",
+   "name": "Carracosta",
+   "slug": "carracosta",
+   "number": 565,
+   "cards": 19,
+   "variants": 35
+  },
+  {
+   "key": "566-archen",
+   "name": "Archen",
+   "slug": "archen",
+   "number": 566,
+   "cards": 16,
+   "variants": 29
+  },
+  {
+   "key": "567-archeops",
+   "name": "Archeops",
+   "slug": "archeops",
+   "number": 567,
+   "cards": 21,
+   "variants": 39
+  },
+  {
+   "key": "568-trubbish",
+   "name": "Trubbish",
+   "slug": "trubbish",
+   "number": 568,
+   "cards": 50,
+   "variants": 93
+  },
+  {
+   "key": "569-garbodor",
+   "name": "Garbodor",
+   "slug": "garbodor",
+   "number": 569,
+   "cards": 69,
+   "variants": 117
+  },
+  {
+   "key": "570-zorua",
+   "name": "Zorua",
+   "slug": "zorua",
+   "number": 570,
+   "cards": 106,
+   "variants": 159
+  },
+  {
+   "key": "571-zoroark",
+   "name": "Zoroark",
+   "slug": "zoroark",
+   "number": 571,
+   "cards": 139,
+   "variants": 198
+  },
+  {
+   "key": "572-minccino",
+   "name": "Minccino",
+   "slug": "minccino",
+   "number": 572,
+   "cards": 62,
+   "variants": 100
+  },
+  {
+   "key": "573-cinccino",
+   "name": "Cinccino",
+   "slug": "cinccino",
+   "number": 573,
+   "cards": 56,
+   "variants": 90
+  },
+  {
+   "key": "574-gothita",
+   "name": "Gothita",
+   "slug": "gothita",
+   "number": 574,
+   "cards": 33,
+   "variants": 61
+  },
+  {
+   "key": "575-gothorita",
+   "name": "Gothorita",
+   "slug": "gothorita",
+   "number": 575,
+   "cards": 32,
+   "variants": 58
+  },
+  {
+   "key": "576-gothitelle",
+   "name": "Gothitelle",
+   "slug": "gothitelle",
+   "number": 576,
+   "cards": 27,
+   "variants": 52
+  },
+  {
+   "key": "577-solosis",
+   "name": "Solosis",
+   "slug": "solosis",
+   "number": 577,
+   "cards": 25,
+   "variants": 51
+  },
+  {
+   "key": "578-duosion",
+   "name": "Duosion",
+   "slug": "duosion",
+   "number": 578,
+   "cards": 24,
+   "variants": 49
+  },
+  {
+   "key": "579-reuniclus",
+   "name": "Reuniclus",
+   "slug": "reuniclus",
+   "number": 579,
+   "cards": 36,
+   "variants": 63
+  },
+  {
+   "key": "580-ducklett",
+   "name": "Ducklett",
+   "slug": "ducklett",
+   "number": 580,
+   "cards": 39,
+   "variants": 63
+  },
+  {
+   "key": "581-swanna",
+   "name": "Swanna",
+   "slug": "swanna",
+   "number": 581,
+   "cards": 35,
+   "variants": 58
+  },
+  {
+   "key": "582-vanillite",
+   "name": "Vanillite",
+   "slug": "vanillite",
+   "number": 582,
+   "cards": 29,
+   "variants": 55
+  },
+  {
+   "key": "583-vanillish",
+   "name": "Vanillish",
+   "slug": "vanillish",
+   "number": 583,
+   "cards": 32,
+   "variants": 59
+  },
+  {
+   "key": "584-vanilluxe",
+   "name": "Vanilluxe",
+   "slug": "vanilluxe",
+   "number": 584,
+   "cards": 27,
+   "variants": 53
+  },
+  {
+   "key": "585-deerling",
+   "name": "Deerling",
+   "slug": "deerling",
+   "number": 585,
+   "cards": 31,
+   "variants": 49
+  },
+  {
+   "key": "586-sawsbuck",
+   "name": "Sawsbuck",
+   "slug": "sawsbuck",
+   "number": 586,
+   "cards": 28,
+   "variants": 46
+  },
+  {
+   "key": "587-emolga",
+   "name": "Emolga",
+   "slug": "emolga",
+   "number": 587,
+   "cards": 56,
+   "variants": 95
+  },
+  {
+   "key": "588-karrablast",
+   "name": "Karrablast",
+   "slug": "karrablast",
+   "number": 588,
+   "cards": 31,
+   "variants": 57
+  },
+  {
+   "key": "589-escavalier",
+   "name": "Escavalier",
+   "slug": "escavalier",
+   "number": 589,
+   "cards": 32,
+   "variants": 59
+  },
+  {
+   "key": "590-foongus",
+   "name": "Foongus",
+   "slug": "foongus",
+   "number": 590,
+   "cards": 30,
+   "variants": 55
+  },
+  {
+   "key": "591-amoonguss",
+   "name": "Amoonguss",
+   "slug": "amoonguss",
+   "number": 591,
+   "cards": 29,
+   "variants": 51
+  },
+  {
+   "key": "592-frillish",
+   "name": "Frillish",
+   "slug": "frillish",
+   "number": 592,
+   "cards": 22,
+   "variants": 40
+  },
+  {
+   "key": "593-jellicent",
+   "name": "Jellicent",
+   "slug": "jellicent",
+   "number": 593,
+   "cards": 24,
+   "variants": 36
+  },
+  {
+   "key": "594-alomomola",
+   "name": "Alomomola",
+   "slug": "alomomola",
+   "number": 594,
+   "cards": 23,
+   "variants": 41
+  },
+  {
+   "key": "595-joltik",
+   "name": "Joltik",
+   "slug": "joltik",
+   "number": 595,
+   "cards": 64,
+   "variants": 105
+  },
+  {
+   "key": "596-galvantula",
+   "name": "Galvantula",
+   "slug": "galvantula",
+   "number": 596,
+   "cards": 48,
+   "variants": 81
+  },
+  {
+   "key": "597-ferroseed",
+   "name": "Ferroseed",
+   "slug": "ferroseed",
+   "number": 597,
+   "cards": 34,
+   "variants": 59
+  },
+  {
+   "key": "598-ferrothorn",
+   "name": "Ferrothorn",
+   "slug": "ferrothorn",
+   "number": 598,
+   "cards": 38,
+   "variants": 62
+  },
+  {
+   "key": "599-klink",
+   "name": "Klink",
+   "slug": "klink",
+   "number": 599,
+   "cards": 36,
+   "variants": 65
+  },
+  {
+   "key": "600-klang",
+   "name": "Klang",
+   "slug": "klang",
+   "number": 600,
+   "cards": 34,
+   "variants": 62
+  },
+  {
+   "key": "601-klinklang",
+   "name": "Klinklang",
+   "slug": "klinklang",
+   "number": 601,
+   "cards": 32,
+   "variants": 62
+  },
+  {
+   "key": "602-tynamo",
+   "name": "Tynamo",
+   "slug": "tynamo",
+   "number": 602,
+   "cards": 45,
+   "variants": 81
+  },
+  {
+   "key": "603-eelektrik",
+   "name": "Eelektrik",
+   "slug": "eelektrik",
+   "number": 603,
+   "cards": 40,
+   "variants": 77
+  },
+  {
+   "key": "604-eelektross",
+   "name": "Eelektross",
+   "slug": "eelektross",
+   "number": 604,
+   "cards": 39,
+   "variants": 69
+  },
+  {
+   "key": "605-elgyem",
+   "name": "Elgyem",
+   "slug": "elgyem",
+   "number": 605,
+   "cards": 30,
+   "variants": 53
+  },
+  {
+   "key": "606-beheeyem",
+   "name": "Beheeyem",
+   "slug": "beheeyem",
+   "number": 606,
+   "cards": 26,
+   "variants": 48
+  },
+  {
+   "key": "607-litwick",
+   "name": "Litwick",
+   "slug": "litwick",
+   "number": 607,
+   "cards": 49,
+   "variants": 88
+  },
+  {
+   "key": "608-lampent",
+   "name": "Lampent",
+   "slug": "lampent",
+   "number": 608,
+   "cards": 43,
+   "variants": 79
+  },
+  {
+   "key": "609-chandelure",
+   "name": "Chandelure",
+   "slug": "chandelure",
+   "number": 609,
+   "cards": 78,
+   "variants": 117
+  },
+  {
+   "key": "610-axew",
+   "name": "Axew",
+   "slug": "axew",
+   "number": 610,
+   "cards": 36,
+   "variants": 59
+  },
+  {
+   "key": "611-fraxure",
+   "name": "Fraxure",
+   "slug": "fraxure",
+   "number": 611,
+   "cards": 29,
+   "variants": 50
+  },
+  {
+   "key": "612-haxorus",
+   "name": "Haxorus",
+   "slug": "haxorus",
+   "number": 612,
+   "cards": 28,
+   "variants": 51
+  },
+  {
+   "key": "613-cubchoo",
+   "name": "Cubchoo",
+   "slug": "cubchoo",
+   "number": 613,
+   "cards": 29,
+   "variants": 51
+  },
+  {
+   "key": "614-beartic",
+   "name": "Beartic",
+   "slug": "beartic",
+   "number": 614,
+   "cards": 29,
+   "variants": 54
+  },
+  {
+   "key": "615-cryogonal",
+   "name": "Cryogonal",
+   "slug": "cryogonal",
+   "number": 615,
+   "cards": 29,
+   "variants": 55
+  },
+  {
+   "key": "616-shelmet",
+   "name": "Shelmet",
+   "slug": "shelmet",
+   "number": 616,
+   "cards": 27,
+   "variants": 54
+  },
+  {
+   "key": "617-accelgor",
+   "name": "Accelgor",
+   "slug": "accelgor",
+   "number": 617,
+   "cards": 27,
+   "variants": 51
+  },
+  {
+   "key": "618-stunfisk",
+   "name": "Stunfisk",
+   "slug": "stunfisk",
+   "number": 618,
+   "cards": 80,
+   "variants": 125
+  },
+  {
+   "key": "619-mienfoo",
+   "name": "Mienfoo",
+   "slug": "mienfoo",
+   "number": 619,
+   "cards": 30,
+   "variants": 54
+  },
+  {
+   "key": "620-mienshao",
+   "name": "Mienshao",
+   "slug": "mienshao",
+   "number": 620,
+   "cards": 31,
+   "variants": 54
+  },
+  {
+   "key": "621-druddigon",
+   "name": "Druddigon",
+   "slug": "druddigon",
+   "number": 621,
+   "cards": 41,
+   "variants": 77
+  },
+  {
+   "key": "622-golett",
+   "name": "Golett",
+   "slug": "golett",
+   "number": 622,
+   "cards": 41,
+   "variants": 70
+  },
+  {
+   "key": "623-golurk",
+   "name": "Golurk",
+   "slug": "golurk",
+   "number": 623,
+   "cards": 59,
+   "variants": 92
+  },
+  {
+   "key": "624-pawniard",
+   "name": "Pawniard",
+   "slug": "pawniard",
+   "number": 624,
+   "cards": 64,
+   "variants": 107
+  },
+  {
+   "key": "625-bisharp",
+   "name": "Bisharp",
+   "slug": "bisharp",
+   "number": 625,
+   "cards": 63,
+   "variants": 107
+  },
+  {
+   "key": "626-bouffalant",
+   "name": "Bouffalant",
+   "slug": "bouffalant",
+   "number": 626,
+   "cards": 51,
+   "variants": 86
+  },
+  {
+   "key": "627-rufflet",
+   "name": "Rufflet",
+   "slug": "rufflet",
+   "number": 627,
+   "cards": 37,
+   "variants": 65
+  },
+  {
+   "key": "628-braviary",
+   "name": "Braviary",
+   "slug": "braviary",
+   "number": 628,
+   "cards": 45,
+   "variants": 72
+  },
+  {
+   "key": "629-vullaby",
+   "name": "Vullaby",
+   "slug": "vullaby",
+   "number": 629,
+   "cards": 32,
+   "variants": 55
+  },
+  {
+   "key": "630-mandibuzz",
+   "name": "Mandibuzz",
+   "slug": "mandibuzz",
+   "number": 630,
+   "cards": 32,
+   "variants": 53
+  },
+  {
+   "key": "631-heatmor",
+   "name": "Heatmor",
+   "slug": "heatmor",
+   "number": 631,
+   "cards": 50,
+   "variants": 81
+  },
+  {
+   "key": "632-durant",
+   "name": "Durant",
+   "slug": "durant",
+   "number": 632,
+   "cards": 57,
+   "variants": 93
+  },
+  {
+   "key": "633-deino",
+   "name": "Deino",
+   "slug": "deino",
+   "number": 633,
+   "cards": 44,
+   "variants": 83
+  },
+  {
+   "key": "634-zweilous",
+   "name": "Zweilous",
+   "slug": "zweilous",
+   "number": 634,
+   "cards": 43,
+   "variants": 77
+  },
+  {
+   "key": "635-hydreigon",
+   "name": "Hydreigon",
+   "slug": "hydreigon",
+   "number": 635,
+   "cards": 65,
+   "variants": 102
+  },
+  {
+   "key": "636-larvesta",
+   "name": "Larvesta",
+   "slug": "larvesta",
+   "number": 636,
+   "cards": 55,
+   "variants": 90
+  },
+  {
+   "key": "637-volcarona",
+   "name": "Volcarona",
+   "slug": "volcarona",
+   "number": 637,
+   "cards": 65,
+   "variants": 103
+  },
+  {
+   "key": "638-cobalion",
+   "name": "Cobalion",
+   "slug": "cobalion",
+   "number": 638,
+   "cards": 53,
+   "variants": 85
+  },
+  {
+   "key": "639-terrakion",
+   "name": "Terrakion",
+   "slug": "terrakion",
+   "number": 639,
+   "cards": 38,
+   "variants": 66
+  },
+  {
+   "key": "640-virizion",
+   "name": "Virizion",
+   "slug": "virizion",
+   "number": 640,
+   "cards": 59,
+   "variants": 92
+  },
+  {
+   "key": "641-tornadus",
+   "name": "Tornadus",
+   "slug": "tornadus",
+   "number": 641,
+   "cards": 64,
+   "variants": 97
+  },
+  {
+   "key": "642-thundurus",
+   "name": "Thundurus",
+   "slug": "thundurus",
+   "number": 642,
+   "cards": 54,
+   "variants": 89
+  },
+  {
+   "key": "643-reshiram",
+   "name": "Reshiram",
+   "slug": "reshiram",
+   "number": 643,
+   "cards": 124,
+   "variants": 174
+  },
+  {
+   "key": "644-zekrom",
+   "name": "Zekrom",
+   "slug": "zekrom",
+   "number": 644,
+   "cards": 103,
+   "variants": 147
+  },
+  {
+   "key": "645-landorus",
+   "name": "Landorus",
+   "slug": "landorus",
+   "number": 645,
+   "cards": 48,
+   "variants": 82
+  },
+  {
+   "key": "646-kyurem",
+   "name": "Kyurem",
+   "slug": "kyurem",
+   "number": 646,
+   "cards": 121,
+   "variants": 182
+  },
+  {
+   "key": "647-keldeo",
+   "name": "Keldeo",
+   "slug": "keldeo",
+   "number": 647,
+   "cards": 66,
+   "variants": 95
+  },
+  {
+   "key": "648-meloetta",
+   "name": "Meloetta",
+   "slug": "meloetta",
+   "number": 648,
+   "cards": 44,
+   "variants": 69
+  },
+  {
+   "key": "649-genesect",
+   "name": "Genesect",
+   "slug": "genesect",
+   "number": 649,
+   "cards": 73,
+   "variants": 100
+  },
+  {
+   "key": "650-chespin",
+   "name": "Chespin",
+   "slug": "chespin",
+   "number": 650,
+   "cards": 28,
+   "variants": 42
+  },
+  {
+   "key": "651-quilladin",
+   "name": "Quilladin",
+   "slug": "quilladin",
+   "number": 651,
+   "cards": 9,
+   "variants": 15
+  },
+  {
+   "key": "652-chesnaught",
+   "name": "Chesnaught",
+   "slug": "chesnaught",
+   "number": 652,
+   "cards": 22,
+   "variants": 32
+  },
+  {
+   "key": "653-fennekin",
+   "name": "Fennekin",
+   "slug": "fennekin",
+   "number": 653,
+   "cards": 36,
+   "variants": 60
+  },
+  {
+   "key": "654-braixen",
+   "name": "Braixen",
+   "slug": "braixen",
+   "number": 654,
+   "cards": 38,
+   "variants": 54
+  },
+  {
+   "key": "655-delphox",
+   "name": "Delphox",
+   "slug": "delphox",
+   "number": 655,
+   "cards": 33,
+   "variants": 56
+  },
+  {
+   "key": "656-froakie",
+   "name": "Froakie",
+   "slug": "froakie",
+   "number": 656,
+   "cards": 52,
+   "variants": 81
+  },
+  {
+   "key": "657-frogadier",
+   "name": "Frogadier",
+   "slug": "frogadier",
+   "number": 657,
+   "cards": 39,
+   "variants": 62
+  },
+  {
+   "key": "658-greninja",
+   "name": "Greninja",
+   "slug": "greninja",
+   "number": 658,
+   "cards": 128,
+   "variants": 171
+  },
+  {
+   "key": "659-bunnelby",
+   "name": "Bunnelby",
+   "slug": "bunnelby",
+   "number": 659,
+   "cards": 41,
+   "variants": 67
+  },
+  {
+   "key": "660-diggersby",
+   "name": "Diggersby",
+   "slug": "diggersby",
+   "number": 660,
+   "cards": 26,
+   "variants": 45
+  },
+  {
+   "key": "661-fletchling",
+   "name": "Fletchling",
+   "slug": "fletchling",
+   "number": 661,
+   "cards": 52,
+   "variants": 79
+  },
+  {
+   "key": "662-fletchinder",
+   "name": "Fletchinder",
+   "slug": "fletchinder",
+   "number": 662,
+   "cards": 46,
+   "variants": 73
+  },
+  {
+   "key": "663-talonflame",
+   "name": "Talonflame",
+   "slug": "talonflame",
+   "number": 663,
+   "cards": 52,
+   "variants": 80
+  },
+  {
+   "key": "664-scatterbug",
+   "name": "Scatterbug",
+   "slug": "scatterbug",
+   "number": 664,
+   "cards": 20,
+   "variants": 35
+  },
+  {
+   "key": "665-spewpa",
+   "name": "Spewpa",
+   "slug": "spewpa",
+   "number": 665,
+   "cards": 19,
+   "variants": 33
+  },
+  {
+   "key": "666-vivillon",
+   "name": "Vivillon",
+   "slug": "vivillon",
+   "number": 666,
+   "cards": 31,
+   "variants": 58
+  },
+  {
+   "key": "667-litleo",
+   "name": "Litleo",
+   "slug": "litleo",
+   "number": 667,
+   "cards": 42,
+   "variants": 69
+  },
+  {
+   "key": "668-pyroar",
+   "name": "Pyroar",
+   "slug": "pyroar",
+   "number": 668,
+   "cards": 47,
+   "variants": 74
+  },
+  {
+   "key": "669-flabebe",
+   "name": "Flabebe",
+   "slug": "flabebe",
+   "number": 669,
+   "cards": 31,
+   "variants": 53
+  },
+  {
+   "key": "670-floette",
+   "name": "Floette",
+   "slug": "floette",
+   "number": 670,
+   "cards": 35,
+   "variants": 55
+  },
+  {
+   "key": "671-florges",
+   "name": "Florges",
+   "slug": "florges",
+   "number": 671,
+   "cards": 30,
+   "variants": 52
+  },
+  {
+   "key": "672-skiddo",
+   "name": "Skiddo",
+   "slug": "skiddo",
+   "number": 672,
+   "cards": 20,
+   "variants": 33
+  },
+  {
+   "key": "673-gogoat",
+   "name": "Gogoat",
+   "slug": "gogoat",
+   "number": 673,
+   "cards": 19,
+   "variants": 33
+  },
+  {
+   "key": "674-pancham",
+   "name": "Pancham",
+   "slug": "pancham",
+   "number": 674,
+   "cards": 38,
+   "variants": 62
+  },
+  {
+   "key": "675-pangoro",
+   "name": "Pangoro",
+   "slug": "pangoro",
+   "number": 675,
+   "cards": 35,
+   "variants": 58
+  },
+  {
+   "key": "676-furfrou",
+   "name": "Furfrou",
+   "slug": "furfrou",
+   "number": 676,
+   "cards": 41,
+   "variants": 59
+  },
+  {
+   "key": "677-espurr",
+   "name": "Espurr",
+   "slug": "espurr",
+   "number": 677,
+   "cards": 35,
+   "variants": 53
+  },
+  {
+   "key": "678-meowstic",
+   "name": "Meowstic",
+   "slug": "meowstic",
+   "number": 678,
+   "cards": 37,
+   "variants": 56
+  },
+  {
+   "key": "679-honedge",
+   "name": "Honedge",
+   "slug": "honedge",
+   "number": 679,
+   "cards": 43,
+   "variants": 78
+  },
+  {
+   "key": "680-doublade",
+   "name": "Doublade",
+   "slug": "doublade",
+   "number": 680,
+   "cards": 38,
+   "variants": 71
+  },
+  {
+   "key": "681-aegislash",
+   "name": "Aegislash",
+   "slug": "aegislash",
+   "number": 681,
+   "cards": 61,
+   "variants": 98
+  },
+  {
+   "key": "682-spritzee",
+   "name": "Spritzee",
+   "slug": "spritzee",
+   "number": 682,
+   "cards": 24,
+   "variants": 40
+  },
+  {
+   "key": "683-aromatisse",
+   "name": "Aromatisse",
+   "slug": "aromatisse",
+   "number": 683,
+   "cards": 19,
+   "variants": 35
+  },
+  {
+   "key": "684-swirlix",
+   "name": "Swirlix",
+   "slug": "swirlix",
+   "number": 684,
+   "cards": 31,
+   "variants": 50
+  },
+  {
+   "key": "685-slurpuff",
+   "name": "Slurpuff",
+   "slug": "slurpuff",
+   "number": 685,
+   "cards": 26,
+   "variants": 42
+  },
+  {
+   "key": "686-inkay",
+   "name": "Inkay",
+   "slug": "inkay",
+   "number": 686,
+   "cards": 59,
+   "variants": 91
+  },
+  {
+   "key": "687-malamar",
+   "name": "Malamar",
+   "slug": "malamar",
+   "number": 687,
+   "cards": 68,
+   "variants": 105
+  },
+  {
+   "key": "688-binacle",
+   "name": "Binacle",
+   "slug": "binacle",
+   "number": 688,
+   "cards": 19,
+   "variants": 29
+  },
+  {
+   "key": "689-barbaracle",
+   "name": "Barbaracle",
+   "slug": "barbaracle",
+   "number": 689,
+   "cards": 16,
+   "variants": 26
+  },
+  {
+   "key": "690-skrelp",
+   "name": "Skrelp",
+   "slug": "skrelp",
+   "number": 690,
+   "cards": 14,
+   "variants": 23
+  },
+  {
+   "key": "691-dragalge",
+   "name": "Dragalge",
+   "slug": "dragalge",
+   "number": 691,
+   "cards": 19,
+   "variants": 28
+  },
+  {
+   "key": "692-clauncher",
+   "name": "Clauncher",
+   "slug": "clauncher",
+   "number": 692,
+   "cards": 21,
+   "variants": 34
+  },
+  {
+   "key": "693-clawitzer",
+   "name": "Clawitzer",
+   "slug": "clawitzer",
+   "number": 693,
+   "cards": 21,
+   "variants": 37
+  },
+  {
+   "key": "694-helioptile",
+   "name": "Helioptile",
+   "slug": "helioptile",
+   "number": 694,
+   "cards": 46,
+   "variants": 74
+  },
+  {
+   "key": "695-heliolisk",
+   "name": "Heliolisk",
+   "slug": "heliolisk",
+   "number": 695,
+   "cards": 54,
+   "variants": 83
+  },
+  {
+   "key": "696-tyrunt",
+   "name": "Tyrunt",
+   "slug": "tyrunt",
+   "number": 696,
+   "cards": 10,
+   "variants": 17
+  },
+  {
+   "key": "697-tyrantrum",
+   "name": "Tyrantrum",
+   "slug": "tyrantrum",
+   "number": 697,
+   "cards": 10,
+   "variants": 20
+  },
+  {
+   "key": "698-amaura",
+   "name": "Amaura",
+   "slug": "amaura",
+   "number": 698,
+   "cards": 6,
+   "variants": 11
+  },
+  {
+   "key": "699-aurorus",
+   "name": "Aurorus",
+   "slug": "aurorus",
+   "number": 699,
+   "cards": 10,
+   "variants": 19
+  },
+  {
+   "key": "700-sylveon",
+   "name": "Sylveon",
+   "slug": "sylveon",
+   "number": 700,
+   "cards": 128,
+   "variants": 161
+  },
+  {
+   "key": "701-hawlucha",
+   "name": "Hawlucha",
+   "slug": "hawlucha",
+   "number": 701,
+   "cards": 74,
+   "variants": 122
+  },
+  {
+   "key": "702-dedenne",
+   "name": "Dedenne",
+   "slug": "dedenne",
+   "number": 702,
+   "cards": 90,
+   "variants": 136
+  },
+  {
+   "key": "703-carbink",
+   "name": "Carbink",
+   "slug": "carbink",
+   "number": 703,
+   "cards": 29,
+   "variants": 47
+  },
+  {
+   "key": "704-goomy",
+   "name": "Goomy",
+   "slug": "goomy",
+   "number": 704,
+   "cards": 23,
+   "variants": 39
+  },
+  {
+   "key": "705-sliggoo",
+   "name": "Sliggoo",
+   "slug": "sliggoo",
+   "number": 705,
+   "cards": 22,
+   "variants": 37
+  },
+  {
+   "key": "706-goodra",
+   "name": "Goodra",
+   "slug": "goodra",
+   "number": 706,
+   "cards": 37,
+   "variants": 56
+  },
+  {
+   "key": "707-klefki",
+   "name": "Klefki",
+   "slug": "klefki",
+   "number": 707,
+   "cards": 36,
+   "variants": 62
+  },
+  {
+   "key": "708-phantump",
+   "name": "Phantump",
+   "slug": "phantump",
+   "number": 708,
+   "cards": 33,
+   "variants": 60
+  },
+  {
+   "key": "709-trevenant",
+   "name": "Trevenant",
+   "slug": "trevenant",
+   "number": 709,
+   "cards": 72,
+   "variants": 106
+  },
+  {
+   "key": "710-pumpkaboo",
+   "name": "Pumpkaboo",
+   "slug": "pumpkaboo",
+   "number": 710,
+   "cards": 21,
+   "variants": 45
+  },
+  {
+   "key": "711-gourgeist",
+   "name": "Gourgeist",
+   "slug": "gourgeist",
+   "number": 711,
+   "cards": 21,
+   "variants": 35
+  },
+  {
+   "key": "712-bergmite",
+   "name": "Bergmite",
+   "slug": "bergmite",
+   "number": 712,
+   "cards": 16,
+   "variants": 25
+  },
+  {
+   "key": "713-avalugg",
+   "name": "Avalugg",
+   "slug": "avalugg",
+   "number": 713,
+   "cards": 16,
+   "variants": 29
+  },
+  {
+   "key": "714-noibat",
+   "name": "Noibat",
+   "slug": "noibat",
+   "number": 714,
+   "cards": 45,
+   "variants": 73
+  },
+  {
+   "key": "715-noivern",
+   "name": "Noivern",
+   "slug": "noivern",
+   "number": 715,
+   "cards": 64,
+   "variants": 83
+  },
+  {
+   "key": "716-xerneas",
+   "name": "Xerneas",
+   "slug": "xerneas",
+   "number": 716,
+   "cards": 71,
+   "variants": 104
+  },
+  {
+   "key": "717-yveltal",
+   "name": "Yveltal",
+   "slug": "yveltal",
+   "number": 717,
+   "cards": 87,
+   "variants": 130
+  },
+  {
+   "key": "718-zygarde",
+   "name": "Zygarde",
+   "slug": "zygarde",
+   "number": 718,
+   "cards": 81,
+   "variants": 111
+  },
+  {
+   "key": "719-diancie",
+   "name": "Diancie",
+   "slug": "diancie",
+   "number": 719,
+   "cards": 47,
+   "variants": 63
+  },
+  {
+   "key": "720-hoopa",
+   "name": "Hoopa",
+   "slug": "hoopa",
+   "number": 720,
+   "cards": 70,
+   "variants": 99
+  },
+  {
+   "key": "721-volcanion",
+   "name": "Volcanion",
+   "slug": "volcanion",
+   "number": 721,
+   "cards": 66,
+   "variants": 92
+  },
+  {
+   "key": "722-rowlet",
+   "name": "Rowlet",
+   "slug": "rowlet",
+   "number": 722,
+   "cards": 69,
+   "variants": 96
+  },
+  {
+   "key": "723-dartrix",
+   "name": "Dartrix",
+   "slug": "dartrix",
+   "number": 723,
+   "cards": 33,
+   "variants": 53
+  },
+  {
+   "key": "724-decidueye",
+   "name": "Decidueye",
+   "slug": "decidueye",
+   "number": 724,
+   "cards": 59,
+   "variants": 83
+  },
+  {
+   "key": "725-litten",
+   "name": "Litten",
+   "slug": "litten",
+   "number": 725,
+   "cards": 51,
+   "variants": 73
+  },
+  {
+   "key": "726-torracat",
+   "name": "Torracat",
+   "slug": "torracat",
+   "number": 726,
+   "cards": 23,
+   "variants": 38
+  },
+  {
+   "key": "727-incineroar",
+   "name": "Incineroar",
+   "slug": "incineroar",
+   "number": 727,
+   "cards": 42,
+   "variants": 55
+  },
+  {
+   "key": "728-popplio",
+   "name": "Popplio",
+   "slug": "popplio",
+   "number": 728,
+   "cards": 20,
+   "variants": 29
+  },
+  {
+   "key": "729-brionne",
+   "name": "Brionne",
+   "slug": "brionne",
+   "number": 729,
+   "cards": 8,
+   "variants": 12
+  },
+  {
+   "key": "730-primarina",
+   "name": "Primarina",
+   "slug": "primarina",
+   "number": 730,
+   "cards": 17,
+   "variants": 26
+  },
+  {
+   "key": "731-pikipek",
+   "name": "Pikipek",
+   "slug": "pikipek",
+   "number": 731,
+   "cards": 17,
+   "variants": 26
+  },
+  {
+   "key": "732-trumbeak",
+   "name": "Trumbeak",
+   "slug": "trumbeak",
+   "number": 732,
+   "cards": 12,
+   "variants": 20
+  },
+  {
+   "key": "733-toucannon",
+   "name": "Toucannon",
+   "slug": "toucannon",
+   "number": 733,
+   "cards": 13,
+   "variants": 19
+  },
+  {
+   "key": "734-yungoos",
+   "name": "Yungoos",
+   "slug": "yungoos",
+   "number": 734,
+   "cards": 21,
+   "variants": 32
+  },
+  {
+   "key": "735-gumshoos",
+   "name": "Gumshoos",
+   "slug": "gumshoos",
+   "number": 735,
+   "cards": 25,
+   "variants": 36
+  },
+  {
+   "key": "736-grubbin",
+   "name": "Grubbin",
+   "slug": "grubbin",
+   "number": 736,
+   "cards": 32,
+   "variants": 50
+  },
+  {
+   "key": "737-charjabug",
+   "name": "Charjabug",
+   "slug": "charjabug",
+   "number": 737,
+   "cards": 40,
+   "variants": 58
+  },
+  {
+   "key": "738-vikavolt",
+   "name": "Vikavolt",
+   "slug": "vikavolt",
+   "number": 738,
+   "cards": 44,
+   "variants": 62
+  },
+  {
+   "key": "739-crabrawler",
+   "name": "Crabrawler",
+   "slug": "crabrawler",
+   "number": 739,
+   "cards": 23,
+   "variants": 36
+  },
+  {
+   "key": "740-crabominable",
+   "name": "Crabominable",
+   "slug": "crabominable",
+   "number": 740,
+   "cards": 40,
+   "variants": 55
+  },
+  {
+   "key": "741-oricorio",
+   "name": "Oricorio",
+   "slug": "oricorio",
+   "number": 741,
+   "cards": 74,
+   "variants": 114
+  },
+  {
+   "key": "742-cutiefly",
+   "name": "Cutiefly",
+   "slug": "cutiefly",
+   "number": 742,
+   "cards": 32,
+   "variants": 44
+  },
+  {
+   "key": "743-ribombee",
+   "name": "Ribombee",
+   "slug": "ribombee",
+   "number": 743,
+   "cards": 29,
+   "variants": 44
+  },
+  {
+   "key": "744-rockruff",
+   "name": "Rockruff",
+   "slug": "rockruff",
+   "number": 744,
+   "cards": 63,
+   "variants": 94
+  },
+  {
+   "key": "745-lycanroc",
+   "name": "Lycanroc",
+   "slug": "lycanroc",
+   "number": 745,
+   "cards": 116,
+   "variants": 150
+  },
+  {
+   "key": "746-wishiwashi",
+   "name": "Wishiwashi",
+   "slug": "wishiwashi",
+   "number": 746,
+   "cards": 43,
+   "variants": 54
+  },
+  {
+   "key": "747-mareanie",
+   "name": "Mareanie",
+   "slug": "mareanie",
+   "number": 747,
+   "cards": 22,
+   "variants": 31
+  },
+  {
+   "key": "748-toxapex",
+   "name": "Toxapex",
+   "slug": "toxapex",
+   "number": 748,
+   "cards": 21,
+   "variants": 28
+  },
+  {
+   "key": "749-mudbray",
+   "name": "Mudbray",
+   "slug": "mudbray",
+   "number": 749,
+   "cards": 17,
+   "variants": 29
+  },
+  {
+   "key": "750-mudsdale",
+   "name": "Mudsdale",
+   "slug": "mudsdale",
+   "number": 750,
+   "cards": 28,
+   "variants": 42
+  },
+  {
+   "key": "751-dewpider",
+   "name": "Dewpider",
+   "slug": "dewpider",
+   "number": 751,
+   "cards": 24,
+   "variants": 35
+  },
+  {
+   "key": "752-araquanid",
+   "name": "Araquanid",
+   "slug": "araquanid",
+   "number": 752,
+   "cards": 23,
+   "variants": 34
+  },
+  {
+   "key": "753-fomantis",
+   "name": "Fomantis",
+   "slug": "fomantis",
+   "number": 753,
+   "cards": 21,
+   "variants": 29
+  },
+  {
+   "key": "754-lurantis",
+   "name": "Lurantis",
+   "slug": "lurantis",
+   "number": 754,
+   "cards": 27,
+   "variants": 33
+  },
+  {
+   "key": "755-morelull",
+   "name": "Morelull",
+   "slug": "morelull",
+   "number": 755,
+   "cards": 20,
+   "variants": 30
+  },
+  {
+   "key": "756-shiinotic",
+   "name": "Shiinotic",
+   "slug": "shiinotic",
+   "number": 756,
+   "cards": 27,
+   "variants": 39
+  },
+  {
+   "key": "757-salandit",
+   "name": "Salandit",
+   "slug": "salandit",
+   "number": 757,
+   "cards": 47,
+   "variants": 73
+  },
+  {
+   "key": "758-salazzle",
+   "name": "Salazzle",
+   "slug": "salazzle",
+   "number": 758,
+   "cards": 57,
+   "variants": 83
+  },
+  {
+   "key": "759-stufful",
+   "name": "Stufful",
+   "slug": "stufful",
+   "number": 759,
+   "cards": 35,
+   "variants": 52
+  },
+  {
+   "key": "760-bewear",
+   "name": "Bewear",
+   "slug": "bewear",
+   "number": 760,
+   "cards": 46,
+   "variants": 63
+  },
+  {
+   "key": "761-bounsweet",
+   "name": "Bounsweet",
+   "slug": "bounsweet",
+   "number": 761,
+   "cards": 22,
+   "variants": 38
+  },
+  {
+   "key": "762-steenee",
+   "name": "Steenee",
+   "slug": "steenee",
+   "number": 762,
+   "cards": 22,
+   "variants": 38
+  },
+  {
+   "key": "763-tsareena",
+   "name": "Tsareena",
+   "slug": "tsareena",
+   "number": 763,
+   "cards": 38,
+   "variants": 58
+  },
+  {
+   "key": "764-comfey",
+   "name": "Comfey",
+   "slug": "comfey",
+   "number": 764,
+   "cards": 24,
+   "variants": 38
+  },
+  {
+   "key": "765-oranguru",
+   "name": "Oranguru",
+   "slug": "oranguru",
+   "number": 765,
+   "cards": 51,
+   "variants": 74
+  },
+  {
+   "key": "766-passimian",
+   "name": "Passimian",
+   "slug": "passimian",
+   "number": 766,
+   "cards": 37,
+   "variants": 59
+  },
+  {
+   "key": "767-wimpod",
+   "name": "Wimpod",
+   "slug": "wimpod",
+   "number": 767,
+   "cards": 33,
+   "variants": 54
+  },
+  {
+   "key": "768-golisopod",
+   "name": "Golisopod",
+   "slug": "golisopod",
+   "number": 768,
+   "cards": 47,
+   "variants": 62
+  },
+  {
+   "key": "769-sandygast",
+   "name": "Sandygast",
+   "slug": "sandygast",
+   "number": 769,
+   "cards": 33,
+   "variants": 51
+  },
+  {
+   "key": "770-palossand",
+   "name": "Palossand",
+   "slug": "palossand",
+   "number": 770,
+   "cards": 34,
+   "variants": 49
+  },
+  {
+   "key": "771-pyukumuku",
+   "name": "Pyukumuku",
+   "slug": "pyukumuku",
+   "number": 771,
+   "cards": 17,
+   "variants": 23
+  },
+  {
+   "key": "772-type-null",
+   "name": "Type: Null",
+   "slug": "type-null",
+   "number": 772,
+   "cards": 22,
+   "variants": 31
+  },
+  {
+   "key": "773-silvally",
+   "name": "Silvally",
+   "slug": "silvally",
+   "number": 773,
+   "cards": 36,
+   "variants": 44
+  },
+  {
+   "key": "774-minior",
+   "name": "Minior",
+   "slug": "minior",
+   "number": 774,
+   "cards": 14,
+   "variants": 20
+  },
+  {
+   "key": "775-komala",
+   "name": "Komala",
+   "slug": "komala",
+   "number": 775,
+   "cards": 18,
+   "variants": 30
+  },
+  {
+   "key": "776-turtonator",
+   "name": "Turtonator",
+   "slug": "turtonator",
+   "number": 776,
+   "cards": 51,
+   "variants": 71
+  },
+  {
+   "key": "777-togedemaru",
+   "name": "Togedemaru",
+   "slug": "togedemaru",
+   "number": 777,
+   "cards": 47,
+   "variants": 72
+  },
+  {
+   "key": "778-mimikyu",
+   "name": "Mimikyu",
+   "slug": "mimikyu",
+   "number": 778,
+   "cards": 111,
+   "variants": 155
+  },
+  {
+   "key": "779-bruxish",
+   "name": "Bruxish",
+   "slug": "bruxish",
+   "number": 779,
+   "cards": 32,
+   "variants": 46
+  },
+  {
+   "key": "780-drampa",
+   "name": "Drampa",
+   "slug": "drampa",
+   "number": 780,
+   "cards": 69,
+   "variants": 96
+  },
+  {
+   "key": "781-dhelmise",
+   "name": "Dhelmise",
+   "slug": "dhelmise",
+   "number": 781,
+   "cards": 45,
+   "variants": 66
+  },
+  {
+   "key": "782-jangmo-o",
+   "name": "Jangmo-o",
+   "slug": "jangmo-o",
+   "number": 782,
+   "cards": 20,
+   "variants": 31
+  },
+  {
+   "key": "783-hakamo-o",
+   "name": "Hakamo-o",
+   "slug": "hakamo-o",
+   "number": 783,
+   "cards": 18,
+   "variants": 25
+  },
+  {
+   "key": "784-kommo-o",
+   "name": "Kommo-o",
+   "slug": "kommo-o",
+   "number": 784,
+   "cards": 24,
+   "variants": 36
+  },
+  {
+   "key": "785-tapu-koko",
+   "name": "Tapu Koko",
+   "slug": "tapu-koko",
+   "number": 785,
+   "cards": 81,
+   "variants": 103
+  },
+  {
+   "key": "786-tapu-lele",
+   "name": "Tapu Lele",
+   "slug": "tapu-lele",
+   "number": 786,
+   "cards": 44,
+   "variants": 66
+  },
+  {
+   "key": "787-tapu-bulu",
+   "name": "Tapu Bulu",
+   "slug": "tapu-bulu",
+   "number": 787,
+   "cards": 41,
+   "variants": 50
+  },
+  {
+   "key": "788-tapu-fini",
+   "name": "Tapu Fini",
+   "slug": "tapu-fini",
+   "number": 788,
+   "cards": 33,
+   "variants": 42
+  },
+  {
+   "key": "789-cosmog",
+   "name": "Cosmog",
+   "slug": "cosmog",
+   "number": 789,
+   "cards": 31,
+   "variants": 45
+  },
+  {
+   "key": "790-cosmoem",
+   "name": "Cosmoem",
+   "slug": "cosmoem",
+   "number": 790,
+   "cards": 21,
+   "variants": 31
+  },
+  {
+   "key": "791-solgaleo",
+   "name": "Solgaleo",
+   "slug": "solgaleo",
+   "number": 791,
+   "cards": 49,
+   "variants": 62
+  },
+  {
+   "key": "792-lunala",
+   "name": "Lunala",
+   "slug": "lunala",
+   "number": 792,
+   "cards": 44,
+   "variants": 55
+  },
+  {
+   "key": "793-nihilego",
+   "name": "Nihilego",
+   "slug": "nihilego",
+   "number": 793,
+   "cards": 11,
+   "variants": 12
+  },
+  {
+   "key": "794-buzzwole",
+   "name": "Buzzwole",
+   "slug": "buzzwole",
+   "number": 794,
+   "cards": 42,
+   "variants": 53
+  },
+  {
+   "key": "795-pheromosa",
+   "name": "Pheromosa",
+   "slug": "pheromosa",
+   "number": 795,
+   "cards": 28,
+   "variants": 33
+  },
+  {
+   "key": "796-xurkitree",
+   "name": "Xurkitree",
+   "slug": "xurkitree",
+   "number": 796,
+   "cards": 26,
+   "variants": 34
+  },
+  {
+   "key": "797-celesteela",
+   "name": "Celesteela",
+   "slug": "celesteela",
+   "number": 797,
+   "cards": 26,
+   "variants": 32
+  },
+  {
+   "key": "798-kartana",
+   "name": "Kartana",
+   "slug": "kartana",
+   "number": 798,
+   "cards": 24,
+   "variants": 31
+  },
+  {
+   "key": "799-guzzlord",
+   "name": "Guzzlord",
+   "slug": "guzzlord",
+   "number": 799,
+   "cards": 35,
+   "variants": 42
+  },
+  {
+   "key": "800-necrozma",
+   "name": "Necrozma",
+   "slug": "necrozma",
+   "number": 800,
+   "cards": 77,
+   "variants": 90
+  },
+  {
+   "key": "801-magearna",
+   "name": "Magearna",
+   "slug": "magearna",
+   "number": 801,
+   "cards": 37,
+   "variants": 55
+  },
+  {
+   "key": "802-marshadow",
+   "name": "Marshadow",
+   "slug": "marshadow",
+   "number": 802,
+   "cards": 49,
+   "variants": 67
+  },
+  {
+   "key": "803-poipole",
+   "name": "Poipole",
+   "slug": "poipole",
+   "number": 803,
+   "cards": 16,
+   "variants": 25
+  },
+  {
+   "key": "804-naganadel",
+   "name": "Naganadel",
+   "slug": "naganadel",
+   "number": 804,
+   "cards": 37,
+   "variants": 45
+  },
+  {
+   "key": "805-stakataka",
+   "name": "Stakataka",
+   "slug": "stakataka",
+   "number": 805,
+   "cards": 19,
+   "variants": 23
+  },
+  {
+   "key": "806-blacephalon",
+   "name": "Blacephalon",
+   "slug": "blacephalon",
+   "number": 806,
+   "cards": 19,
+   "variants": 25
+  },
+  {
+   "key": "807-zeraora",
+   "name": "Zeraora",
+   "slug": "zeraora",
+   "number": 807,
+   "cards": 113,
+   "variants": 149
+  },
+  {
+   "key": "808-meltan",
+   "name": "Meltan",
+   "slug": "meltan",
+   "number": 808,
+   "cards": 42,
+   "variants": 61
+  },
+  {
+   "key": "809-melmetal",
+   "name": "Melmetal",
+   "slug": "melmetal",
+   "number": 809,
+   "cards": 69,
+   "variants": 91
+  },
+  {
+   "key": "810-grookey",
+   "name": "Grookey",
+   "slug": "grookey",
+   "number": 810,
+   "cards": 30,
+   "variants": 51
+  },
+  {
+   "key": "811-thwackey",
+   "name": "Thwackey",
+   "slug": "thwackey",
+   "number": 811,
+   "cards": 22,
+   "variants": 39
+  },
+  {
+   "key": "812-rillaboom",
+   "name": "Rillaboom",
+   "slug": "rillaboom",
+   "number": 812,
+   "cards": 52,
+   "variants": 70
+  },
+  {
+   "key": "813-scorbunny",
+   "name": "Scorbunny",
+   "slug": "scorbunny",
+   "number": 813,
+   "cards": 40,
+   "variants": 59
+  },
+  {
+   "key": "814-raboot",
+   "name": "Raboot",
+   "slug": "raboot",
+   "number": 814,
+   "cards": 32,
+   "variants": 46
+  },
+  {
+   "key": "815-cinderace",
+   "name": "Cinderace",
+   "slug": "cinderace",
+   "number": 815,
+   "cards": 60,
+   "variants": 85
+  },
+  {
+   "key": "816-sobble",
+   "name": "Sobble",
+   "slug": "sobble",
+   "number": 816,
+   "cards": 34,
+   "variants": 51
+  },
+  {
+   "key": "817-drizzile",
+   "name": "Drizzile",
+   "slug": "drizzile",
+   "number": 817,
+   "cards": 19,
+   "variants": 33
+  },
+  {
+   "key": "818-inteleon",
+   "name": "Inteleon",
+   "slug": "inteleon",
+   "number": 818,
+   "cards": 51,
+   "variants": 77
+  },
+  {
+   "key": "819-skwovet",
+   "name": "Skwovet",
+   "slug": "skwovet",
+   "number": 819,
+   "cards": 40,
+   "variants": 64
+  },
+  {
+   "key": "820-greedent",
+   "name": "Greedent",
+   "slug": "greedent",
+   "number": 820,
+   "cards": 66,
+   "variants": 88
+  },
+  {
+   "key": "821-rookidee",
+   "name": "Rookidee",
+   "slug": "rookidee",
+   "number": 821,
+   "cards": 24,
+   "variants": 37
+  },
+  {
+   "key": "822-corvisquire",
+   "name": "Corvisquire",
+   "slug": "corvisquire",
+   "number": 822,
+   "cards": 21,
+   "variants": 34
+  },
+  {
+   "key": "823-corviknight",
+   "name": "Corviknight",
+   "slug": "corviknight",
+   "number": 823,
+   "cards": 46,
+   "variants": 64
+  },
+  {
+   "key": "824-blipbug",
+   "name": "Blipbug",
+   "slug": "blipbug",
+   "number": 824,
+   "cards": 23,
+   "variants": 39
+  },
+  {
+   "key": "825-dottler",
+   "name": "Dottler",
+   "slug": "dottler",
+   "number": 825,
+   "cards": 23,
+   "variants": 37
+  },
+  {
+   "key": "826-orbeetle",
+   "name": "Orbeetle",
+   "slug": "orbeetle",
+   "number": 826,
+   "cards": 52,
+   "variants": 67
+  },
+  {
+   "key": "827-nickit",
+   "name": "Nickit",
+   "slug": "nickit",
+   "number": 827,
+   "cards": 29,
+   "variants": 46
+  },
+  {
+   "key": "828-thievul",
+   "name": "Thievul",
+   "slug": "thievul",
+   "number": 828,
+   "cards": 32,
+   "variants": 47
+  },
+  {
+   "key": "829-gossifleur",
+   "name": "Gossifleur",
+   "slug": "gossifleur",
+   "number": 829,
+   "cards": 25,
+   "variants": 36
+  },
+  {
+   "key": "830-eldegoss",
+   "name": "Eldegoss",
+   "slug": "eldegoss",
+   "number": 830,
+   "cards": 35,
+   "variants": 49
+  },
+  {
+   "key": "831-wooloo",
+   "name": "Wooloo",
+   "slug": "wooloo",
+   "number": 831,
+   "cards": 41,
+   "variants": 61
+  },
+  {
+   "key": "832-dubwool",
+   "name": "Dubwool",
+   "slug": "dubwool",
+   "number": 832,
+   "cards": 32,
+   "variants": 51
+  },
+  {
+   "key": "833-chewtle",
+   "name": "Chewtle",
+   "slug": "chewtle",
+   "number": 833,
+   "cards": 22,
+   "variants": 34
+  },
+  {
+   "key": "834-drednaw",
+   "name": "Drednaw",
+   "slug": "drednaw",
+   "number": 834,
+   "cards": 35,
+   "variants": 49
+  },
+  {
+   "key": "835-yamper",
+   "name": "Yamper",
+   "slug": "yamper",
+   "number": 835,
+   "cards": 29,
+   "variants": 43
+  },
+  {
+   "key": "836-boltund",
+   "name": "Boltund",
+   "slug": "boltund",
+   "number": 836,
+   "cards": 56,
+   "variants": 75
+  },
+  {
+   "key": "837-rolycoly",
+   "name": "Rolycoly",
+   "slug": "rolycoly",
+   "number": 837,
+   "cards": 23,
+   "variants": 36
+  },
+  {
+   "key": "838-carkol",
+   "name": "Carkol",
+   "slug": "carkol",
+   "number": 838,
+   "cards": 21,
+   "variants": 33
+  },
+  {
+   "key": "839-coalossal",
+   "name": "Coalossal",
+   "slug": "coalossal",
+   "number": 839,
+   "cards": 38,
+   "variants": 53
+  },
+  {
+   "key": "840-applin",
+   "name": "Applin",
+   "slug": "applin",
+   "number": 840,
+   "cards": 50,
+   "variants": 80
+  },
+  {
+   "key": "841-flapple",
+   "name": "Flapple",
+   "slug": "flapple",
+   "number": 841,
+   "cards": 45,
+   "variants": 58
+  },
+  {
+   "key": "842-appletun",
+   "name": "Appletun",
+   "slug": "appletun",
+   "number": 842,
+   "cards": 27,
+   "variants": 39
+  },
+  {
+   "key": "843-silicobra",
+   "name": "Silicobra",
+   "slug": "silicobra",
+   "number": 843,
+   "cards": 19,
+   "variants": 32
+  },
+  {
+   "key": "844-sandaconda",
+   "name": "Sandaconda",
+   "slug": "sandaconda",
+   "number": 844,
+   "cards": 46,
+   "variants": 65
+  },
+  {
+   "key": "845-cramorant",
+   "name": "Cramorant",
+   "slug": "cramorant",
+   "number": 845,
+   "cards": 63,
+   "variants": 89
+  },
+  {
+   "key": "846-arrokuda",
+   "name": "Arrokuda",
+   "slug": "arrokuda",
+   "number": 846,
+   "cards": 18,
+   "variants": 27
+  },
+  {
+   "key": "847-barraskewda",
+   "name": "Barraskewda",
+   "slug": "barraskewda",
+   "number": 847,
+   "cards": 17,
+   "variants": 28
+  },
+  {
+   "key": "848-toxel",
+   "name": "Toxel",
+   "slug": "toxel",
+   "number": 848,
+   "cards": 46,
+   "variants": 68
+  },
+  {
+   "key": "849-toxtricity",
+   "name": "Toxtricity",
+   "slug": "toxtricity",
+   "number": 849,
+   "cards": 80,
+   "variants": 107
+  },
+  {
+   "key": "850-sizzlipede",
+   "name": "Sizzlipede",
+   "slug": "sizzlipede",
+   "number": 850,
+   "cards": 38,
+   "variants": 57
+  },
+  {
+   "key": "851-centiskorch",
+   "name": "Centiskorch",
+   "slug": "centiskorch",
+   "number": 851,
+   "cards": 65,
+   "variants": 82
+  },
+  {
+   "key": "852-clobbopus",
+   "name": "Clobbopus",
+   "slug": "clobbopus",
+   "number": 852,
+   "cards": 38,
+   "variants": 54
+  },
+  {
+   "key": "853-grapploct",
+   "name": "Grapploct",
+   "slug": "grapploct",
+   "number": 853,
+   "cards": 32,
+   "variants": 46
+  },
+  {
+   "key": "854-sinistea",
+   "name": "Sinistea",
+   "slug": "sinistea",
+   "number": 854,
+   "cards": 16,
+   "variants": 26
+  },
+  {
+   "key": "855-polteageist",
+   "name": "Polteageist",
+   "slug": "polteageist",
+   "number": 855,
+   "cards": 18,
+   "variants": 31
+  },
+  {
+   "key": "856-hatenna",
+   "name": "Hatenna",
+   "slug": "hatenna",
+   "number": 856,
+   "cards": 19,
+   "variants": 29
+  },
+  {
+   "key": "857-hattrem",
+   "name": "Hattrem",
+   "slug": "hattrem",
+   "number": 857,
+   "cards": 15,
+   "variants": 24
+  },
+  {
+   "key": "858-hatterene",
+   "name": "Hatterene",
+   "slug": "hatterene",
+   "number": 858,
+   "cards": 27,
+   "variants": 37
+  },
+  {
+   "key": "859-impidimp",
+   "name": "Impidimp",
+   "slug": "impidimp",
+   "number": 859,
+   "cards": 25,
+   "variants": 44
+  },
+  {
+   "key": "860-morgrem",
+   "name": "Morgrem",
+   "slug": "morgrem",
+   "number": 860,
+   "cards": 25,
+   "variants": 44
+  },
+  {
+   "key": "861-grimmsnarl",
+   "name": "Grimmsnarl",
+   "slug": "grimmsnarl",
+   "number": 861,
+   "cards": 43,
+   "variants": 60
+  },
+  {
+   "key": "862-obstagoon",
+   "name": "Obstagoon",
+   "slug": "obstagoon",
+   "number": 862,
+   "cards": 31,
+   "variants": 44
+  },
+  {
+   "key": "863-perrserker",
+   "name": "Perrserker",
+   "slug": "perrserker",
+   "number": 863,
+   "cards": 34,
+   "variants": 45
+  },
+  {
+   "key": "864-cursola",
+   "name": "Cursola",
+   "slug": "cursola",
+   "number": 864,
+   "cards": 16,
+   "variants": 20
+  },
+  {
+   "key": "865-sirfetch-d",
+   "name": "Sirfetch'd",
+   "slug": "sirfetch-d",
+   "number": 865,
+   "cards": 19,
+   "variants": 29
+  },
+  {
+   "key": "866-mr-rime",
+   "name": "Mr. Rime",
+   "slug": "mr-rime",
+   "number": 866,
+   "cards": 20,
+   "variants": 30
+  },
+  {
+   "key": "867-runerigus",
+   "name": "Runerigus",
+   "slug": "runerigus",
+   "number": 867,
+   "cards": 12,
+   "variants": 18
+  },
+  {
+   "key": "868-milcery",
+   "name": "Milcery",
+   "slug": "milcery",
+   "number": 868,
+   "cards": 32,
+   "variants": 46
+  },
+  {
+   "key": "869-alcremie",
+   "name": "Alcremie",
+   "slug": "alcremie",
+   "number": 869,
+   "cards": 39,
+   "variants": 54
+  },
+  {
+   "key": "870-falinks",
+   "name": "Falinks",
+   "slug": "falinks",
+   "number": 870,
+   "cards": 44,
+   "variants": 63
+  },
+  {
+   "key": "871-pincurchin",
+   "name": "Pincurchin",
+   "slug": "pincurchin",
+   "number": 871,
+   "cards": 37,
+   "variants": 51
+  },
+  {
+   "key": "872-snom",
+   "name": "Snom",
+   "slug": "snom",
+   "number": 872,
+   "cards": 30,
+   "variants": 46
+  },
+  {
+   "key": "873-frosmoth",
+   "name": "Frosmoth",
+   "slug": "frosmoth",
+   "number": 873,
+   "cards": 27,
+   "variants": 47
+  },
+  {
+   "key": "874-stonjourner",
+   "name": "Stonjourner",
+   "slug": "stonjourner",
+   "number": 874,
+   "cards": 42,
+   "variants": 58
+  },
+  {
+   "key": "875-eiscue",
+   "name": "Eiscue",
+   "slug": "eiscue",
+   "number": 875,
+   "cards": 41,
+   "variants": 59
+  },
+  {
+   "key": "876-indeedee",
+   "name": "Indeedee",
+   "slug": "indeedee",
+   "number": 876,
+   "cards": 50,
+   "variants": 69
+  },
+  {
+   "key": "877-morpeko",
+   "name": "Morpeko",
+   "slug": "morpeko",
+   "number": 877,
+   "cards": 131,
+   "variants": 169
+  },
+  {
+   "key": "878-cufant",
+   "name": "Cufant",
+   "slug": "cufant",
+   "number": 878,
+   "cards": 39,
+   "variants": 57
+  },
+  {
+   "key": "879-copperajah",
+   "name": "Copperajah",
+   "slug": "copperajah",
+   "number": 879,
+   "cards": 46,
+   "variants": 62
+  },
+  {
+   "key": "880-dracozolt",
+   "name": "Dracozolt",
+   "slug": "dracozolt",
+   "number": 880,
+   "cards": 23,
+   "variants": 26
+  },
+  {
+   "key": "881-arctozolt",
+   "name": "Arctozolt",
+   "slug": "arctozolt",
+   "number": 881,
+   "cards": 8,
+   "variants": 11
+  },
+  {
+   "key": "882-dracovish",
+   "name": "Dracovish",
+   "slug": "dracovish",
+   "number": 882,
+   "cards": 10,
+   "variants": 12
+  },
+  {
+   "key": "883-arctovish",
+   "name": "Arctovish",
+   "slug": "arctovish",
+   "number": 883,
+   "cards": 15,
+   "variants": 18
+  },
+  {
+   "key": "884-duraludon",
+   "name": "Duraludon",
+   "slug": "duraludon",
+   "number": 884,
+   "cards": 67,
+   "variants": 95
+  },
+  {
+   "key": "885-dreepy",
+   "name": "Dreepy",
+   "slug": "dreepy",
+   "number": 885,
+   "cards": 26,
+   "variants": 49
+  },
+  {
+   "key": "886-drakloak",
+   "name": "Drakloak",
+   "slug": "drakloak",
+   "number": 886,
+   "cards": 26,
+   "variants": 51
+  },
+  {
+   "key": "887-dragapult",
+   "name": "Dragapult",
+   "slug": "dragapult",
+   "number": 887,
+   "cards": 52,
+   "variants": 71
+  },
+  {
+   "key": "888-zacian",
+   "name": "Zacian",
+   "slug": "zacian",
+   "number": 888,
+   "cards": 96,
+   "variants": 123
+  },
+  {
+   "key": "889-zamazenta",
+   "name": "Zamazenta",
+   "slug": "zamazenta",
+   "number": 889,
+   "cards": 65,
+   "variants": 82
+  },
+  {
+   "key": "890-eternatus",
+   "name": "Eternatus",
+   "slug": "eternatus",
+   "number": 890,
+   "cards": 44,
+   "variants": 53
+  },
+  {
+   "key": "891-kubfu",
+   "name": "Kubfu",
+   "slug": "kubfu",
+   "number": 891,
+   "cards": 5,
+   "variants": 8
+  },
+  {
+   "key": "892-urshifu",
+   "name": "Urshifu",
+   "slug": "urshifu",
+   "number": 892,
+   "cards": 79,
+   "variants": 97
+  },
+  {
+   "key": "893-zarude",
+   "name": "Zarude",
+   "slug": "zarude",
+   "number": 893,
+   "cards": 42,
+   "variants": 61
+  },
+  {
+   "key": "894-regieleki",
+   "name": "Regieleki",
+   "slug": "regieleki",
+   "number": 894,
+   "cards": 27,
+   "variants": 39
+  },
+  {
+   "key": "895-regidrago",
+   "name": "Regidrago",
+   "slug": "regidrago",
+   "number": 895,
+   "cards": 27,
+   "variants": 42
+  },
+  {
+   "key": "896-glastrier",
+   "name": "Glastrier",
+   "slug": "glastrier",
+   "number": 896,
+   "cards": 7,
+   "variants": 16
+  },
+  {
+   "key": "897-spectrier",
+   "name": "Spectrier",
+   "slug": "spectrier",
+   "number": 897,
+   "cards": 6,
+   "variants": 13
+  },
+  {
+   "key": "898-calyrex",
+   "name": "Calyrex",
+   "slug": "calyrex",
+   "number": 898,
+   "cards": 78,
+   "variants": 90
+  },
+  {
+   "key": "899-wyrdeer",
+   "name": "Wyrdeer",
+   "slug": "wyrdeer",
+   "number": 899,
+   "cards": 15,
+   "variants": 20
+  },
+  {
+   "key": "900-kleavor",
+   "name": "Kleavor",
+   "slug": "kleavor",
+   "number": 900,
+   "cards": 23,
+   "variants": 28
+  },
+  {
+   "key": "901-ursaluna",
+   "name": "Ursaluna",
+   "slug": "ursaluna",
+   "number": 901,
+   "cards": 36,
+   "variants": 52
+  },
+  {
+   "key": "902-basculegion",
+   "name": "Basculegion",
+   "slug": "basculegion",
+   "number": 902,
+   "cards": 10,
+   "variants": 17
+  },
+  {
+   "key": "903-sneasler",
+   "name": "Sneasler",
+   "slug": "sneasler",
+   "number": 903,
+   "cards": 15,
+   "variants": 18
+  },
+  {
+   "key": "904-overqwil",
+   "name": "Overqwil",
+   "slug": "overqwil",
+   "number": 904,
+   "cards": 6,
+   "variants": 11
+  },
+  {
+   "key": "905-enamorus",
+   "name": "Enamorus",
+   "slug": "enamorus",
+   "number": 905,
+   "cards": 31,
+   "variants": 39
+  },
+  {
+   "key": "906-sprigatito",
+   "name": "Sprigatito",
+   "slug": "sprigatito",
+   "number": 906,
+   "cards": 48,
+   "variants": 66
+  },
+  {
+   "key": "907-floragato",
+   "name": "Floragato",
+   "slug": "floragato",
+   "number": 907,
+   "cards": 33,
+   "variants": 45
+  },
+  {
+   "key": "908-meowscarada",
+   "name": "Meowscarada",
+   "slug": "meowscarada",
+   "number": 908,
+   "cards": 30,
+   "variants": 43
+  },
+  {
+   "key": "909-fuecoco",
+   "name": "Fuecoco",
+   "slug": "fuecoco",
+   "number": 909,
+   "cards": 46,
+   "variants": 71
+  },
+  {
+   "key": "910-crocalor",
+   "name": "Crocalor",
+   "slug": "crocalor",
+   "number": 910,
+   "cards": 33,
+   "variants": 51
+  },
+  {
+   "key": "911-skeledirge",
+   "name": "Skeledirge",
+   "slug": "skeledirge",
+   "number": 911,
+   "cards": 29,
+   "variants": 45
+  },
+  {
+   "key": "912-quaxly",
+   "name": "Quaxly",
+   "slug": "quaxly",
+   "number": 912,
+   "cards": 35,
+   "variants": 53
+  },
+  {
+   "key": "913-quaxwell",
+   "name": "Quaxwell",
+   "slug": "quaxwell",
+   "number": 913,
+   "cards": 30,
+   "variants": 42
+  },
+  {
+   "key": "914-quaquaval",
+   "name": "Quaquaval",
+   "slug": "quaquaval",
+   "number": 914,
+   "cards": 27,
+   "variants": 42
+  },
+  {
+   "key": "915-lechonk",
+   "name": "Lechonk",
+   "slug": "lechonk",
+   "number": 915,
+   "cards": 42,
+   "variants": 66
+  },
+  {
+   "key": "916-oinkologne",
+   "name": "Oinkologne",
+   "slug": "oinkologne",
+   "number": 916,
+   "cards": 24,
+   "variants": 38
+  },
+  {
+   "key": "917-tarountula",
+   "name": "Tarountula",
+   "slug": "tarountula",
+   "number": 917,
+   "cards": 24,
+   "variants": 43
+  },
+  {
+   "key": "918-spidops",
+   "name": "Spidops",
+   "slug": "spidops",
+   "number": 918,
+   "cards": 30,
+   "variants": 47
+  },
+  {
+   "key": "919-nymble",
+   "name": "Nymble",
+   "slug": "nymble",
+   "number": 919,
+   "cards": 20,
+   "variants": 33
+  },
+  {
+   "key": "920-lokix",
+   "name": "Lokix",
+   "slug": "lokix",
+   "number": 920,
+   "cards": 14,
+   "variants": 28
+  },
+  {
+   "key": "921-pawmi",
+   "name": "Pawmi",
+   "slug": "pawmi",
+   "number": 921,
+   "cards": 30,
+   "variants": 43
+  },
+  {
+   "key": "922-pawmo",
+   "name": "Pawmo",
+   "slug": "pawmo",
+   "number": 922,
+   "cards": 21,
+   "variants": 32
+  },
+  {
+   "key": "923-pawmot",
+   "name": "Pawmot",
+   "slug": "pawmot",
+   "number": 923,
+   "cards": 23,
+   "variants": 38
+  },
+  {
+   "key": "924-tandemaus",
+   "name": "Tandemaus",
+   "slug": "tandemaus",
+   "number": 924,
+   "cards": 30,
+   "variants": 47
+  },
+  {
+   "key": "925-maushold",
+   "name": "Maushold",
+   "slug": "maushold",
+   "number": 925,
+   "cards": 33,
+   "variants": 45
+  },
+  {
+   "key": "926-fidough",
+   "name": "Fidough",
+   "slug": "fidough",
+   "number": 926,
+   "cards": 22,
+   "variants": 32
+  },
+  {
+   "key": "927-dachsbun",
+   "name": "Dachsbun",
+   "slug": "dachsbun",
+   "number": 927,
+   "cards": 18,
+   "variants": 23
+  },
+  {
+   "key": "928-smoliv",
+   "name": "Smoliv",
+   "slug": "smoliv",
+   "number": 928,
+   "cards": 22,
+   "variants": 36
+  },
+  {
+   "key": "929-dolliv",
+   "name": "Dolliv",
+   "slug": "dolliv",
+   "number": 929,
+   "cards": 20,
+   "variants": 32
+  },
+  {
+   "key": "930-arboliva",
+   "name": "Arboliva",
+   "slug": "arboliva",
+   "number": 930,
+   "cards": 20,
+   "variants": 30
+  },
+  {
+   "key": "931-squawkabilly",
+   "name": "Squawkabilly",
+   "slug": "squawkabilly",
+   "number": 931,
+   "cards": 37,
+   "variants": 54
+  },
+  {
+   "key": "932-nacli",
+   "name": "Nacli",
+   "slug": "nacli",
+   "number": 932,
+   "cards": 23,
+   "variants": 33
+  },
+  {
+   "key": "933-naclstack",
+   "name": "Naclstack",
+   "slug": "naclstack",
+   "number": 933,
+   "cards": 14,
+   "variants": 22
+  },
+  {
+   "key": "934-garganacl",
+   "name": "Garganacl",
+   "slug": "garganacl",
+   "number": 934,
+   "cards": 22,
+   "variants": 31
+  },
+  {
+   "key": "935-charcadet",
+   "name": "Charcadet",
+   "slug": "charcadet",
+   "number": 935,
+   "cards": 48,
+   "variants": 87
+  },
+  {
+   "key": "936-armarouge",
+   "name": "Armarouge",
+   "slug": "armarouge",
+   "number": 936,
+   "cards": 36,
+   "variants": 53
+  },
+  {
+   "key": "937-ceruledge",
+   "name": "Ceruledge",
+   "slug": "ceruledge",
+   "number": 937,
+   "cards": 40,
+   "variants": 56
+  },
+  {
+   "key": "938-tadbulb",
+   "name": "Tadbulb",
+   "slug": "tadbulb",
+   "number": 938,
+   "cards": 29,
+   "variants": 56
+  },
+  {
+   "key": "939-bellibolt",
+   "name": "Bellibolt",
+   "slug": "bellibolt",
+   "number": 939,
+   "cards": 42,
+   "variants": 55
+  },
+  {
+   "key": "940-wattrel",
+   "name": "Wattrel",
+   "slug": "wattrel",
+   "number": 940,
+   "cards": 46,
+   "variants": 72
+  },
+  {
+   "key": "941-kilowattrel",
+   "name": "Kilowattrel",
+   "slug": "kilowattrel",
+   "number": 941,
+   "cards": 45,
+   "variants": 72
+  },
+  {
+   "key": "942-maschiff",
+   "name": "Maschiff",
+   "slug": "maschiff",
+   "number": 942,
+   "cards": 29,
+   "variants": 48
+  },
+  {
+   "key": "943-mabosstiff",
+   "name": "Mabosstiff",
+   "slug": "mabosstiff",
+   "number": 943,
+   "cards": 32,
+   "variants": 44
+  },
+  {
+   "key": "944-shroodle",
+   "name": "Shroodle",
+   "slug": "shroodle",
+   "number": 944,
+   "cards": 21,
+   "variants": 32
+  },
+  {
+   "key": "945-grafaiai",
+   "name": "Grafaiai",
+   "slug": "grafaiai",
+   "number": 945,
+   "cards": 19,
+   "variants": 28
+  },
+  {
+   "key": "946-bramblin",
+   "name": "Bramblin",
+   "slug": "bramblin",
+   "number": 946,
+   "cards": 16,
+   "variants": 28
+  },
+  {
+   "key": "947-brambleghast",
+   "name": "Brambleghast",
+   "slug": "brambleghast",
+   "number": 947,
+   "cards": 11,
+   "variants": 23
+  },
+  {
+   "key": "948-toedscool",
+   "name": "Toedscool",
+   "slug": "toedscool",
+   "number": 948,
+   "cards": 35,
+   "variants": 55
+  },
+  {
+   "key": "949-toedscruel",
+   "name": "Toedscruel",
+   "slug": "toedscruel",
+   "number": 949,
+   "cards": 32,
+   "variants": 48
+  },
+  {
+   "key": "950-klawf",
+   "name": "Klawf",
+   "slug": "klawf",
+   "number": 950,
+   "cards": 18,
+   "variants": 29
+  },
+  {
+   "key": "951-capsakid",
+   "name": "Capsakid",
+   "slug": "capsakid",
+   "number": 951,
+   "cards": 20,
+   "variants": 34
+  },
+  {
+   "key": "952-scovillain",
+   "name": "Scovillain",
+   "slug": "scovillain",
+   "number": 952,
+   "cards": 25,
+   "variants": 32
+  },
+  {
+   "key": "953-rellor",
+   "name": "Rellor",
+   "slug": "rellor",
+   "number": 953,
+   "cards": 20,
+   "variants": 36
+  },
+  {
+   "key": "954-rabsca",
+   "name": "Rabsca",
+   "slug": "rabsca",
+   "number": 954,
+   "cards": 22,
+   "variants": 39
+  },
+  {
+   "key": "955-flittle",
+   "name": "Flittle",
+   "slug": "flittle",
+   "number": 955,
+   "cards": 29,
+   "variants": 48
+  },
+  {
+   "key": "956-espathra",
+   "name": "Espathra",
+   "slug": "espathra",
+   "number": 956,
+   "cards": 27,
+   "variants": 43
+  },
+  {
+   "key": "957-tinkatink",
+   "name": "Tinkatink",
+   "slug": "tinkatink",
+   "number": 957,
+   "cards": 28,
+   "variants": 41
+  },
+  {
+   "key": "958-tinkatuff",
+   "name": "Tinkatuff",
+   "slug": "tinkatuff",
+   "number": 958,
+   "cards": 19,
+   "variants": 30
+  },
+  {
+   "key": "959-tinkaton",
+   "name": "Tinkaton",
+   "slug": "tinkaton",
+   "number": 959,
+   "cards": 28,
+   "variants": 43
+  },
+  {
+   "key": "960-wiglett",
+   "name": "Wiglett",
+   "slug": "wiglett",
+   "number": 960,
+   "cards": 28,
+   "variants": 49
+  },
+  {
+   "key": "961-wugtrio",
+   "name": "Wugtrio",
+   "slug": "wugtrio",
+   "number": 961,
+   "cards": 26,
+   "variants": 42
+  },
+  {
+   "key": "962-bombirdier",
+   "name": "Bombirdier",
+   "slug": "bombirdier",
+   "number": 962,
+   "cards": 27,
+   "variants": 38
+  },
+  {
+   "key": "963-finizen",
+   "name": "Finizen",
+   "slug": "finizen",
+   "number": 963,
+   "cards": 22,
+   "variants": 39
+  },
+  {
+   "key": "964-palafin",
+   "name": "Palafin",
+   "slug": "palafin",
+   "number": 964,
+   "cards": 40,
+   "variants": 59
+  },
+  {
+   "key": "965-varoom",
+   "name": "Varoom",
+   "slug": "varoom",
+   "number": 965,
+   "cards": 35,
+   "variants": 57
+  },
+  {
+   "key": "966-revavroom",
+   "name": "Revavroom",
+   "slug": "revavroom",
+   "number": 966,
+   "cards": 37,
+   "variants": 52
+  },
+  {
+   "key": "967-cyclizar",
+   "name": "Cyclizar",
+   "slug": "cyclizar",
+   "number": 967,
+   "cards": 47,
+   "variants": 69
+  },
+  {
+   "key": "968-orthworm",
+   "name": "Orthworm",
+   "slug": "orthworm",
+   "number": 968,
+   "cards": 17,
+   "variants": 26
+  },
+  {
+   "key": "969-glimmet",
+   "name": "Glimmet",
+   "slug": "glimmet",
+   "number": 969,
+   "cards": 22,
+   "variants": 37
+  },
+  {
+   "key": "970-glimmora",
+   "name": "Glimmora",
+   "slug": "glimmora",
+   "number": 970,
+   "cards": 20,
+   "variants": 30
+  },
+  {
+   "key": "971-greavard",
+   "name": "Greavard",
+   "slug": "greavard",
+   "number": 971,
+   "cards": 34,
+   "variants": 55
+  },
+  {
+   "key": "972-houndstone",
+   "name": "Houndstone",
+   "slug": "houndstone",
+   "number": 972,
+   "cards": 34,
+   "variants": 48
+  },
+  {
+   "key": "973-flamigo",
+   "name": "Flamigo",
+   "slug": "flamigo",
+   "number": 973,
+   "cards": 28,
+   "variants": 43
+  },
+  {
+   "key": "974-cetoddle",
+   "name": "Cetoddle",
+   "slug": "cetoddle",
+   "number": 974,
+   "cards": 21,
+   "variants": 39
+  },
+  {
+   "key": "975-cetitan",
+   "name": "Cetitan",
+   "slug": "cetitan",
+   "number": 975,
+   "cards": 31,
+   "variants": 43
+  },
+  {
+   "key": "976-veluza",
+   "name": "Veluza",
+   "slug": "veluza",
+   "number": 976,
+   "cards": 20,
+   "variants": 27
+  },
+  {
+   "key": "977-dondozo",
+   "name": "Dondozo",
+   "slug": "dondozo",
+   "number": 977,
+   "cards": 25,
+   "variants": 36
+  },
+  {
+   "key": "978-tatsugiri",
+   "name": "Tatsugiri",
+   "slug": "tatsugiri",
+   "number": 978,
+   "cards": 45,
+   "variants": 68
+  },
+  {
+   "key": "979-annihilape",
+   "name": "Annihilape",
+   "slug": "annihilape",
+   "number": 979,
+   "cards": 33,
+   "variants": 46
+  },
+  {
+   "key": "980-clodsire",
+   "name": "Clodsire",
+   "slug": "clodsire",
+   "number": 980,
+   "cards": 21,
+   "variants": 27
+  },
+  {
+   "key": "981-farigiraf",
+   "name": "Farigiraf",
+   "slug": "farigiraf",
+   "number": 981,
+   "cards": 17,
+   "variants": 25
+  },
+  {
+   "key": "982-dudunsparce",
+   "name": "Dudunsparce",
+   "slug": "dudunsparce",
+   "number": 982,
+   "cards": 24,
+   "variants": 39
+  },
+  {
+   "key": "983-kingambit",
+   "name": "Kingambit",
+   "slug": "kingambit",
+   "number": 983,
+   "cards": 20,
+   "variants": 31
+  },
+  {
+   "key": "984-great-tusk",
+   "name": "Great Tusk",
+   "slug": "great-tusk",
+   "number": 984,
+   "cards": 29,
+   "variants": 50
+  },
+  {
+   "key": "985-scream-tail",
+   "name": "Scream Tail",
+   "slug": "scream-tail",
+   "number": 985,
+   "cards": 22,
+   "variants": 40
+  },
+  {
+   "key": "986-brute-bonnet",
+   "name": "Brute Bonnet",
+   "slug": "brute-bonnet",
+   "number": 986,
+   "cards": 12,
+   "variants": 24
+  },
+  {
+   "key": "987-flutter-mane",
+   "name": "Flutter Mane",
+   "slug": "flutter-mane",
+   "number": 987,
+   "cards": 22,
+   "variants": 41
+  },
+  {
+   "key": "988-slither-wing",
+   "name": "Slither Wing",
+   "slug": "slither-wing",
+   "number": 988,
+   "cards": 13,
+   "variants": 24
+  },
+  {
+   "key": "989-sandy-shocks",
+   "name": "Sandy Shocks",
+   "slug": "sandy-shocks",
+   "number": 989,
+   "cards": 20,
+   "variants": 25
+  },
+  {
+   "key": "990-iron-treads",
+   "name": "Iron Treads",
+   "slug": "iron-treads",
+   "number": 990,
+   "cards": 23,
+   "variants": 34
+  },
+  {
+   "key": "991-iron-bundle",
+   "name": "Iron Bundle",
+   "slug": "iron-bundle",
+   "number": 991,
+   "cards": 21,
+   "variants": 38
+  },
+  {
+   "key": "992-iron-hands",
+   "name": "Iron Hands",
+   "slug": "iron-hands",
+   "number": 992,
+   "cards": 23,
+   "variants": 30
+  },
+  {
+   "key": "993-iron-jugulis",
+   "name": "Iron Jugulis",
+   "slug": "iron-jugulis",
+   "number": 993,
+   "cards": 13,
+   "variants": 26
+  },
+  {
+   "key": "994-iron-moth",
+   "name": "Iron Moth",
+   "slug": "iron-moth",
+   "number": 994,
+   "cards": 11,
+   "variants": 26
+  },
+  {
+   "key": "995-iron-thorns",
+   "name": "Iron Thorns",
+   "slug": "iron-thorns",
+   "number": 995,
+   "cards": 20,
+   "variants": 34
+  },
+  {
+   "key": "996-frigibax",
+   "name": "Frigibax",
+   "slug": "frigibax",
+   "number": 996,
+   "cards": 16,
+   "variants": 23
+  },
+  {
+   "key": "997-arctibax",
+   "name": "Arctibax",
+   "slug": "arctibax",
+   "number": 997,
+   "cards": 15,
+   "variants": 19
+  },
+  {
+   "key": "998-baxcalibur",
+   "name": "Baxcalibur",
+   "slug": "baxcalibur",
+   "number": 998,
+   "cards": 14,
+   "variants": 22
+  },
+  {
+   "key": "999-gimmighoul",
+   "name": "Gimmighoul",
+   "slug": "gimmighoul",
+   "number": 999,
+   "cards": 26,
+   "variants": 42
+  },
+  {
+   "key": "1000-gholdengo",
+   "name": "Gholdengo",
+   "slug": "gholdengo",
+   "number": 1000,
+   "cards": 32,
+   "variants": 42
+  },
+  {
+   "key": "1001-wo-chien",
+   "name": "Wo-Chien",
+   "slug": "wo-chien",
+   "number": 1001,
+   "cards": 22,
+   "variants": 32
+  },
+  {
+   "key": "1002-chien-pao",
+   "name": "Chien-Pao",
+   "slug": "chien-pao",
+   "number": 1002,
+   "cards": 35,
+   "variants": 63
+  },
+  {
+   "key": "1003-ting-lu",
+   "name": "Ting-Lu",
+   "slug": "ting-lu",
+   "number": 1003,
+   "cards": 25,
+   "variants": 36
+  },
+  {
+   "key": "1004-chi-yu",
+   "name": "Chi-Yu",
+   "slug": "chi-yu",
+   "number": 1004,
+   "cards": 29,
+   "variants": 46
+  },
+  {
+   "key": "1005-roaring-moon",
+   "name": "Roaring Moon",
+   "slug": "roaring-moon",
+   "number": 1005,
+   "cards": 26,
+   "variants": 43
+  },
+  {
+   "key": "1006-iron-valiant",
+   "name": "Iron Valiant",
+   "slug": "iron-valiant",
+   "number": 1006,
+   "cards": 27,
+   "variants": 35
+  },
+  {
+   "key": "1007-koraidon",
+   "name": "Koraidon",
+   "slug": "koraidon",
+   "number": 1007,
+   "cards": 62,
+   "variants": 93
+  },
+  {
+   "key": "1008-miraidon",
+   "name": "Miraidon",
+   "slug": "miraidon",
+   "number": 1008,
+   "cards": 66,
+   "variants": 99
+  },
+  {
+   "key": "1009-walking-wake",
+   "name": "Walking Wake",
+   "slug": "walking-wake",
+   "number": 1009,
+   "cards": 24,
+   "variants": 27
+  },
+  {
+   "key": "1010-iron-leaves",
+   "name": "Iron Leaves",
+   "slug": "iron-leaves",
+   "number": 1010,
+   "cards": 23,
+   "variants": 27
+  },
+  {
+   "key": "1011-dipplin",
+   "name": "Dipplin",
+   "slug": "dipplin",
+   "number": 1011,
+   "cards": 30,
+   "variants": 50
+  },
+  {
+   "key": "1012-poltchageist",
+   "name": "Poltchageist",
+   "slug": "poltchageist",
+   "number": 1012,
+   "cards": 23,
+   "variants": 36
+  },
+  {
+   "key": "1013-sinistcha",
+   "name": "Sinistcha",
+   "slug": "sinistcha",
+   "number": 1013,
+   "cards": 21,
+   "variants": 33
+  },
+  {
+   "key": "1014-okidogi",
+   "name": "Okidogi",
+   "slug": "okidogi",
+   "number": 1014,
+   "cards": 32,
+   "variants": 51
+  },
+  {
+   "key": "1015-munkidori",
+   "name": "Munkidori",
+   "slug": "munkidori",
+   "number": 1015,
+   "cards": 34,
+   "variants": 56
+  },
+  {
+   "key": "1016-fezandipiti",
+   "name": "Fezandipiti",
+   "slug": "fezandipiti",
+   "number": 1016,
+   "cards": 38,
+   "variants": 61
+  },
+  {
+   "key": "1017-ogerpon",
+   "name": "Ogerpon",
+   "slug": "ogerpon",
+   "number": 1017,
+   "cards": 110,
+   "variants": 147
+  },
+  {
+   "key": "1018-archaludon",
+   "name": "Archaludon",
+   "slug": "archaludon",
+   "number": 1018,
+   "cards": 26,
+   "variants": 49
+  },
+  {
+   "key": "1019-hydrapple",
+   "name": "Hydrapple",
+   "slug": "hydrapple",
+   "number": 1019,
+   "cards": 26,
+   "variants": 30
+  },
+  {
+   "key": "1020-gouging-fire",
+   "name": "Gouging Fire",
+   "slug": "gouging-fire",
+   "number": 1020,
+   "cards": 22,
+   "variants": 29
+  },
+  {
+   "key": "1021-raging-bolt",
+   "name": "Raging Bolt",
+   "slug": "raging-bolt",
+   "number": 1021,
+   "cards": 24,
+   "variants": 36
+  },
+  {
+   "key": "1022-iron-boulder",
+   "name": "Iron Boulder",
+   "slug": "iron-boulder",
+   "number": 1022,
+   "cards": 23,
+   "variants": 38
+  },
+  {
+   "key": "1023-iron-crown",
+   "name": "Iron Crown",
+   "slug": "iron-crown",
+   "number": 1023,
+   "cards": 23,
+   "variants": 31
+  },
+  {
+   "key": "1024-terapagos",
+   "name": "Terapagos",
+   "slug": "terapagos",
+   "number": 1024,
+   "cards": 31,
+   "variants": 45
+  },
+  {
+   "key": "1025-pecharunt",
+   "name": "Pecharunt",
+   "slug": "pecharunt",
+   "number": 1025,
+   "cards": 28,
+   "variants": 36
+  }
+ ],
+ "counts": {
+  "species": 1025,
+  "variants": 81659,
+  "withProductId": 62157
+ }
+}

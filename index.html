@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Search every Pokémon TCG printing and check live TCGplayer prices.">
+<title>Card search</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="page">
+    <header class="search-hero">
+      <h1>Card search</h1>
+      <p class="subtitle">Every printing of a Pokémon, with live TCGplayer prices.</p>
+      <div class="search-box-wrap">
+        <label class="sr-only" for="q">Search a Pokémon</label>
+        <input id="q" class="search-box" type="search" placeholder="Search a Pokémon" autocomplete="off" spellcheck="false" enterkeyhint="search">
+        <div class="suggest" id="suggest" role="listbox" hidden></div>
+      </div>
+      <p class="status" id="status"></p>
+    </header>
+    <div id="result">
+      <p class="page-msg" id="welcome">Type a name to see every card. Try Vaporeon, Umbreon, or Pikachu.</p>
+    </div>
+  </div>
+  <div class="overlay" id="overlay" aria-hidden="true">
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+      <div class="sheet-handle" aria-hidden="true"></div>
+      <button type="button" class="sheet-close" id="sheet-close" aria-label="Close">×</button>
+      <div class="sheet-body">
+        <div class="sheet-art" id="sheet-art"></div>
+        <div class="sheet-info">
+          <div class="sheet-kicker">
+            <h2 id="sheet-title"></h2>
+            <span class="rarity" id="sheet-rarity" hidden></span>
+          </div>
+          <p class="sheet-set" id="sheet-set"></p>
+          <p class="sheet-try" id="sheet-try"></p>
+          <div class="markets" id="sheet-markets"></div>
+          <div class="sheet-links" id="sheet-links"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>
