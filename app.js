@@ -421,7 +421,7 @@
         '<div class="toolbar-row">' +
           '<label class="sort-wrap"><span class="sr-only">Sort</span><select id="sort" aria-label="Sort">' + sortOptions + "</select></label>" +
           variantHtml +
-          '<label class="search-wrap"><span class="sr-only">Filter</span><input id="filter" type="search" placeholder="Search" autocomplete="off" spellcheck="false"></label>' +
+          '<label class="search-wrap"><span class="sr-only">Filter</span><input id="filter" type="search" placeholder="Filter by set, number or rarity…" autocomplete="off" spellcheck="false"></label>' +
           '<div class="count" id="count">' + escapeHtml(count) + "</div>" +
         "</div>" +
         '<div class="toolbar-row wraps"><div class="chips" role="group" aria-label="Language">' + langChips + "</div>" + rarityHtml + "</div>" +
@@ -477,8 +477,9 @@
       " · " + cards.length + " variant" + (cards.length === 1 ? "" : "s");
     var langs = uniqueValues(cards, "lang");
     if (langs.length) subtitle += " · " + langs.join("+");
-    var html = '<header><h2 class="result-title" style="font-size:22px;letter-spacing:-0.03em;margin:0 0 4px">' +
-      escapeHtml(meta.name) + " · Master Set</h2><p class=\"subtitle\">" + escapeHtml(subtitle) + "</p></header>";
+    var html = '<header class="result-header"><div><p class="result-eyebrow">THE COMPLETE COLLECTION</p><h2 class="result-title">' +
+      escapeHtml(meta.name) + ' <span>/ Master Set</span></h2><p class="subtitle">' + escapeHtml(subtitle) +
+      '</p></div><span class="result-badge">Explore every printing</span></header>';
     html += renderToolbar(cards);
     html += '<div class="grid" id="grid">';
     for (var i = 0; i < cards.length; i++) html += tileHtml(cards[i], i);
@@ -818,6 +819,7 @@
 
   function hideSuggest() {
     var box = $("suggest");
+    $("q").setAttribute("aria-expanded", "false");
     box.hidden = true;
     box.classList.remove("is-on");
     box.innerHTML = "";
@@ -838,6 +840,7 @@
         '><span class="s-name">' + escapeHtml(item.name) + '</span><span class="s-meta">' + escapeHtml(meta) + "</span></button>";
     }).join("");
     box.hidden = false;
+    $("q").setAttribute("aria-expanded", "true");
     box.classList.add("is-on");
     activeSuggest = 0;
     box.querySelectorAll("button").forEach(function (btn) {
@@ -923,6 +926,11 @@
 
   function loadSpecies(item) {
     var token = ++loadToken;
+    document.querySelectorAll('[data-species]').forEach(function (button) {
+      button.classList.toggle('is-selected', button.getAttribute('data-species') === item.slug);
+      button.setAttribute('aria-pressed', button.getAttribute('data-species') === item.slug ? 'true' : 'false');
+    });
+    document.title = item.name + ' cards · CardDex';
     closeSheet();
     current = null;
     setStatus("Loading " + item.name + "…");
@@ -996,6 +1004,30 @@
 
   function bindSearch() {
     var input = $("q");
+    if ($("search-submit")) $("search-submit").addEventListener("click", submitQuery);
+    document.querySelectorAll('[data-species]').forEach(function (button) {
+      button.disabled = true;
+      button.addEventListener('click', function () {
+        var item = findByHash('#' + button.getAttribute('data-species'));
+        if (item) pickSpecies(item);
+      });
+    });
+    document.querySelectorAll('[data-focus-search]').forEach(function (link) {
+      link.addEventListener('click', function (event) {
+        event.preventDefault();
+        input.scrollIntoView({ block: 'center' });
+        input.focus({ preventScroll: true });
+      });
+    });
+    document.querySelectorAll('[data-open-guide]').forEach(function (link) {
+      link.addEventListener('click', function (event) {
+        event.preventDefault();
+        var guide = $('market-guide');
+        guide.open = true;
+        guide.scrollIntoView({ block: 'start' });
+        guide.querySelector('summary').focus({ preventScroll: true });
+      });
+    });
     input.addEventListener("input", function () {
       var q = input.value.trim();
       if (q.length < 1) { hideSuggest(); return; }
@@ -1020,6 +1052,10 @@
       return res.json();
     }).then(function (data) {
       speciesIndex = data.species || data || [];
+      if ($('catalog-species')) $('catalog-species').textContent = speciesIndex.length.toLocaleString('en-US');
+      var totalPrintings = (data.counts || {}).variants || speciesIndex.reduce(function (total, item) { return total + Number(item.variants || 0); }, 0);
+      if ($('catalog-printings')) $('catalog-printings').textContent = totalPrintings.toLocaleString('en-US');
+      document.querySelectorAll('[data-species]').forEach(function (button) { button.disabled = false; });
       setStatus(speciesIndex.length + " Pokémon in the catalog. Type a name to start.");
       var fromHash = findByHash(location.hash);
       if (fromHash) pickSpecies(fromHash);

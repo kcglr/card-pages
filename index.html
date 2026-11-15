@@ -3,26 +3,53 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="Search every Pokémon TCG printing and check live TCGplayer prices.">
-<title>Card search</title>
+<meta name="description" content="Discover every Pokémon TCG printing with CardDex. Explore cards, check live TCGplayer prices, and open exact marketplace pages.">
+<meta name="theme-color" content="#0b0e16">
+<title>CardDex — Your Pokémon card universe</title>
 <link rel="stylesheet" href="styles.css">
 <link rel="stylesheet" href="card-tilt.css?v=1">
+<link rel="stylesheet" href="theme.css?v=1">
+<link rel="icon" href="assets/pokeball.svg" type="image/svg+xml">
 </head>
 <body>
+  <a class="skip-link" href="#result">Skip to cards</a>
   <div class="page">
+    <nav class="topbar" aria-label="Main navigation">
+      <a class="brand" href="./" aria-label="CardDex home"><span class="brand-ball" aria-hidden="true"></span>CARD<span>DEX</span><span class="brand-tag">TCG</span></a>
+      <div class="nav-links"><a href="#explore" data-focus-search>Explore cards</a><a href="#market-guide" data-open-guide>Market guide</a></div>
+      <span class="nav-status"><i aria-hidden="true"></i>Made for collectors</span>
+    </nav>
     <header class="search-hero">
-      <h1>Card search</h1>
-      <p class="subtitle">Every printing of a Pokémon, with live TCGplayer prices.</p>
+      <div class="hero-art" aria-hidden="true"><img src="assets/pokemon-hero.webp" alt="" fetchpriority="high" width="1536" height="1024"></div>
+      <div class="hero-copy">
+        <p class="eyebrow"><span aria-hidden="true">✦</span> YOUR POKÉMON CARD UNIVERSE</p>
+        <h1>Find your next<br><em>holy grail.</em></h1>
+        <p class="hero-description">Every Pokémon. Every printing. One place to explore<br class="desktop-break"> the artwork, check prices, and discover your next chase.</p>
+        <div class="hero-stats" aria-label="Catalog coverage">
+          <div><strong id="catalog-species">1,025</strong><span>Pokémon</span></div>
+          <div><strong id="catalog-printings">81,659</strong><span>card printings</span></div>
+          <div><strong>ENG · JP · CN</strong><span>one global collection</span></div>
+        </div>
+      </div>
+      <span class="hero-caption" aria-hidden="true">THE CHASE NEVER ENDS <span>✧</span></span>
+    </header>
+    <section class="explore-bar" id="explore" aria-label="Find Pokémon cards">
+      <div class="search-heading"><span class="section-label">START YOUR DISCOVERY</span><span class="search-hint">A whole world in one search.</span></div>
       <div class="search-box-wrap">
         <label class="sr-only" for="q">Search a Pokémon</label>
-        <input id="q" class="search-box" type="search" placeholder="Search a Pokémon" autocomplete="off" spellcheck="false" enterkeyhint="search">
+        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4.5 4.5"/></svg>
+        <input id="q" class="search-box" type="search" placeholder="Search a Pokémon… Pikachu, Mew, Umbreon" autocomplete="off" spellcheck="false" enterkeyhint="search" aria-controls="suggest" aria-expanded="false">
+        <button type="button" id="search-submit" class="search-submit" aria-label="Explore Pokémon">Explore <span aria-hidden="true">↗</span></button>
         <div class="suggest" id="suggest" role="listbox" hidden></div>
       </div>
+      <div class="quick-picks"><span>Jump into</span><button type="button" data-species="pikachu">Pikachu <span>↗</span></button><button type="button" data-species="charizard">Charizard <span>↗</span></button><button type="button" data-species="mew">Mew <span>↗</span></button><button type="button" data-species="umbreon">Umbreon <span>↗</span></button><button type="button" data-species="gengar">Gengar <span>↗</span></button></div>
       <p class="status" id="status"></p>
-    </header>
-    <div id="result">
-      <p class="page-msg" id="welcome">Type a name to see every card. Try Vaporeon, Umbreon, or Pikachu.</p>
-    </div>
+    </section>
+    <main id="result" tabindex="-1">
+      <div class="welcome-state" id="welcome"><span class="welcome-star" aria-hidden="true">✧</span><h2>Your next discovery starts here.</h2><p>Pick a Pokémon above to explore its complete card history.</p><div class="source-tags"><span>TCGplayer</span><span>PriceCharting</span><span>Cardmarket</span><span>Collectr</span><span>eBay</span></div></div>
+    </main>
+    <details class="market-guide" id="market-guide"><summary><span>Know your cards. Know your prices.</span><span class="guide-toggle" aria-hidden="true">+</span></summary><div class="guide-content"><div><h3>Live prices, clearly sourced.</h3><p>Prices shown here come from TCGplayer and are in USD, with an approximate TRY conversion. Availability varies by language and printing.</p></div><div><h3>Follow the exact printing.</h3><p>Open a card to visit PriceCharting, Cardmarket or Collectr. Search options appear when an exact match is unavailable. eBay links separate sold and active listings.</p></div><div><h3>A little holo magic.</h3><p>Move your pointer across a card to tilt it. On your phone, press and slide across the artwork. Tap a card to see its details.</p></div></div></details>
+    <div class="site-footer"><a class="brand footer-brand" href="./"><span class="brand-ball" aria-hidden="true"></span>CARD<span>DEX</span></a><p>An independent explorer for the Pokémon TCG community.</p><span>Enjoy the chase. <span aria-hidden="true">✦</span></span></div>
   </div>
   <div class="overlay" id="overlay" aria-hidden="true">
     <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
@@ -46,6 +73,6 @@
   <script src="market-links.js?v=4"></script>
   <script src="cardmarket-resolver.js?v=3"></script>
   <script src="card-tilt.js?v=1"></script>
-  <script src="app.js?v=8"></script>
+  <script src="app.js?v=9"></script>
 </body>
 </html>
