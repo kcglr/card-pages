@@ -177,13 +177,11 @@
   }
 
   function pcTerms(card) {
-    // PriceCharting finds nothing when the query has a variant word or a "149/131" style number.
+    // PriceCharting search works best with just the card name and number.
     var parts = (card.set || "").split(" · ");
-    var num = (parts[1] || "").split("/")[0].replace(/^0+(?=\d)/, "");
-    var bits = [card.name, parts[0], num];
-    if (card.lang === "JP") bits.push("japanese");
-    if (card.lang === "CN") bits.push("chinese");
-    return bits.filter(Boolean).join(" ");
+    var raw = (parts[1] || "").split("/")[0].trim().split(/\s+/).pop() || "";
+    var num = raw.replace(/^0+(?=\d)/, "");
+    return [card.name, num].filter(Boolean).join(" ");
   }
 
   function marketLinks(card) {
