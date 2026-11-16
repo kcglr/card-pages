@@ -330,6 +330,10 @@
     // Fade only the inside face: opacity on the 3D leaf itself would flatten it and
     // show the front face mirrored from behind.
     cover.lastChild.animate([{ opacity: 1 }, { opacity: 1, offset: 0.6 }, { opacity: 0 }], timing);
+    // The name tape is drawn on a layer of its own (tilted, with a shadow), which
+    // Chrome still shows mirrored once the front faces away, so the front goes
+    // out as it passes 90deg (offset .43 of the 0 to -125deg stretch).
+    cover.firstChild.animate([{ opacity: 1 }, { opacity: 1, offset: 0.42 }, { opacity: 0, offset: 0.44 }, { opacity: 0 }], timing);
     animation.onfinish = function () { cover.remove(); };
   };
 
