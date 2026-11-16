@@ -1853,11 +1853,102 @@ body.is-mine .mine-count { background: #fbf7ef; }
 .mine-empty > p { margin: 0; color: var(--muted); font-size: 15px; line-height: 1.5; }
 .mine-empty .mine-sum-tools { justify-content: center; padding: 0; border: 0; }
 
+/* The summary card's drawer: Breakdown, Value over time and Top movers. It
+   opens inside the card, drawn in the card's own ink and cream. */
+.mine-shelf-tabs { display: flex; flex-wrap: wrap; gap: 8px; }
+.mine-shelf { display: grid; gap: 12px; padding: 14px; border: 2px solid #1f1a16; border-radius: 8px; background: #fffaf0; }
+.mine-choices { display: flex; flex-wrap: wrap; gap: 6px; }
+.mine-shelf-note { margin: 0; color: #66584b; font-size: 13px; font-weight: 600; line-height: 1.45; }
+
+.mine-rows { display: grid; gap: 2px; max-height: 420px; margin: 0; padding: 0; overflow: auto; list-style: none; }
+.mine-rows-head { padding: 8px 8px 2px; color: #66584b; font-size: 11px; font-weight: 800; letter-spacing: .08em; }
+.mine-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto 3.6em;
+  grid-template-areas: "name cards value share" "bar bar bar bar";
+  align-items: baseline;
+  gap: 3px 14px;
+  width: 100%;
+  padding: 7px 8px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.mine-row:hover { background: #f3ead8; }
+.mine-row:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--sticker); }
+.mine-row-name { grid-area: name; overflow: hidden; font-size: 14px; font-weight: 750; white-space: nowrap; text-overflow: ellipsis; }
+.mine-row-cards { grid-area: cards; color: #66584b; font-size: 12.5px; font-weight: 650; }
+.mine-row-value { grid-area: value; font-size: 14px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.mine-row-share { grid-area: share; color: #66584b; font-size: 12.5px; font-weight: 700; text-align: right; font-variant-numeric: tabular-nums; }
+.mine-row-bar { grid-area: bar; position: relative; height: 6px; background: #ebe1cd; }
+.mine-row-bar > span { position: absolute; top: 0; bottom: 0; left: 0; background: var(--sticker); box-shadow: inset 0 0 0 1px rgba(31, 26, 22, .35); }
+.mine-row-bar > span.is-top { background: #c8302a; }
+
+/* Value over time: a step chart on ink with a faint 4 px grid. Lines keep
+   their width at any size (non-scaling strokes); nothing draws on. */
+.mine-legend { display: flex; flex-wrap: wrap; gap: 6px 20px; font-size: 13px; font-weight: 700; }
+.mine-key b { font-variant-numeric: tabular-nums; }
+.mine-key::before { content: ""; display: inline-block; width: 18px; margin-right: 7px; vertical-align: middle; }
+.mine-key.is-value::before { height: 6px; border: 1.5px solid #1f1a16; background: var(--sticker); }
+.mine-key.is-cost::before { height: 0; border-top: 2.5px dashed #1f1a16; }
+.mine-chart { margin: 0; }
+.mine-chart-plot { position: relative; height: 190px; border: 2px solid #1f1a16; background: #1f1a16; }
+.mine-chart-plot svg {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  bottom: 8px;
+  left: 64px;
+  width: calc(100% - 72px);
+  height: calc(100% - 16px);
+  overflow: visible;
+  background-image: linear-gradient(rgba(251, 247, 239, .045) 1px, transparent 1px), linear-gradient(90deg, rgba(251, 247, 239, .045) 1px, transparent 1px);
+  background-size: 4px 4px;
+}
+.mine-chart-y {
+  position: absolute;
+  left: 4px;
+  width: 52px;
+  top: calc(8px + (100% - 16px) * var(--y) / 100);
+  transform: translateY(-50%);
+  color: rgba(251, 247, 239, .75);
+  font-size: 11px;
+  font-weight: 700;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.mine-chart-rule { stroke: rgba(251, 247, 239, .2); stroke-width: 1; vector-effect: non-scaling-stroke; shape-rendering: crispEdges; }
+.mine-chart-cost { fill: none; stroke: #fbf7ef; stroke-width: 2; stroke-dasharray: 6 5; vector-effect: non-scaling-stroke; shape-rendering: crispEdges; }
+.mine-chart-value { fill: none; stroke: var(--sticker); stroke-width: 3; vector-effect: non-scaling-stroke; shape-rendering: crispEdges; }
+.mine-chart-x { display: flex; justify-content: space-between; padding: 5px 8px 0 66px; color: #66584b; font-size: 12px; font-weight: 650; }
+
+/* Top movers: risers and fallers side by side, one column on a phone. */
+.mine-movers { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px 26px; }
+.mine-mover-col h4 { margin: 0 0 6px; color: #66584b; font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.mine-mover-col ol { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.mine-mover { display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; align-items: center; gap: 10px; }
+.mine-mover img, .mine-mover-img { display: block; width: 36px; height: 50px; border-radius: 3px; background: #ebe1cd; object-fit: cover; box-shadow: 0 1px 2px rgba(0, 0, 0, .35); }
+.mine-mover-text { display: grid; gap: 1px; min-width: 0; color: #66584b; font-size: 12.5px; font-weight: 600; }
+.mine-mover-text b { overflow: hidden; color: #1f1a16; font-size: 13.5px; font-weight: 750; white-space: nowrap; text-overflow: ellipsis; }
+.mine-mover-text span { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.mine-mover-change { display: grid; justify-items: end; font-size: 14px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.mine-mover-change small { font-size: 12px; font-weight: 700; }
+
 @media (max-width: 700px) {
   .mine-summary { padding: calc(var(--px) + 14px) calc(var(--px) + 14px); }
   .mine-sum-main { gap: 14px 24px; }
   .mine-sum-facts dd { font-size: 19px; }
   .mine-backup { flex-basis: 100%; order: 5; margin-left: 0; }
+  .mine-shelf { padding: 10px; }
+  .mine-row { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "name value" "cards share" "bar bar"; }
+  .mine-chart-plot { height: 160px; }
+  .mine-chart-plot svg { left: 54px; width: calc(100% - 62px); }
+  .mine-chart-y { width: 44px; font-size: 10.5px; }
+  .mine-chart-x { padding-left: 56px; }
 }
 /* Phones: My binder becomes an icon with its count on the corner. */
 @media (max-width: 480px) {

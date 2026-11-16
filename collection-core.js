@@ -550,6 +550,224 @@
     return t;
   }
 
+  /* ---- breakdowns (§4.4 of the plan) ---- */
+
+  // Copies grouped by set ("ENG|Jungle", the set picker's key), language or
+  // Pokémon, each with its card count and value, highest value first.
+  // Unpriced copies count as cards but add no value, and `unpriced` totals
+  // them, so the rows' values add up to `total`.
+  function breakdown(copies, priceOf, by) {
+    var rows = {};
+    var order = [];
+    var out = { rows: [], total: 0, unpriced: 0, cards: 0 };
+    (copies || []).forEach(function (c) {
+      var lang = String(c.snap.lang || "").toUpperCase();
+      var key = by === "lang" ? lang : by === "pokemon" ? c.species : lang + "|" + (c.snap.set || "");
+      var row = rows[key];
+      if (!row) {
+        row = rows[key] = { key: key, cards: 0, value: 0, unpriced: 0, lang: lang, set: c.snap.set || "", species: c.species };
+        order.push(key);
+      }
+      var v = unitValue(c, priceOf ? priceOf(c) : null);
+      row.cards += c.qty;
+      out.cards += c.qty;
+      if (v) { row.value += v.value * c.qty; out.total += v.value * c.qty; }
+      else { row.unpriced += c.qty; out.unpriced += c.qty; }
+    });
+    out.rows = order.map(function (k) { rows[k].value = round2(rows[k].value); return rows[k]; })
+      .sort(function (a, b) { return b.value - a.value || b.cards - a.cards || (a.key < b.key ? -1 : a.key > b.key ? 1 : 0); });
+    out.total = round2(out.total);
+    return out;
+  }
+
+  /* ---- price history (§4.3) ---- */
+
+  // { days: [{ date, usdTry, prices: { cardId: usd } }] }, oldest first. Each
+  // day keeps only the prices that changed since the day before, so a card's
+  // price on a day is its latest entry on or before it.
+  var MAX_DAYS = 3660;
+  var BAD_KEY = /^(__proto__|constructor|prototype)$/;
+
+  function cleanHistory(raw) {
+    var out = { days: [] };
+    var seen = {};
+    (raw && Array.isArray(raw.days) ? raw.days.slice(-MAX_DAYS) : []).forEach(function (d) {
+      var date = isoDay(d && d.date);
+      if (!date || seen[date]) return;
+      seen[date] = true;
+      var prices = {};
+      var src = d.prices && typeof d.prices === "object" ? d.prices : {};
+      Object.keys(src).slice(0, MAX_COPIES).forEach(function (id) {
+        var p = money(src[id]);
+        if (p && id.length <= 160 && !BAD_KEY.test(id)) prices[id] = p;
+      });
+      out.days.push({ date: date, usdTry: rate(d.usdTry), prices: prices });
+    });
+    out.days.sort(function (a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; });
+    return out;
+  }
+
+  // Every card's price as it stood on `date`.
+  function pricesOn(history, date) {
+    var state = {};
+    var days = (history && history.days) || [];
+    for (var i = 0; i < days.length && days[i].date <= date; i++) {
+      Object.assign(state, days[i].prices);
+    }
+    return state;
+  }
+
+  // Each day with the full set of prices known by then, and back again.
+  function expandHistory(history) {
+    var state = {};
+    return cleanHistory(history).days.map(function (d) {
+      Object.assign(state, d.prices);
+      return { date: d.date, usdTry: d.usdTry, prices: Object.assign({}, state) };
+    });
+  }
+  function compressHistory(full) {
+    var last = {};
+    return { days: full.map(function (d) {
+      var prices = {};
+      Object.keys(d.prices).forEach(function (id) {
+        if (last[id] !== d.prices[id]) prices[id] = d.prices[id];
+        last[id] = d.prices[id];
+      });
+      return { date: d.date, usdTry: d.usdTry, prices: prices };
+    }) };
+  }
+
+  // Today's prices go in once a day. A later visit the same day updates
+  // that day: a price it sees again stays, one back to the day before's is
+  // dropped, and a card it couldn't price keeps what the first visit saw.
+  function recordDay(history, date, prices, usdTry) {
+    var h = cleanHistory(history);
+    var day = isoDay(date);
+    if (!day) return h;
+    var earlier = null;
+    h.days = h.days.filter(function (d) {
+      if (d.date === day) { earlier = d; return false; }
+      return true;
+    });
+    var before = pricesOn(h, day);
+    var changed = earlier ? Object.assign({}, earlier.prices) : {};
+    Object.keys(prices || {}).forEach(function (id) {
+      var p = money(prices[id]);
+      if (!p || id.length > 160 || BAD_KEY.test(id)) return;
+      if (before[id] === p) delete changed[id];
+      else changed[id] = p;
+    });
+    h.days.push({ date: day, usdTry: rate(usdTry) || (earlier && earlier.usdTry) || null, prices: changed });
+    h.days.sort(function (a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; });
+    // A day after this one (the clock moved back) may now repeat a price.
+    if (h.days[h.days.length - 1].date !== day) h = compressHistory(expandHistory(h));
+    if (h.days.length > MAX_DAYS) h.days = compressHistory(expandHistory(h)).days.slice(-MAX_DAYS);
+    return h;
+  }
+
+  // This browser's history and a backup's become one. On a day both have,
+  // this browser's prices win.
+  function mergeHistory(mine, theirs) {
+    var byDate = {};
+    expandHistory(theirs).forEach(function (d) { byDate[d.date] = d; });
+    expandHistory(mine).forEach(function (d) {
+      var o = byDate[d.date];
+      byDate[d.date] = o ? { date: d.date, usdTry: d.usdTry || o.usdTry, prices: Object.assign({}, o.prices, d.prices) } : d;
+    });
+    var full = Object.keys(byDate).sort().map(function (k) { return byDate[k]; });
+    return compressHistory(full.slice(-MAX_DAYS));
+  }
+
+  function shiftDay(date, n) {
+    var d = new Date(date + "T00:00:00Z");
+    d.setUTCDate(d.getUTCDate() + n);
+    return d.toISOString().slice(0, 10);
+  }
+
+  // A copy counts from the day it was bought, else the day it was added.
+  function ownedFrom(copy) { return copy.bought || String(copy.added || "").slice(0, 10); }
+
+  function worthOn(copies, prices, date) {
+    var v = 0;
+    copies.forEach(function (c) {
+      if (ownedFrom(c) > date) return;
+      var u = unitValue(c, prices[c.card] ? { value: prices[c.card] } : null);
+      if (u) v += u.value * c.qty;
+    });
+    return round2(v);
+  }
+  function paidBy(copies, date) {
+    var v = 0;
+    copies.forEach(function (c) {
+      if (c.paid && c.paid.usd != null && ownedFrom(c) <= date) v += c.paid.usd * c.qty;
+    });
+    return round2(v);
+  }
+
+  // The Value over time chart between two dates: `value` has a point for
+  // each day with saved prices (the day before the range, if any, starts it
+  // at the left edge); `cost` steps up on each purchase date. Both count
+  // only copies owned by then, so new cards step both lines up together.
+  function valueSeries(history, copies, from, to) {
+    var days = (history && history.days) || [];
+    var state = {};
+    var value = [];
+    for (var i = 0; i < days.length && days[i].date <= to; i++) {
+      Object.assign(state, days[i].prices);
+      if (days[i].date < from) {
+        var next = days[i + 1];
+        if (!next || next.date > from) value.push({ date: from, value: worthOn(copies, state, from) });
+        continue;
+      }
+      value.push({ date: days[i].date, value: worthOn(copies, state, days[i].date) });
+    }
+    var cost = [{ date: from, value: paidBy(copies, from) }];
+    var dates = {};
+    copies.forEach(function (c) {
+      var d = ownedFrom(c);
+      if (c.paid && c.paid.usd != null && d > from && d <= to) dates[d] = true;
+    });
+    Object.keys(dates).sort().forEach(function (d) { cost.push({ date: d, value: paidBy(copies, d) }); });
+    return { value: value, cost: cost };
+  }
+
+  // The first day the chart can start on: the first saved prices, or the
+  // first card you owned, whichever is earlier.
+  function firstDay(history, copies) {
+    var first = history && history.days && history.days.length ? history.days[0].date : "";
+    copies.forEach(function (c) {
+      var d = ownedFrom(c);
+      if (d && (!first || d < first)) first = d;
+    });
+    return first;
+  }
+
+  // Top movers (§4.5): each card's price now ({ id, now, qty }) against its
+  // price in the latest saved day at least `days` old, ranked by the change
+  // times how many you own. Not ready until such a day exists.
+  function movers(history, cards, today, days, limit) {
+    var hist = (history && history.days) || [];
+    var cutoff = shiftDay(today, -days);
+    var base = "";
+    for (var i = hist.length - 1; i >= 0; i--) if (hist[i].date <= cutoff) { base = hist[i].date; break; }
+    if (!base) return { ready: false, first: hist.length ? hist[0].date : "" };
+    var then = pricesOn(history, base);
+    var list = [];
+    (cards || []).forEach(function (c) {
+      var old = then[c.id];
+      if (!(old > 0) || !(c.now > 0) || !(c.qty > 0)) return;
+      var change = round2((c.now - old) * c.qty);
+      if (change) list.push({ id: c.id, old: old, now: c.now, qty: c.qty, change: change, pct: (c.now - old) / old });
+    });
+    var n = limit || 5;
+    return {
+      ready: true,
+      since: base,
+      up: list.filter(function (x) { return x.change > 0; }).sort(function (a, b) { return b.change - a.change; }).slice(0, n),
+      down: list.filter(function (x) { return x.change < 0; }).sort(function (a, b) { return a.change - b.change; }).slice(0, n)
+    };
+  }
+
   /* ---- money typed into the form ---- */
 
   // "1.250,50" and "1,250.50" both mean 1250.5: with both marks, the last one
@@ -603,10 +821,14 @@
 
   /* ---- backups ---- */
 
-  function exportDoc(doc, now) {
+  // The backup file. The price history goes in too (it's small), so a
+  // restored binder keeps its chart and movers.
+  function exportDoc(doc, now, history) {
     var clean = cleanDoc(doc);
     delete clean.local;
     clean.exported = now || new Date().toISOString();
+    var h = cleanHistory(history);
+    if (h.days.length) clean.history = h;
     return clean;
   }
 
@@ -623,7 +845,8 @@
     var species = {};
     var cards = 0;
     doc.copies.forEach(function (c) { species[c.species] = true; cards += c.qty; });
-    return { ok: true, doc: doc, summary: { cards: cards, entries: doc.copies.length, species: Object.keys(species).length, saved: str(raw.exported || raw.updated, 40) } };
+    var history = raw.history ? cleanHistory(raw.history) : null;
+    return { ok: true, doc: doc, history: history && history.days.length ? history : null, summary: { cards: cards, entries: doc.copies.length, species: Object.keys(species).length, saved: str(raw.exported || raw.updated, 40) } };
   }
 
   // One row per copy entry, for spreadsheets. Cells that a spreadsheet would
@@ -678,6 +901,16 @@
     parseAmount: parseAmount,
     convertPaid: convertPaid,
     needsRate: needsRate,
+    breakdown: breakdown,
+    cleanHistory: cleanHistory,
+    pricesOn: pricesOn,
+    recordDay: recordDay,
+    mergeHistory: mergeHistory,
+    shiftDay: shiftDay,
+    ownedFrom: ownedFrom,
+    valueSeries: valueSeries,
+    firstDay: firstDay,
+    movers: movers,
     exportDoc: exportDoc,
     parseFile: parseFile,
     toCsv: toCsv

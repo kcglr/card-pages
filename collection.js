@@ -12,7 +12,10 @@
   var formatUsd = root.PricePick.formatUsd;
   var $ = function (id) { return document.getElementById(id); };
 
-  var api = { fxRate: function () { return null; }, speciesName: function (key) { return key; } };
+  var api = { fxRate: function () { return null; }, speciesName: function (key) { return key; }, filterTo: function () {} };
+  var history = null; // the saved price history, once read (Store.readHistory)
+  // The summary card's drawer: which panel is open and each panel's choice.
+  var shelf = { open: "", by: "set", range: "90", days: "7" };
   var shown = null; // { card, ctx } of the pulled-out card
   var slip = null; // { uid } while the slip is open; uid "" adds a copy
   var LIRA_STORE = "pullfolio.mine.lira";
@@ -447,7 +450,7 @@
   }
 
   function downloadBackup(quiet) {
-    var doc = core.exportDoc(Store.model().doc);
+    var doc = core.exportDoc(Store.model().doc, null, history);
     saveFile("pullfolio-binder-" + stamp() + ".json", JSON.stringify(doc, null, 1), "application/json");
     Store.markBackup();
     if (!quiet) toast(t("backup.done"));
@@ -510,6 +513,12 @@
     if (mode === "replace" && Store.model().count()) downloadBackup(true); // what was here, just in case
     if (mode === "merge") Store.mergeIn(r.doc);
     else Store.replace(r.doc);
+    // Saved prices are facts about the cards, not part of the choice: both
+    // ways keep this browser's and add the backup's.
+    if (r.history) {
+      history = core.mergeHistory(history, r.history);
+      Store.writeHistory(history);
+    }
     toast(t("backup.loaded", { n: num(Store.model().count()) }));
     ensureRates();
   }
@@ -557,6 +566,8 @@
     }
     if (s.unmatched) cover.push(plural("sum.unmatched", s.unmatched));
     if (cover.length) html += '<div class="mine-sum-notes"><p>' + esc(cover.join(" · ")) + "</p></div>";
+    if (s.cards) html += shelfTabsHtml() + (shelf.open ? '<div class="mine-shelf" id="mine-shelf" role="region" aria-label="' +
+      esc(t(shelfLabel(shelf.open))) + '">' + shelfHtml(s) + "</div>" : "");
     var local = Store.model().doc.local;
     var due = backupDue(local);
     html += '<div class="mine-sum-tools">' +
@@ -570,6 +581,209 @@
       (Store.volatile ? '<p class="mine-note is-warn">' + esc(t("store.volatile")) + "</p>" : "") +
       '<div data-mine-import aria-live="polite">' + importHtml() + "</div>";
     return html;
+  }
+
+  /* ---- the summary card's drawer: Breakdown, Value over time, Top movers ---- */
+
+  var SHELVES = [["breakdown", "shelf.breakdown"], ["history", "shelf.history"], ["movers", "movers.title"]];
+  function shelfLabel(name) {
+    for (var i = 0; i < SHELVES.length; i++) if (SHELVES[i][0] === name) return SHELVES[i][1];
+    return "";
+  }
+
+  function shelfTabsHtml() {
+    return '<div class="mine-shelf-tabs">' + SHELVES.map(function (s) {
+      var on = shelf.open === s[0];
+      return '<button type="button" class="mine-chip mine-tab' + (on ? " is-on" : "") + '" data-sum="shelf" data-val="' + s[0] +
+        '" aria-expanded="' + on + '"' + (on ? ' aria-controls="mine-shelf"' : "") + ">" + esc(t(s[1])) + "</button>";
+    }).join("") + "</div>";
+  }
+
+  // A row of pressed/unpressed choices inside a panel.
+  function segHtml(act, options, on, label) {
+    return '<div class="mine-choices" role="group" aria-label="' + esc(label) + '">' + options.map(function (o) {
+      var is = String(on) === o[0];
+      return '<button type="button" class="mine-chip' + (is ? " is-on" : "") + '" data-sum="' + act + '" data-val="' + o[0] +
+        '" aria-pressed="' + is + '">' + esc(t(o[1])) + "</button>";
+    }).join("") + "</div>";
+  }
+
+  // Amounts in the panels follow the summary's "Show in ₺".
+  function amount(usd) {
+    var rate = api.fxRate();
+    return wantsLira() && rate ? liraAmount(usd * rate) : formatUsd(usd);
+  }
+  function shareText(p) {
+    return t("by.share", { n: p > 0 && p < 0.01 ? "<1" : num(Math.round(p * 100)) });
+  }
+
+  function shelfHtml(s) {
+    if (shelf.open === "breakdown") return breakdownHtml(s);
+    if (shelf.open === "history") return historyHtml();
+    return moversHtml(s);
+  }
+
+  // Breakdown (§4.4): rows by set (grouped by language), language or
+  // Pokémon, biggest value first. A row filters the binder to its cards.
+  var LANG_ORDER = ["ENG", "JP", "CN"];
+  function langRank(lang) {
+    var i = LANG_ORDER.indexOf(lang);
+    return i === -1 ? LANG_ORDER.length : i;
+  }
+
+  function breakdownHtml(s) {
+    var b = core.breakdown(Store.model().all(), s.priceOf, shelf.by);
+    var rows = b.rows.slice();
+    if (shelf.by === "set") {
+      rows.sort(function (x, y) {
+        return langRank(x.lang) - langRank(y.lang) || (x.lang < y.lang ? -1 : x.lang > y.lang ? 1 : 0) || y.value - x.value || y.cards - x.cards;
+      });
+    }
+    var top = rows.reduce(function (m, r) { return Math.max(m, r.value); }, 0);
+    var html = segHtml("by", [["set", "by.set"], ["lang", "by.lang"], ["pokemon", "by.pokemon"]], shelf.by, t("shelf.breakdown"));
+    html += '<ul class="mine-rows">';
+    var lastLang = null;
+    rows.forEach(function (r) {
+      if (shelf.by === "set" && r.lang !== lastLang) {
+        lastLang = r.lang;
+        html += '<li class="mine-rows-head" lang="en">' + esc(r.lang || "—") + "</li>";
+      }
+      var name = shelf.by === "lang" ? r.lang || "—" : shelf.by === "pokemon" ? api.speciesName(r.species) : r.set || "—";
+      var share = b.total > 0 ? r.value / b.total : 0;
+      var cards = plural("count.cards", r.cards);
+      var value = r.value ? amount(r.value) : "—";
+      var part = r.value ? shareText(share) : "";
+      html += '<li><button type="button" class="mine-row" data-sum="filter" data-kind="' + shelf.by + '" data-val="' + esc(r.key) +
+        '" aria-label="' + esc(t("by.row", { name: name, cards: cards, value: value })) + '">' +
+        '<span class="mine-row-name"' + (shelf.by === "lang" ? ' lang="en"' : "") + ">" + esc(name) + "</span>" +
+        '<span class="mine-row-cards">' + esc(cards) + "</span>" +
+        '<span class="mine-row-value">' + esc(value) + "</span>" +
+        '<span class="mine-row-share">' + esc(part) + "</span>" +
+        '<span class="mine-row-bar" aria-hidden="true"><span' + (r.value && r.value === top ? ' class="is-top"' : "") +
+        ' style="width:' + (share * 100).toFixed(1) + '%"></span></span>' +
+        "</button></li>";
+    });
+    html += "</ul>";
+    if (b.unpriced) html += '<p class="mine-shelf-note">' + esc(plural("sum.unpriced", b.unpriced)) + "</p>";
+    return html;
+  }
+
+  // Value over time (§4.3): the value of the cards you owned on each day
+  // with saved prices, and what you had paid by then, as steps.
+  var RANGES = [["30", "range.30"], ["90", "range.90"], ["365", "range.365"], ["all", "range.all"]];
+
+  function historyHtml() {
+    var copies = Store.model().all();
+    var to = today();
+    var from = shelf.range === "all" ? core.firstDay(history, copies) || to : core.shiftDay(to, -Number(shelf.range));
+    if (from > to) from = to;
+    var series = core.valueSeries(history, copies, from, to);
+    var lastV = series.value.length ? series.value[series.value.length - 1].value : null;
+    var lastC = series.cost[series.cost.length - 1].value;
+    var html = segHtml("range", RANGES, shelf.range, t("shelf.history")) +
+      '<div class="mine-legend"><span class="mine-key is-value">' + esc(t("history.value")) + " <b>" + esc(lastV != null ? formatUsd(lastV) : "—") + "</b></span>" +
+      '<span class="mine-key is-cost">' + esc(t("history.paid")) + " <b>" + esc(lastC ? formatUsd(lastC) : "—") + "</b></span></div>";
+    var days = (history && history.days) || [];
+    if (!series.value.length && !lastC && series.cost.length < 2) {
+      return html + '<p class="mine-shelf-note">' + esc(t("history.none")) + "</p>";
+    }
+    return html + chartHtml(series, from, to, lastV, lastC) +
+      '<p class="mine-shelf-note">' + esc(t("history.note", { date: day(days.length ? days[0].date : to) })) + "</p>";
+  }
+
+  function dayNumber(date) { return Math.round(new Date(date + "T00:00:00Z").getTime() / 864e5); }
+  function niceMax(v) {
+    if (!(v > 0)) return 1;
+    var p = Math.pow(10, Math.floor(Math.log(v) / Math.LN10));
+    var steps = [1, 2, 2.5, 5, 10];
+    for (var i = 0; i < steps.length; i++) if (steps[i] * p >= v) return steps[i] * p;
+    return 10 * p;
+  }
+  function usdShort(v) { return "$" + num(Math.round(v)); }
+
+  // The chart stretches to the card's width: the lines are SVG with
+  // non-scaling strokes, the labels HTML, and the 4 px grid the frame's
+  // background, so text and lines stay the same size on a phone.
+  function chartHtml(series, from, to, lastV, lastC) {
+    // Each day is a slot, today's included, so the last step has a width.
+    var x0 = dayNumber(from);
+    var x1 = dayNumber(to) + 1;
+    if (x1 <= x0) x0 = x1 - 1;
+    var max = niceMax(Math.max.apply(null, series.value.concat(series.cost).map(function (p) { return p.value; }).concat([0])));
+    function X(d) { return Math.round((dayNumber(d) - x0) / (x1 - x0) * 1000 * 10) / 10; }
+    function Y(v) { return Math.round((96 - v / max * 92) * 10) / 10; }
+    function steps(points) {
+      if (!points.length) return "";
+      var d = "M" + X(points[0].date) + " " + Y(points[0].value);
+      for (var i = 1; i < points.length; i++) d += "H" + X(points[i].date) + "V" + Y(points[i].value);
+      return d + "H1000";
+    }
+    var grid = [0, max / 2, max];
+    var label = t("history.summary", { date: day(to), value: lastV != null ? formatUsd(lastV) : "—", paid: lastC ? formatUsd(lastC) : "—" });
+    return '<figure class="mine-chart"><div class="mine-chart-plot">' +
+      grid.map(function (v) { return '<span class="mine-chart-y" style="--y:' + Y(v) + '">' + esc(usdShort(v)) + "</span>"; }).join("") +
+      '<svg viewBox="0 0 1000 100" preserveAspectRatio="none" aria-hidden="true" focusable="false">' +
+      grid.map(function (v) { return '<line x1="0" x2="1000" y1="' + Y(v) + '" y2="' + Y(v) + '" class="mine-chart-rule"/>'; }).join("") +
+      '<path class="mine-chart-cost" d="' + steps(series.cost) + '"/>' +
+      '<path class="mine-chart-value" d="' + steps(series.value) + '"/>' +
+      "</svg></div>" +
+      '<div class="mine-chart-x"><span>' + esc(day(from)) + "</span><span>" + esc(day(to)) + "</span></div>" +
+      '<figcaption class="sr-only">' + esc(label) + "</figcaption></figure>";
+  }
+
+  // Top movers (§4.5): price now against the saved price a week (or 30
+  // days) back, by the change in dollars times the copies you own.
+  function moversHtml(s) {
+    var byCard = {};
+    Store.model().all().forEach(function (c) {
+      var e = byCard[c.card] || (byCard[c.card] = { id: c.card, qty: 0, now: 0, snap: c.snap });
+      e.qty += c.qty;
+      var p = s.priceOf ? s.priceOf(c) : null;
+      if (p && p.value > 0) e.now = p.value;
+    });
+    var cards = Object.keys(byCard).map(function (k) { return byCard[k]; });
+    var r = core.movers(history, cards, today(), Number(shelf.days));
+    var html = segHtml("days", [["7", "range.7"], ["30", "range.30"]], shelf.days, t("movers.title"));
+    if (!r.ready) {
+      return html + '<p class="mine-shelf-note">' + esc(t(shelf.days === "30" ? "movers.wait30" : "movers.wait")) +
+        (r.first ? " " + esc(t("movers.first", { date: day(r.first) })) : "") + "</p>";
+    }
+    return html + '<p class="mine-shelf-note">' + esc(t("movers.since", { date: day(r.since) })) + "</p>" +
+      '<div class="mine-movers">' + moverList("movers.up", r.up, byCard) + moverList("movers.down", r.down, byCard) + "</div>";
+  }
+
+  function moverList(key, items, byCard) {
+    var html = '<section class="mine-mover-col"><h4>' + esc(t(key)) + "</h4>";
+    if (!items.length) return html + '<p class="mine-shelf-note">' + esc(t("movers.none")) + "</p></section>";
+    html += "<ol>";
+    items.forEach(function (x) {
+      var snap = byCard[x.id].snap;
+      html += '<li class="mine-mover">' +
+        (snap.img ? '<img src="' + esc(snap.img) + '" alt="" loading="lazy" decoding="async" width="36" height="50">' : '<span class="mine-mover-img"></span>') +
+        '<span class="mine-mover-text"><b>' + esc(snap.name) + "</b>" +
+        "<span>" + esc([snap.set, snap.no, snap.variant].filter(Boolean).join(" · ") + (x.qty > 1 ? " · ×" + num(x.qty) : "")) + "</span>" +
+        "<span>" + esc(amount(x.old) + " → " + amount(x.now)) + "</span></span>" +
+        '<span class="mine-mover-change ' + (x.change > 0 ? "is-gain" : "is-loss") + '">' + esc(signed(amount(Math.abs(x.change)), x.change)) +
+        "<small>" + esc(pct(x.pct)) + "</small></span></li>";
+    });
+    return html + "</ol></section>";
+  }
+
+  // Today's prices for the cards in My binder ({ cardId: usd }), saved once a
+  // day for the chart and the movers.
+  function recordPrices(prices, usdTry) {
+    (history ? Promise.resolve(history) : Store.readHistory()).then(function (h) {
+      history = core.recordDay(h, today(), prices, usdTry);
+      Store.writeHistory(history);
+      if (shelf.open) renderSummary();
+    });
+  }
+
+  // Redraws the card and puts focus back on the control that was used.
+  function rerender(selector) {
+    renderSummary();
+    var el = selector ? document.querySelector(selector) : null;
+    if (el) el.focus({ preventScroll: true });
   }
 
   var lastSummary = null;
@@ -604,6 +818,34 @@
     else if (act === "import-cancel") showImport(null);
     else if (act === "import-merge") finishImport("merge");
     else if (act === "import-replace") finishImport("replace");
+    else if (act === "shelf") {
+      var name = btn.getAttribute("data-val");
+      shelf.open = shelf.open === name ? "" : name;
+      rerender('[data-sum="shelf"][data-val="' + name + '"]');
+    } else if (act === "by" || act === "range" || act === "days") {
+      shelf[act] = btn.getAttribute("data-val");
+      rerender('[data-sum="' + act + '"][data-val="' + shelf[act] + '"]');
+    } else if (act === "filter") {
+      // A breakdown row: show just those cards in the binder below.
+      var kind = btn.getAttribute("data-kind");
+      var key = btn.getAttribute("data-val");
+      shelf.open = "";
+      renderSummary();
+      api.filterTo(kind, key);
+    }
+  });
+
+  // Escape puts the drawer away.
+  document.addEventListener("keydown", function (ev) {
+    if (ev.key !== "Escape" || !shelf.open || !(ev.target.closest && ev.target.closest("#mine-summary"))) return;
+    var name = shelf.open;
+    shelf.open = "";
+    rerender('[data-sum="shelf"][data-val="' + name + '"]');
+  });
+
+  Store.readHistory().then(function (h) {
+    history = h;
+    if (shelf.open) renderSummary();
   });
 
   Store.onChange(function (reason) {
@@ -622,6 +864,7 @@
     renderSummary: renderSummary,
     emptyHtml: emptyHtml,
     toast: toast,
+    recordPrices: recordPrices,
     relabel: function () {
       if (shown && !slip) render();
       renderSummary();

@@ -13,7 +13,9 @@
   var STORE = "kv";
   var DOC_KEY = "collection";
   var PRICE_KEY = "prices";
+  var HISTORY_KEY = "history"; // a price record per day (Value over time, Top movers)
   var SAVE_DELAY = 250;
+  var memHistory = null; // the history while IndexedDB is unavailable
 
   var db = null;
   var model = new core.Model();
@@ -170,6 +172,17 @@
       if (!db) return Promise.resolve();
       return write(PRICE_KEY, { payloads: payloads, updatedAt: updatedAt || "", savedAt: new Date().toISOString() })
         .catch(function () {});
+    },
+    // The price history, always cleaned on the way in.
+    readHistory: function () {
+      return ready.then(function () { return db ? read(HISTORY_KEY) : memHistory; })
+        .catch(function () { return null; })
+        .then(function (h) { return core.cleanHistory(h); });
+    },
+    writeHistory: function (history) {
+      memHistory = history;
+      if (!db) return Promise.resolve();
+      return write(HISTORY_KEY, history).catch(function (err) { console.error(err); });
     }
   };
 

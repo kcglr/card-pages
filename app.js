@@ -1741,7 +1741,9 @@
     var byId = {};
     current.cards.forEach(function (c) { byId[c.id] = c; });
     var copies = Store.model().all();
-    var stats = Core.totals(copies, function (copy) { return byId[copy.card] ? byId[copy.card].price : null; });
+    var priceOf = function (copy) { return byId[copy.card] ? byId[copy.card].price : null; };
+    var stats = Core.totals(copies, priceOf);
+    stats.priceOf = priceOf; // for the Breakdown and Top movers panels
     stats.priceTime = current.priceTime;
     stats.loading = !current.priceTime && current.cards.some(function (c) { return c.productId; });
     stats.unmatched = copies.reduce(function (n, c) { return n + (c.unmatched ? c.qty : 0); }, 0);
@@ -1823,8 +1825,41 @@
       if (result.failed && summary) setStatus("status.partial", { n: summary.priced, time: summary.when }, true);
       var keep = {};
       ids.forEach(function (id) { if (merged[id]) keep[id] = merged[id]; });
-      if (Object.keys(result.prices).length) Store.writePrices(keep, result.updatedAt);
+      if (!Object.keys(result.prices).length) return;
+      Store.writePrices(keep, result.updatedAt);
+      // Today's price of each card goes into the history (one record a day).
+      var todays = {};
+      current.cards.forEach(function (c) { if (c.price && c.price.value > 0) todays[c.id] = c.price.value; });
+      Mine.recordPrices(todays, fxRate);
     });
+  }
+
+  // A Breakdown row in My binder's summary: show only its cards. The other
+  // filters are cleared so the binder holds exactly that row.
+  function filterMineTo(kind, key) {
+    if (!current || !current.meta.mine || !binder) return;
+    closePicker(false);
+    filterState.variants = {};
+    filterState.species = {};
+    filterState.set = "";
+    filterState.query = "";
+    filterState.hideReverse = false;
+    document.querySelectorAll('#result .chip[data-filter="hide-reverse"]').forEach(function (chip) {
+      chip.classList.remove("is-on");
+      chip.setAttribute("aria-pressed", "false");
+    });
+    var input = $("filter");
+    if (input) input.value = "";
+    setLangs(kind === "lang" ? [key] : []);
+    if (kind === "set") {
+      filterState.set = key;
+      if (input) input.value = key.split("|").slice(1).join("|");
+    } else if (kind === "pokemon") {
+      filterState.species[key] = true;
+    }
+    showCards(true);
+    var wrap = document.querySelector("#result .binder-wrap");
+    if (wrap) wrap.scrollIntoView({ block: "start", behavior: motionOff() ? "auto" : "smooth" });
   }
 
   // The collection changed: file the cards again, keeping the page and the
@@ -2993,7 +3028,7 @@
     showActive();
     watchCover();
     i18n.onChange(relabel);
-    Mine.init({ fxRate: function () { return fxRate; }, speciesName: speciesName });
+    Mine.init({ fxRate: function () { return fxRate; }, speciesName: speciesName, filterTo: filterMineTo });
     Store.ready.then(updateMineCount);
     document.addEventListener("click", function (ev) {
       var link = ev.target.closest && ev.target.closest("[data-open-mine]");
