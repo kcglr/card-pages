@@ -1490,6 +1490,360 @@ body.is-viewing .search-hero { display: none; }
   .brand-logo { height: 28px; }
 }
 
+/* ---- My binder (docs/COLLECTION-PLAN.md) ---- */
+
+/* The way in, beside the language switch; it stays on phones as an icon. */
+.mine-link {
+  position: relative;
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 7px;
+  height: 38px;
+  padding: 0 11px 0 9px;
+  border: 2px solid var(--edge);
+  border-radius: 8px;
+  background: var(--field);
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 750;
+  text-decoration: none;
+  box-shadow: 2px 2px 0 var(--edge-shadow);
+}
+.mine-link:hover { background: var(--chip); }
+.mine-link:focus-visible { outline: none; box-shadow: 2px 2px 0 var(--edge-shadow), 0 0 0 4px var(--sticker); }
+body.is-mine .mine-link { background: var(--sticker); color: #1f1a16; border-color: #1f1a16; }
+.mine-link-icon { flex: none; width: 16px; height: 16px; image-rendering: pixelated; }
+.mine-count {
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border: 2px solid #1f1a16;
+  border-radius: 4px;
+  background: var(--sticker);
+  color: #1f1a16;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 16px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+body.is-mine .mine-count { background: #fbf7ef; }
+.mine-count[hidden], .binder-tabs .chip[hidden] { display: none; }
+
+/* Owned pockets: an ink tab with a pixel tick (×n for more copies), and a
+   graded copy's slab. In My binder only the count shows. */
+.pk-own, .pk-slab {
+  position: absolute;
+  z-index: 3;
+  top: 6px;
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .5);
+  pointer-events: none;
+}
+.pk-own { left: 6px; gap: 3px; padding: 0 5px; background: #1f1a16; color: var(--sticker); }
+.pk-own b { color: #fbf7ef; font-weight: 800; }
+.pk-tick { width: 11px; height: 9.5px; image-rendering: pixelated; }
+.is-mine .pk-tick { display: none; }
+.pk-slab { right: 6px; padding: 0 5px; border: 1.5px solid #1f1a16; background: #fbf7ef; color: #1f1a16; font-size: 10px; letter-spacing: .02em; }
+@container binder (max-width: 720px) {
+  .pk-own, .pk-slab { top: 4px; height: 16px; font-size: 10px; }
+  .pk-own { left: 4px; padding: 0 4px; }
+  .pk-slab { right: 4px; padding: 0 4px; font-size: 9px; }
+}
+
+/* The Pokémon picker's sprites. */
+.pick-icon { flex: none; width: 40px; height: 30px; margin: -6px -2px; object-fit: contain; image-rendering: pixelated; }
+
+/* The card file's "In my binder" section. */
+.mine-add, .mine-total {
+  --px: 3px;
+  background:
+    linear-gradient(var(--ink), var(--ink)) var(--px) 0 / calc(100% - 2 * var(--px)) var(--px) no-repeat,
+    linear-gradient(var(--ink), var(--ink)) var(--px) 100% / calc(100% - 2 * var(--px)) var(--px) no-repeat,
+    linear-gradient(var(--ink), var(--ink)) 0 var(--px) / var(--px) calc(100% - 2 * var(--px)) no-repeat,
+    linear-gradient(var(--ink), var(--ink)) 100% var(--px) / var(--px) calc(100% - 2 * var(--px)) no-repeat,
+    linear-gradient(var(--fill), var(--fill)) var(--px) var(--px) / calc(100% - 2 * var(--px)) calc(100% - 2 * var(--px)) no-repeat;
+}
+.mine-add {
+  --ink: #1f1a16;
+  --fill: var(--sticker);
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: calc(var(--px) + 10px) calc(var(--px) + 18px) calc(var(--px) + 10px) calc(var(--px) + 14px);
+  border: 0;
+  color: #1f1a16;
+  font: 800 15px/1.1 var(--font);
+  cursor: pointer;
+  filter: drop-shadow(3px 3px 0 #1f1a16);
+}
+.mine-add svg { width: 16px; height: 16px; }
+.mine-add:hover { --fill: #ffe066; }
+.mine-add:active { translate: 2px 2px; filter: drop-shadow(1px 1px 0 #1f1a16); }
+.mine-add:focus-visible { outline: 2px solid #1f1a16; outline-offset: 4px; }
+.mine-have { display: flex; align-items: center; gap: 9px; margin: 0 0 8px; font-size: 17px; font-weight: 800; }
+.mine-have-tick {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  border: 2px solid #1f1a16;
+  border-radius: 3px;
+  background: var(--sticker) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 7 6' shape-rendering='crispEdges'%3E%3Cpath fill='%231f1a16' d='M6 0h1v1H6zM5 1h2v1H5zM0 2h1v1H0zM4 2h2v1H4zM0 3h2v1H0zM3 3h2v1H3zM1 4h3v1H1zM2 5h1v1H2z'/%3E%3C/svg%3E") center / 11px no-repeat;
+}
+.mine-note { margin: 0 0 8px; color: var(--muted); font-size: 13px; line-height: 1.4; }
+.mine-note.is-warn { padding: 7px 10px; border-left: 3px solid #c8302a; background: #fbeee0; color: #5a2a1c; }
+.mine-copies { display: grid; gap: 6px; margin: 10px 0 0; padding: 0; list-style: none; }
+.mine-copy {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 8px 8px 11px;
+  border: 2px solid #1f1a16;
+  border-radius: 6px;
+  background: #fffdf8;
+}
+.mine-copy-qty { min-width: 2.2em; font-size: 15px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.mine-copy-main { display: grid; gap: 2px; min-width: 0; }
+.mine-copy-cond { font-size: 13.5px; font-weight: 800; }
+.mine-copy-meta { color: var(--muted); font-size: 12.5px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.mine-copy-note { font-size: 12.5px; line-height: 1.35; overflow-wrap: anywhere; }
+.mine-copy-acts { display: flex; gap: 4px; }
+.mine-mini, .mine-chip {
+  min-height: 32px;
+  padding: 0 11px;
+  border: 2px solid #1f1a16;
+  border-radius: 999px;
+  background: #fffdf8;
+  color: #1f1a16;
+  font: 750 12.5px/1 var(--font);
+  cursor: pointer;
+}
+.mine-mini:hover, .mine-chip:hover { background: #e8dec9; }
+.mine-mini:focus-visible, .mine-chip:focus-visible, .mine-textbtn:focus-visible, .mine-save:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--sticker); }
+.mine-chip.is-on { background: #1f1a16; color: #fbf7ef; }
+.mine-chip.is-due { background: var(--sticker); }
+.mine-worth { margin: 10px 0 0; font-size: 13.5px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.is-gain { color: #1d6b35; }
+.is-loss { color: #b02a22; }
+.mine-more { display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 10px 0 0; }
+.mine-textbtn {
+  padding: 4px 2px;
+  border: 0;
+  border-radius: 3px;
+  background: none;
+  color: #1f1a16;
+  font: 750 13px/1.2 var(--font);
+  text-decoration: underline 2px #d3c4aa;
+  text-underline-offset: 4px;
+  cursor: pointer;
+}
+.mine-textbtn:hover { text-decoration-color: #1f1a16; }
+.mine-save {
+  min-height: 40px;
+  padding: 0 20px;
+  border: 2px solid #1f1a16;
+  border-radius: 8px;
+  background: #1f1a16;
+  color: #fbf7ef;
+  font: 800 14px/1 var(--font);
+  cursor: pointer;
+}
+.mine-save:hover { background: #3a2f26; }
+
+/* The slip: what you have of it. Focus is the sticker yellow. */
+.mine-slip { display: grid; gap: 12px; margin: 0; }
+.mine-slip-head { margin: 0; font-size: 15px; font-weight: 800; }
+.mine-slip-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.mine-slip .is-wide { grid-column: 1 / -1; }
+.mine-field { display: grid; align-content: start; gap: 6px; min-width: 0; margin: 0; padding: 0; border: 0; }
+.mine-field-label { padding: 0; color: var(--muted); font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.mine-field-help { color: var(--muted); font-size: 12px; line-height: 1.35; }
+.mine-slip input:not([type]), .mine-slip input[type="date"], .mine-slip select, .mine-slip textarea {
+  width: 100%;
+  min-width: 0;
+  height: 40px;
+  padding: 0 10px;
+  border: 2px solid #1f1a16;
+  border-radius: 6px;
+  background: #fffdf8;
+  color: #1f1a16;
+  font: 600 15px/1.2 var(--font);
+}
+.mine-slip textarea { height: auto; min-height: 64px; padding: 8px 10px; resize: vertical; }
+.mine-slip input:disabled { opacity: .45; }
+.mine-slip input:focus, .mine-slip select:focus, .mine-slip textarea:focus, .mine-stepper button:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--sticker); }
+.mine-stepper { display: flex; }
+.mine-stepper button {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border: 2px solid #1f1a16;
+  background: #fffdf8;
+  color: #1f1a16;
+  font: 800 18px/1 var(--font);
+  cursor: pointer;
+}
+.mine-stepper button:first-child { border-radius: 6px 0 0 6px; }
+.mine-stepper button:last-child { border-radius: 0 6px 6px 0; }
+.mine-stepper button:hover { background: #e8dec9; }
+.mine-slip .mine-stepper input { width: 64px; flex: none; margin: 0 -2px; border-radius: 0; text-align: center; font-weight: 800; font-variant-numeric: tabular-nums; }
+.mine-seg { display: inline-flex; justify-self: start; padding: 2px; border: 2px solid #1f1a16; border-radius: 999px; background: #fffdf8; }
+.mine-seg label, .mine-cond, .mine-check { position: relative; cursor: pointer; }
+.mine-seg input, .mine-cond input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+.mine-seg span { display: block; padding: 6px 14px; border-radius: 999px; font-size: 13px; font-weight: 750; }
+.mine-seg input:checked + span { background: #1f1a16; color: #fbf7ef; }
+.mine-seg input:focus-visible + span, .mine-cond input:focus-visible + span { box-shadow: 0 0 0 3px var(--sticker); }
+.mine-conds { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.mine-cond > span[lang] {
+  display: block;
+  min-width: 48px;
+  padding: 7px 10px;
+  border: 2px solid #1f1a16;
+  border-radius: 6px;
+  background: #fffdf8;
+  font-size: 13px;
+  font-weight: 800;
+  text-align: center;
+}
+.mine-cond:hover > span[lang] { background: #e8dec9; }
+.mine-cond input:checked + span { background: var(--sticker); box-shadow: 2px 2px 0 #1f1a16; }
+.mine-graded { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 8px; }
+.mine-graded label { display: grid; gap: 5px; min-width: 0; }
+.mine-conds[hidden], .mine-graded[hidden], .mine-error[hidden] { display: none; }
+.mine-money { display: flex; }
+.mine-slip .mine-money input { flex: 1; border-radius: 6px 0 0 6px; }
+.mine-slip .mine-money select { flex: none; width: auto; margin-left: -2px; padding-right: 26px; border-radius: 0 6px 6px 0; }
+.mine-check { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 650; }
+.mine-check input { width: 18px; height: 18px; margin: 0; accent-color: #1f1a16; }
+.mine-check input:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--sticker); }
+.mine-extra { padding-top: 10px; border-top: 2px dashed var(--line); }
+.mine-extra summary { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 750; list-style: none; cursor: pointer; border-radius: 3px; }
+.mine-extra summary::-webkit-details-marker { display: none; }
+.mine-extra summary::before { content: "+"; display: grid; place-items: center; width: 18px; height: 18px; border: 2px solid #1f1a16; border-radius: 3px; font-weight: 800; line-height: 1; }
+.mine-extra[open] summary::before { content: "−"; }
+.mine-extra summary:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--sticker); }
+.mine-extra-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 14px; margin-top: 10px; }
+.mine-error { margin: 0; padding: 8px 10px; border-left: 3px solid #c8302a; background: #fbe3dc; color: #7c1d16; font-size: 13px; font-weight: 650; }
+.mine-slip-acts { display: flex; align-items: center; gap: 16px; }
+@container (max-width: 420px) {
+  .mine-slip-grid, .mine-extra-grid { grid-template-columns: minmax(0, 1fr); }
+  .mine-graded { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .mine-graded label:last-child { grid-column: 1 / -1; }
+  .mine-copy { grid-template-columns: auto minmax(0, 1fr); }
+  .mine-copy-acts { grid-column: 1 / -1; justify-content: flex-end; }
+}
+
+/* The undo strip, at the foot of the window. */
+.mine-toast {
+  position: fixed;
+  z-index: 120;
+  left: 50%;
+  bottom: calc(20px + env(safe-area-inset-bottom));
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  max-width: calc(100vw - 32px);
+  padding: 9px 9px 9px 16px;
+  border: 2px solid #1f1a16;
+  border-radius: 8px;
+  background: #1f1a16;
+  color: #fbf7ef;
+  font-size: 14px;
+  font-weight: 650;
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, .35);
+  opacity: 0;
+  visibility: hidden;
+  transform: translate(-50%, 12px);
+  transition: opacity .18s ease, transform .18s ease, visibility 0s linear .18s;
+}
+.mine-toast.is-on { opacity: 1; visibility: visible; transform: translate(-50%, 0); transition: opacity .18s ease, transform .18s ease; }
+.mine-toast-text { min-width: 0; overflow-wrap: anywhere; }
+.mine-toast-undo { flex: none; min-height: 34px; padding: 0 14px; border: 0; border-radius: 6px; background: var(--sticker); color: #1f1a16; font: 800 13px/1 var(--font); cursor: pointer; }
+.mine-toast-undo:focus-visible { outline: 2px solid #fbf7ef; outline-offset: 2px; }
+
+/* My binder's summary: a cream index card with the total on a sticker. */
+.mine-summary {
+  --px: 3px;
+  --ink: #1f1a16;
+  --fill: #fbf7ef;
+  display: grid;
+  gap: 14px;
+  margin: 0 0 26px;
+  padding: calc(var(--px) + 18px) calc(var(--px) + 22px);
+  color: #1f1a16;
+  filter: drop-shadow(5px 5px 0 rgba(0, 0, 0, .5));
+  background:
+    linear-gradient(var(--ink), var(--ink)) var(--px) 0 / calc(100% - 2 * var(--px)) var(--px) no-repeat,
+    linear-gradient(var(--ink), var(--ink)) var(--px) 100% / calc(100% - 2 * var(--px)) var(--px) no-repeat,
+    linear-gradient(var(--ink), var(--ink)) 0 var(--px) / var(--px) calc(100% - 2 * var(--px)) no-repeat,
+    linear-gradient(var(--ink), var(--ink)) 100% var(--px) / var(--px) calc(100% - 2 * var(--px)) no-repeat,
+    linear-gradient(var(--fill), var(--fill)) var(--px) var(--px) / calc(100% - 2 * var(--px)) calc(100% - 2 * var(--px)) no-repeat;
+}
+.mine-summary:empty { display: none; }
+.mine-sum-main { display: flex; flex-wrap: wrap; align-items: center; gap: 18px 40px; }
+.mine-total {
+  --ink: #1f1a16;
+  --fill: var(--sticker);
+  display: grid;
+  justify-items: start;
+  padding: calc(var(--px) + 8px) calc(var(--px) + 18px) calc(var(--px) + 10px);
+  filter: drop-shadow(3px 3px 0 #1f1a16);
+}
+.mine-total p { margin: 0; }
+.mine-total-label { font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; opacity: .75; }
+.mine-total-value { font-size: clamp(32px, 4vw, 44px); font-weight: 800; line-height: 1.05; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+.mine-total-other { font-size: 14px; font-weight: 750; font-variant-numeric: tabular-nums; }
+.mine-sum-facts { display: flex; flex-wrap: wrap; gap: 14px 36px; margin: 0; }
+.mine-sum-facts dt { color: #66584b; font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.mine-sum-facts dd { margin: 3px 0 0; font-size: 22px; font-weight: 800; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.mine-sum-facts dd.mine-sub { font-size: 12px; letter-spacing: 0; }
+.mine-pct { font-size: 14px; font-weight: 750; }
+.mine-sub { color: #66584b; font-size: 12px; font-weight: 600; }
+.mine-sum-notes { display: grid; gap: 3px; }
+.mine-sum-notes p { margin: 0; color: #66584b; font-size: 13.5px; font-weight: 650; line-height: 1.4; }
+.mine-sum-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding-top: 12px; border-top: 2px dashed #d3c4aa; }
+.mine-backup { margin-left: auto; color: #66584b; font-size: 12.5px; font-weight: 650; }
+.mine-backup.is-due { color: #7c1d16; font-weight: 750; }
+.mine-summary .mine-note.is-warn { margin: 0; }
+.mine-import { display: grid; gap: 8px; padding: 12px 14px; border: 2px solid #1f1a16; border-radius: 8px; background: #fff6cc; color: #1f1a16; text-align: left; }
+.mine-import.is-error { background: #fbe3dc; }
+.mine-import p { margin: 0; font-size: 13.5px; font-weight: 650; line-height: 1.4; }
+.mine-import .mine-import-help { color: #66584b; font-weight: 600; }
+.mine-import-acts { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+[data-mine-import]:empty { display: none; }
+
+/* An empty My binder: a closed binder, a line of help and a way back in. */
+.mine-empty-state { gap: 22px; }
+.mine-empty { display: grid; justify-items: center; gap: 12px; max-width: 440px; }
+.mine-empty > p { margin: 0; color: var(--muted); font-size: 15px; line-height: 1.5; }
+.mine-empty .mine-sum-tools { justify-content: center; padding: 0; border: 0; }
+
+@media (max-width: 700px) {
+  .mine-summary { padding: calc(var(--px) + 14px) calc(var(--px) + 14px); }
+  .mine-sum-main { gap: 14px 24px; }
+  .mine-sum-facts dd { font-size: 19px; }
+  .mine-backup { flex-basis: 100%; order: 5; margin-left: 0; }
+}
+/* Phones: My binder becomes an icon with its count on the corner. */
+@media (max-width: 480px) {
+  .mine-link { margin-left: auto; width: 40px; padding: 0; justify-content: center; }
+  .mine-link-text { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .mine-link .mine-count { position: absolute; top: -9px; right: -10px; min-width: 18px; height: 18px; padding: 0 3px; font-size: 10px; line-height: 14px; }
+  .mine-link + .lang-switch { margin-left: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mine-toast, .mine-toast.is-on { transition: none; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   .pk-card, .pk-sleeve, .closed-binder, .cover-sprite, .cover-search, .search-hero > .hero-copy, .chip.tab, .guide-toggle, .label-tape, .nav-btn, .back-home { transition: none; }

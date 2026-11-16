@@ -77,6 +77,26 @@
     return page - page % this.perView;
   };
 
+  // The tab on a pocket whose card you own (×n for more than one copy), and
+  // a graded copy's slab label.
+  var TICK = '<svg class="pk-tick" viewBox="0 0 7 6" shape-rendering="crispEdges" aria-hidden="true"><path fill="currentColor" ' +
+    'd="M6 0h1v1H6zM5 1h2v1H5zM0 2h1v1H0zM4 2h2v1H4zM0 3h2v1H0zM3 3h2v1H3zM1 4h3v1H1zM2 5h1v1H2z"/></svg>';
+  function ownInner(info) { return TICK + (info.owned > 1 ? "<b>×" + info.owned + "</b>" : ""); }
+  function badges(info) {
+    return (info.owned ? '<span class="pk-own" aria-hidden="true">' + ownInner(info) + "</span>" : "") +
+      (info.slab ? '<span class="pk-slab" aria-hidden="true">' + escapeHtml(info.slab) + "</span>" : "");
+  }
+  function syncBadge(pocket, cls, html) {
+    var el = pocket.querySelector("." + cls);
+    if (!html) { if (el) el.remove(); return; }
+    if (!el) {
+      el = node("span", cls);
+      el.setAttribute("aria-hidden", "true");
+      pocket.appendChild(el);
+    }
+    if (el.innerHTML !== html) el.innerHTML = html;
+  }
+
   Binder.prototype.pocketHtml = function (card, slot) {
     var info = this.opts.describe(card);
     var art = info.image
@@ -88,6 +108,7 @@
       '<span class="pk-sleeve" aria-hidden="true"></span>' +
       (info.lang ? '<span class="pk-lang" aria-hidden="true">' + escapeHtml(info.lang) + "</span>" : "") +
       (info.price ? '<span class="pk-price" aria-hidden="true">' + escapeHtml(info.price) + "</span>" : "") +
+      badges(info) +
       "</button>";
   };
 
@@ -198,6 +219,8 @@
       }
       if (sticker && !info.price) sticker.remove();
       else if (sticker) sticker.textContent = info.price;
+      syncBadge(pocket, "pk-own", info.owned ? ownInner(info) : "");
+      syncBadge(pocket, "pk-slab", info.slab ? escapeHtml(info.slab) : "");
       pocket.setAttribute("aria-label", info.label);
     });
   };

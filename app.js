@@ -19,6 +19,9 @@
   var activeCard = null;
 
   var $ = function (id) { return document.getElementById(id); };
+  var Store = window.PullfolioStore;
+  var Mine = window.PullfolioMine;
+  var Core = window.PullfolioCore;
   var i18n = window.CardI18n;
   var t = i18n.t;
   var num = i18n.num;
@@ -94,13 +97,7 @@
       .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
   }
 
-  function formatUsd(amount) {
-    if (amount == null || !isFinite(amount)) return "";
-    if (Math.abs(amount - Math.round(amount)) < 0.005 && amount >= 10) {
-      return "$" + Math.round(amount).toLocaleString("en-US");
-    }
-    return "$" + amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  }
+  var formatUsd = window.PricePick.formatUsd;
 
   function formatTry(amount, rate) {
     if (!rate || !isFinite(amount)) return "";
@@ -173,121 +170,15 @@
     return window.CardMarketLinks.build(card);
   }
 
-  /* ---- subtype matching, same rules as prices.py ---- */
+  /* ---- prices: price-pick.js has the rules, shared with My binder ---- */
 
-  function textOf(card) {
-    return [card.variant, card.rarity, card.name].filter(Boolean).join(" ");
-  }
-  function wantsReverse(card) { return /reverse\s*holo/i.test(textOf(card)); }
-  function wantsFirst(card) { return /(1st|first)\s+edition/i.test(textOf(card)); }
-  function wantsHolo(card) {
-    var t = textOf(card);
-    return /holo/i.test(t) && !/reverse\s*holo/i.test(t);
-  }
-  function wantsNormal(card) { return !wantsReverse(card) && !wantsHolo(card); }
-  function subName(row) { return String((row && row.subTypeName) || ""); }
-  function positive(row, key) {
-    if (!row) return 0;
-    var n = Number(row[key || "marketPrice"]);
-    return isFinite(n) && n > 0 ? n : 0;
-  }
-  function bestAmount(row) {
-    if (!row) return null;
-    if (positive(row, "marketPrice")) return { kind: "market", value: positive(row, "marketPrice") };
-    if (positive(row, "midPrice")) return { kind: "mid", value: positive(row, "midPrice") };
-    if (positive(row, "lowPrice")) return { kind: "low", value: positive(row, "lowPrice") };
-    return null;
-  }
-  function findRow(rows, pred) {
-    var matched = rows.filter(function (row) { return pred(subName(row)); });
-    if (!matched.length) return null;
-    var priced = matched.filter(function (row) { return bestAmount(row); });
-    return (priced[0] || matched[0] || null);
-  }
-
-  function pickPriceRow(card, payload, uniqueProduct) {
-    if (!payload || !payload.prices) return null;
-    var rows = payload.prices.filter(function (r) { return r && typeof r === "object"; });
-    if (!rows.length) return null;
-    var row;
-
-    if (wantsFirst(card)) {
-      if (wantsReverse(card)) {
-        row = findRow(rows, function (n) { return /(1st|first)\s+edition/i.test(n) && /reverse/i.test(n); });
-        if (row && bestAmount(row)) return row;
-        if (!uniqueProduct) return null;
-      } else if (wantsHolo(card)) {
-        row = findRow(rows, function (n) { return /(1st|first)\s+edition/i.test(n) && /holo/i.test(n) && !/reverse/i.test(n); });
-        if (row && bestAmount(row)) return row;
-        if (!uniqueProduct) return null;
-      } else {
-        row = findRow(rows, function (n) { return /(1st|first)\s+edition/i.test(n); });
-        if (row && bestAmount(row)) return row;
-        if (!uniqueProduct) return null;
-      }
-    }
-
-    if (wantsReverse(card)) {
-      row = findRow(rows, function (n) { return /reverse\s*holo/i.test(n); });
-      if (row && bestAmount(row)) return row;
-      if (!uniqueProduct) return null;
-    }
-
-    var hasUnlimited = rows.some(function (r) { return /unlimited/i.test(subName(r)); });
-    if (hasUnlimited && !wantsFirst(card)) {
-      if (wantsHolo(card)) {
-        row = findRow(rows, function (n) { return /unlimited/i.test(n) && /holo/i.test(n) && !/reverse/i.test(n); });
-        if (row && bestAmount(row)) return row;
-      }
-      if (wantsNormal(card)) {
-        row = findRow(rows, function (n) { return /^unlimited$/i.test(n) || (/unlimited/i.test(n) && !/holo/i.test(n)); });
-        if (row && bestAmount(row)) return row;
-      }
-    }
-
-    if (wantsHolo(card)) {
-      row = findRow(rows, function (n) { return /^holofoil$/i.test(n) || (/holo/i.test(n) && !/reverse|1st|first|unlimited/i.test(n)); });
-      if (row && bestAmount(row)) return row;
-      if (!uniqueProduct) return null;
-    }
-
-    row = findRow(rows, function (n) { return /^normal$/i.test(n); });
-    if (row && bestAmount(row)) return row;
-    row = findRow(rows, function (n) { return /^unlimited$/i.test(n); });
-    if (row && bestAmount(row)) return row;
-    var preferred = payload.preferred;
-    if (preferred && bestAmount(preferred) && !/(1st|first)\s+edition|reverse/i.test(subName(preferred))) {
-      return preferred;
-    }
-    if (uniqueProduct) {
-      if (preferred && bestAmount(preferred)) return preferred;
-      for (var i = 0; i < rows.length; i++) {
-        if (bestAmount(rows[i])) return rows[i];
-      }
-    }
-    return null;
-  }
-
+  // `unique`: no other printing in the file shares the card's TCGplayer
+  // product. My binder's cards carry it (pidUnique), saved from their file.
   function applyPriceToCard(card, payloads, pidCounts) {
     var pid = card.productId ? String(card.productId) : "";
     if (!pid) return null;
-    var unique = pidCounts[pid] === 1;
-    var row = pickPriceRow(card, payloads[pid], unique);
-    var amount = bestAmount(row);
-    if (!amount) return null;
-    var low = positive(row, "lowPrice");
-    var mid = positive(row, "midPrice");
-    var range = "";
-    if (low && mid && low <= amount.value && mid < amount.value * 20) {
-      range = formatUsd(low) + "–" + formatUsd(mid);
-    }
-    return {
-      headline: formatUsd(amount.value),
-      value: amount.value,
-      subtype: subName(row),
-      kind: amount.kind,
-      range: range
-    };
+    var unique = card.pidUnique != null ? !!card.pidUnique : pidCounts[pid] === 1;
+    return window.PricePick.price(card, payloads[pid], unique);
   }
 
   /* ---- FX + price fetch ---- */
@@ -372,7 +263,7 @@
 
   var binder = null;
   var animating = false;
-  var filterState = { langs: {}, variants: {}, set: "", hideReverse: false, query: "" };
+  var filterState = { langs: {}, variants: {}, species: {}, set: "", hideReverse: false, query: "" };
   var LANG_STORE = "pullfolio.langs";
 
   // Markup for text that follows the site language: CardI18n.apply() re-reads
@@ -392,9 +283,19 @@
       '<button type="button" class="picker-btn" id="variant-btn" aria-haspopup="true" aria-expanded="false" aria-controls="picker">' +
         said("span", "toolbar.variant", 'class="sr-only"') + '<span class="picker-btn-label" id="variant-label" lang="en"></span>' + CARET + "</button>" : "";
     var dated = hasDates(cards);
-    var sortOptions = (dated ? said("option", "sort.newest", 'value="newest" selected') + said("option", "sort.oldest", 'value="oldest"') : "") +
+    var mine = current && current.meta.mine;
+    var speciesBtn = mine && uniqueValues(cards, "species").length > 1 ?
+      '<button type="button" class="picker-btn" id="species-btn" aria-haspopup="true" aria-expanded="false" aria-controls="picker">' +
+        said("span", "toolbar.species", 'class="sr-only"') + '<span class="picker-btn-label" id="species-label"></span>' + CARET + "</button>" : "";
+    var sortOptions = mine ?
+      said("option", "sort.value", 'value="value" selected') + said("option", "sort.gain", 'value="gain"') +
+      said("option", "sort.added", 'value="added"') + said("option", "sort.dex", 'value="dex"') +
+      (dated ? said("option", "sort.newest", 'value="newest"') + said("option", "sort.oldest", 'value="oldest"') : "") +
+      said("option", "sort.set", 'value="set"') + said("option", "sort.name", 'value="name"') :
+      (dated ? said("option", "sort.newest", 'value="newest" selected') + said("option", "sort.oldest", 'value="oldest"') : "") +
       said("option", "sort.priceDesc", 'value="price-desc"' + (dated ? "" : " selected")) +
       said("option", "sort.priceAsc", 'value="price-asc"') + said("option", "sort.name", 'value="name"') + said("option", "sort.set", 'value="set"');
+    variantBtn = speciesBtn + variantBtn;
     return (
       '<div class="toolbar" id="toolbar">' +
         '<div class="toolbar-row">' +
@@ -439,6 +340,12 @@
     var lang = (card.lang || "").toUpperCase();
     var price = (card.price && card.price.headline) || "";
     var name = card.name || t("card.fallback");
+    // How many you own (by id, or the same product filed under another
+    // Pokémon), and a graded copy's slab.
+    var own = Mine.pocketInfo(card);
+    // In My binder every card is yours: only more than one copy is marked.
+    if (own && current && current.meta.mine && own.qty < 2 && !own.slab) own = null;
+    else if (own && current && current.meta.mine && own.qty < 2) own = { qty: 0, slab: own.slab };
     return {
       key: String(card.ref),
       name: name,
@@ -446,7 +353,10 @@
       back: cardBack(card),
       lang: lang,
       price: price,
-      label: [name, lang, (card.variant || card.rarity || "").trim(), card.set, price || t("card.noPrice")]
+      owned: own ? own.qty : 0,
+      slab: own ? own.slab : "",
+      label: [name, lang, (card.variant || card.rarity || "").trim(), card.set, price || t("card.noPrice"),
+        own ? (own.qty ? t("own.pocket", { n: num(own.qty) }) + (own.slab ? " " : "") : "") + own.slab : ""]
         .filter(Boolean).join(", ")
     };
   }
@@ -469,35 +379,47 @@
     if (!current) return;
     var cards = current.cards;
     var meta = current.meta;
-    var art = speciesArt(meta.number);
+    var mine = !!meta.mine;
+    var art = mine ? "" : speciesArt(meta.number);
     var fromCover = !document.body.classList.contains("is-viewing");
     document.body.classList.add("is-viewing");
+    document.body.classList.toggle("is-mine", mine);
     $("search-cover").classList.remove("is-loading", "is-picked");
+    var title = mine ? said("h2", "mine.title", 'class="result-title"') : '<h2 class="result-title">' + escapeHtml(meta.name) + "</h2>";
     $("result").innerHTML =
-      '<header class="result-header">' +
+      '<header class="result-header' + (mine ? " is-mine" : "") + '">' +
         (art ? '<img class="result-art" src="' + escapeHtml(art) + '" alt="" width="112" height="112" onerror="this.remove()">' : "") +
         '<div class="result-heading">' +
           '<button type="button" class="back-home" data-go-home><span aria-hidden="true">←</span> ' + said("span", "result.back") + "</button>" +
-          '<p class="result-dex" id="result-dex"></p><h2 class="result-title">' + escapeHtml(meta.name) +
-          '</h2><p class="subtitle" id="result-sub"></p><p class="status result-status" id="result-status"></p></div>' +
-        said("p", "result.hint", 'class="result-hint"') +
+          '<p class="result-dex" id="result-dex"></p>' + title +
+          '<p class="subtitle" id="result-sub"></p><p class="status result-status" id="result-status"></p></div>' +
+        (mine ? "" : said("p", "result.hint", 'class="result-hint"')) +
       "</header>" +
-      renderToolbar(cards) +
-      '<div class="binder-wrap"><div class="binder-stack">' + renderLangTabs(cards) + '<div id="binder"></div></div>' +
-      said("p", "empty", 'class="empty" id="empty"') + "</div>" +
+      (mine && cards.length ? '<section class="mine-summary" id="mine-summary"' + saidAttr("aria-label", "sum.value") + "></section>" : "") +
+      (mine && !cards.length ? '<div class="welcome-state mine-empty-state"><div class="closed-binder"><span class="cover-tape">' + escapeHtml(t("mine.title")) +
+        "</span></div>" + Mine.emptyHtml() + "</div>" :
+        renderToolbar(cards) +
+        '<div class="binder-wrap' + (mine ? " is-mine" : "") + '"><div class="binder-stack">' + renderLangTabs(cards) + '<div id="binder"></div></div>' +
+        said("p", "empty", 'class="empty" id="empty"') + "</div>") +
       '<footer id="result-footer"></footer>';
     renderResultText();
     renderFooter();
     renderStatus();
+    if (mine) renderMineSummary();
     $("result").querySelector("[data-go-home]").addEventListener("click", function () { goHome(true); });
     if (binder) binder.destroy();
+    binder = null;
+    if (mine && !cards.length) {
+      if (fromCover) window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+      return;
+    }
     binder = new window.CardBinder($("binder"), { describe: describeCard, onPick: pullCard });
     bindToolbar();
     showCards(false);
     // Coming from the cover, the hero has just been put away: start at the top so
     // the binder is seen opening.
     if (fromCover) window.scrollTo({ top: 0, left: 0, behavior: "instant" });
-    binder.openCover(meta.name);
+    binder.openCover(mine ? t("mine.title") : meta.name);
   }
 
   // The result text that carries numbers; redrawn when the language changes.
@@ -506,6 +428,15 @@
     var meta = current.meta;
     var cards = current.cards;
     var langs = uniqueValues(cards, "lang");
+    if (meta.mine) {
+      var all = Store.model().all();
+      var sum = Core.totals(all, null);
+      $("result-dex").textContent = t("mine.kicker");
+      $("result-sub").textContent = !sum.cards ? "" : countText("sum.cards", sum.cards) + " · " + countText("sum.printings", sum.printings) + " · " +
+        countText("sum.species", sum.species) + (langs.length ? " · " + langs.join(" · ") : "");
+      updateCount();
+      return;
+    }
     $("result-dex").textContent = meta.number ? t("result.dex", { n: String(meta.number).padStart(3, "0") }) : t("result.master");
     $("result-sub").textContent = countText("count.cards", meta.cards || cards.length) + " · " +
       countText("count.printings", cards.length) + (langs.length ? " · " + langs.join(" · ") : "");
@@ -522,15 +453,39 @@
   function renderFooter() {
     var footer = $("result-footer");
     if (!footer || !current) return;
+    if (current.meta.mine) {
+      footer.textContent = current.priceTime ? t("mine.footer", { time: current.priceTime }) : "";
+      return;
+    }
     var slug = current.meta.slug || (current.meta.key || "").replace(/^\d+-/, "");
     footer.innerHTML = (current.priceTime ? escapeHtml(t("footer.prices", { time: current.priceTime })) + " " : "") +
       escapeHtml(t("footer.list")) + ' <a href="https://pokecottage.com/pokemon-master-sets/' + encodeURIComponent(slug) +
       '" target="_blank" rel="noopener noreferrer">PokéCottage</a>. ' + escapeHtml(t("footer.rest"));
   }
 
+  // A null last, the rest high to low.
+  function byNumberDesc(x, y) {
+    if (x == null && y == null) return 0;
+    if (x == null) return 1;
+    if (y == null) return -1;
+    return y - x;
+  }
+
   function compareCards(mode) {
     function text(card, key) { return String(card[key] || "").toLowerCase(); }
+    var inner = compareSpecies(mode, text);
+    // In My binder, cards missing from the latest catalog go last.
     return function (a, b) {
+      return ((a.unmatched ? 1 : 0) - (b.unmatched ? 1 : 0)) || inner(a, b);
+    };
+  }
+
+  function compareSpecies(mode, text) {
+    return function (a, b) {
+      if (mode === "value") return byNumberDesc(a.mineValue, b.mineValue) || text(a, "name").localeCompare(text(b, "name"));
+      if (mode === "gain") return byNumberDesc(a.mineGain, b.mineGain) || byNumberDesc(a.mineValue, b.mineValue);
+      if (mode === "added") return String(b.mineAdded || "").localeCompare(String(a.mineAdded || ""));
+      if (mode === "dex") return (a.speciesNo || 0) - (b.speciesNo || 0) || String(a.released || "9").localeCompare(String(b.released || "9"));
       if (mode === "name") return text(a, "name").localeCompare(text(b, "name")) || text(a, "set").localeCompare(text(b, "set"));
       if (mode === "set") return text(a, "set").localeCompare(text(b, "set")) || text(a, "name").localeCompare(text(b, "name"));
       if (mode === "newest" || mode === "oldest") {
@@ -568,16 +523,26 @@
   function pickedVariants() {
     return Object.keys(filterState.variants).filter(function (k) { return filterState.variants[k]; });
   }
+  function pickedSpecies() {
+    return Object.keys(filterState.species || {}).filter(function (k) { return filterState.species[k]; });
+  }
+  function speciesName(key) {
+    var n = Core.speciesNumber(key);
+    var item = speciesByNumber[n];
+    return item ? item.name : String(key || "").replace(/^\d+-/, "").replace(/-/g, " ");
+  }
 
   // `skip` leaves one filter out, so a picker can count its own options. The
   // set list leaves out the typed text too: that narrows the list by name.
   function passes(card, skip) {
     var langOn = pickedLangs();
     var variantsOn = pickedVariants();
+    var speciesOn = pickedSpecies();
     var q = skip === "set" ? "" : filterState.query.trim().toLowerCase();
     var variant = cardVariant(card);
     var lower = variant.toLowerCase();
     return (!langOn.length || langOn.indexOf((card.lang || "").toUpperCase()) !== -1) &&
+      (skip === "species" || !speciesOn.length || speciesOn.indexOf(card.species) !== -1) &&
       (skip === "variant" || !variantsOn.length || variantsOn.indexOf(variant) !== -1) &&
       (!filterState.hideReverse || lower.indexOf("reverse") === -1 || lower.indexOf("holo") === -1) &&
       (skip === "set" || !filterState.set || cardSetKey(card) === filterState.set) &&
@@ -628,6 +593,23 @@
     return on.length === 1 ? on[0] : t("picker.variantsOn", { name: on[0], n: on.length - 1 });
   }
 
+  // My binder's Pokémon, by National Dex number, counted under the other filters.
+  function speciesOptions() {
+    var counts = {};
+    current.cards.forEach(function (card) {
+      if (card.species && passes(card, "species")) counts[card.species] = (counts[card.species] || 0) + 1;
+    });
+    pickedSpecies().forEach(function (k) { if (!counts[k]) counts[k] = 0; });
+    return Object.keys(counts).map(function (k) { return { key: k, n: counts[k], no: Core.speciesNumber(k), name: speciesName(k) }; })
+      .sort(function (a, b) { return a.no - b.no || a.key.localeCompare(b.key); });
+  }
+
+  function speciesLabel() {
+    var on = pickedSpecies();
+    if (!on.length) return t("mine.allSpecies");
+    return on.length === 1 ? speciesName(on[0]) : t("mine.speciesOn", { name: speciesName(on[0]), n: on.length - 1 });
+  }
+
   function pickerHead(titleKey, count, canClear) {
     return '<div class="picker-head"><p class="picker-title">' + escapeHtml(t(titleKey)) + "<span>" + escapeHtml(count) + "</span></p>" +
       (canClear ? '<button type="button" class="picker-clear" data-act="clear">' + escapeHtml(t("picker.clear")) + "</button>" : "") +
@@ -664,6 +646,17 @@
         });
         html += '<div class="picker-list is-sets">' + body + "</div>";
       }
+    } else if (pickerMode === "species") {
+      var kinds = speciesOptions();
+      html += pickerHead("picker.species", t("count.species", { n: num(kinds.length) }), pickedSpecies().length > 0);
+      html += kinds.length ? '<div class="picker-list is-species">' + kinds.map(function (s) {
+        var on = !!filterState.species[s.key];
+        var icon = s.no ? '<img class="pick-icon' + (s.no > ICON_LAST ? " is-big" : "") + '" src="' + escapeHtml(iconSrc(s.no)) +
+          '" alt="" width="40" height="30" draggable="false" onerror="this.style.visibility=\'hidden\'">' : "";
+        return '<button type="button" class="pick' + (on ? " is-on" : "") + '" data-key="' + escapeHtml(s.key) + '" aria-pressed="' + on + '">' +
+          '<span class="pick-tick" aria-hidden="true"></span>' + icon + '<span class="pick-name">' + escapeHtml(s.name) +
+          '</span><span class="pick-meta">' + escapeHtml((s.no ? "#" + String(s.no).padStart(3, "0") + " · " : "") + num(s.n)) + "</span></button>";
+      }).join("") + "</div>" : '<p class="picker-empty">' + escapeHtml(t("picker.none")) + "</p>";
     } else {
       var opts = variantOptions();
       html += pickerHead("picker.variants", t("count.variants", { n: num(opts.length) }), pickedVariants().length > 0);
@@ -681,6 +674,13 @@
   }
 
   function syncPickerButtons() {
+    var who = $("species-btn");
+    if (who) {
+      who.setAttribute("aria-expanded", pickerMode === "species" ? "true" : "false");
+      who.classList.toggle("is-open", pickerMode === "species");
+      who.classList.toggle("is-on", pickedSpecies().length > 0);
+      $("species-label").textContent = speciesLabel();
+    }
     var btn = $("variant-btn");
     if (btn) {
       btn.setAttribute("aria-expanded", pickerMode === "variants" ? "true" : "false");
@@ -716,7 +716,8 @@
     pickerMode = "";
     box.classList.remove("is-open");
     syncPickerButtons();
-    if (focusBack) (mode === "sets" ? $("filter") : $("variant-btn")).focus();
+    var back = mode === "sets" ? $("filter") : mode === "species" ? $("species-btn") : $("variant-btn");
+    if (focusBack && back) back.focus();
   }
 
   function bindPickers() {
@@ -750,6 +751,11 @@
       if (pickerMode === "variants") closePicker(false);
       else openPicker("variants");
     });
+    var who = $("species-btn");
+    if (who) who.addEventListener("click", function () {
+      if (pickerMode === "species") closePicker(false);
+      else openPicker("species");
+    });
     box.addEventListener("click", function (ev) {
       var act = ev.target.closest("[data-act]");
       if (act) {
@@ -758,6 +764,8 @@
           filterState.set = "";
           filterState.query = "";
           input.value = "";
+        } else if (pickerMode === "species") {
+          filterState.species = {};
         } else {
           filterState.variants = {};
         }
@@ -774,6 +782,9 @@
         input.value = off ? "" : key.split("|").slice(1).join("|");
         showCards(true);
         if (!off) { closePicker(false); input.focus({ preventScroll: true }); }
+      } else if (pickerMode === "species") {
+        filterState.species[key] = !filterState.species[key];
+        showCards(true);
       } else {
         filterState.variants[key] = !filterState.variants[key];
         showCards(true);
@@ -814,7 +825,7 @@
     if (!current) return;
     if (!binder || !$("binder")) { paintResult(); return; }
     var mode = $("sort") ? $("sort").value : "";
-    if (mode === "price-desc" || mode === "price-asc") showCards(false);
+    if (mode === "price-desc" || mode === "price-asc" || mode === "value" || mode === "gain") showCards(false);
     else binder.refresh();
   }
 
@@ -844,12 +855,16 @@
 
   function withDetails(card) {
     if (card.details || !current) return;
-    var key = current.meta.key;
+    var key = card.species || current.meta.key;
     loadDetails(key).then(function (map) {
-      if (!current || current.meta.key !== key) return;
+      if (!current) return;
       card.details = map ? map[card.id] || {} : {};
       if (activeCard === card) fillFacts(card);
     });
+  }
+
+  function cardSpeciesNo(card) {
+    return Number(card.speciesNo || (current && current.meta.number)) || 0;
   }
 
   function cardLangName(lang) {
@@ -877,7 +892,7 @@
     var iso = d.d || card.released || "";
     if (!hasDate({ released: iso })) return "";
     if (d.m) return escapeHtml(monthDate(iso));
-    var n = current ? Number(current.meta.number) || 0 : 0;
+    var n = cardSpeciesNo(card);
     var setStart = !d.d && (d.x || (n && !plausibleDate({ released: iso }, n)));
     return escapeHtml(cardDate(iso)) + (setStart ? '<span class="fact-sub">' + escapeHtml(t("fact.setStart")) + "</span>" : "");
   }
@@ -885,7 +900,7 @@
   function fillSheetText(card) {
     var lang = (card.lang || "").toUpperCase();
     var variant = (card.variant || card.rarity || "").trim();
-    var n = current ? Number(current.meta.number) || 0 : 0;
+    var n = cardSpeciesNo(card);
     $("sheet-tags").innerHTML =
       (lang ? '<span class="sheet-lang lang-' + escapeHtml(lang.toLowerCase()) + '">' + escapeHtml(cardLangName(lang)) + "</span>" : "") +
       // The catalog's variant names are English; lang keeps Turkish capitals (İ) off them.
@@ -962,6 +977,35 @@
     }
     fillSites(card);
     withDetails(card);
+    showMineSection(card);
+  }
+
+  // The card file's "In my binder" section. In a Pokémon's binder its cards
+  // are at hand for the printing switcher; in My binder the card's Pokémon
+  // file (and its market links) load when the card is pulled out.
+  function showMineSection(card) {
+    var mine = current && current.meta.mine;
+    Mine.showCard(card, {
+      species: card.species || (current && current.meta.key),
+      price: card.price || null,
+      cards: mine ? null : current && current.cards
+    });
+    if (!mine || !card.species) return;
+    Promise.all([
+      fetchSpeciesFile(card.species).catch(function () { return null; }),
+      card.linksLoaded ? null : fetch("links/" + encodeURIComponent(card.species) + ".json?v=20261116r3").then(function (res) {
+        return res.ok ? res.json() : {};
+      }).catch(function () { return {}; })
+    ]).then(function (parts) {
+      if (activeCard !== card) return;
+      if (parts[1] && !card.linksLoaded) {
+        Object.assign(card, parts[1][card.id] || {});
+        card.linksLoaded = true;
+        fillSites(card);
+        resolveCardLinks(card);
+      }
+      if (parts[0] && parts[0].cards) Mine.updateCard({ cards: parts[0].cards.map(function (c) { return Object.assign({}, c, { species: card.species }); }) });
+    });
   }
 
   // A logo tile per site. PriceCharting and Cardmarket open the exact card
@@ -1004,7 +1048,7 @@
     fillSites(card);
     var controller = new AbortController();
     var timeout = setTimeout(function () { controller.abort(); }, 30000);
-    var url = "api/" + endpoint + "?species=" + encodeURIComponent(current.meta.key) + "&card=" + encodeURIComponent(card.id);
+    var url = "api/" + endpoint + "?species=" + encodeURIComponent(card.species || current.meta.key) + "&card=" + encodeURIComponent(card.id);
     var request = local ? fetch(url, { signal: controller.signal }).then(function (res) {
       if (!res.ok) throw new Error("Card lookup " + res.status);
       return res.json();
@@ -1054,6 +1098,7 @@
     if (!activeCard || (animating && !instant)) return;
     var card = activeCard;
     activeCard = null;
+    Mine.hideCard();
     var overlay = $("overlay");
     var art = $("sheet-art");
     var img = art.querySelector("img");
@@ -1067,6 +1112,8 @@
       art.classList.remove("is-waiting", "is-landing");
       if (binder) binder.markOut(null);
       if (pocket && pocket.isConnected && !instant) pocket.focus({ preventScroll: true });
+      // My binder waits for the card to be put back before it re-files.
+      if (mineDirty && !instant && current && current.meta.mine) refileMine();
     }
     if (instant || !pocket || !img || art.classList.contains("is-empty")) {
       document.querySelectorAll(".card-fly").forEach(function (fly) { fly.remove(); });
@@ -1098,7 +1145,7 @@
     var present = [];
     document.querySelectorAll('#result .chip[data-filter="lang"]').forEach(function (c) {
       var value = c.getAttribute("data-value");
-      if (value) present.push(value);
+      if (value && !c.hidden) present.push(value);
     });
     var picked = list.filter(function (lang) { return present.indexOf(lang) !== -1; });
     if (picked.length === present.length) picked = [];
@@ -1114,7 +1161,7 @@
   }
 
   function bindToolbar() {
-    filterState = { langs: {}, variants: {}, set: "", hideReverse: false, query: "" };
+    filterState = { langs: {}, variants: {}, species: {}, set: "", hideReverse: false, query: "" };
     setLangs(savedLangs());
     document.querySelectorAll("#result .chip").forEach(function (chip) {
       chip.addEventListener("click", function () {
@@ -1375,7 +1422,7 @@
     current = null;
     titleName = "";
     document.title = t("title.home");
-    document.body.classList.remove("is-viewing");
+    document.body.classList.remove("is-viewing", "is-mine");
     $("result").innerHTML = "";
     if (history.replaceState) history.replaceState(null, "", location.pathname + location.search);
     if (speciesIndex.length) setStatus(null);
@@ -1413,6 +1460,10 @@
         return elapsed >= 50 ? " (" + (elapsed / 1000).toLocaleString(i18n.locale(), { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + " s)" : "";
       }
     });
+    if (current.meta.mine) {
+      scoreMineCards();
+      renderMineSummary();
+    }
     updateTiles();
     renderFooter();
     if (activeCard) fillPrice(activeCard);
@@ -1448,6 +1499,7 @@
     if (binder) binder.destroy();
     binder = null;
     current = null;
+    document.body.classList.remove("is-mine");
     setStatus("status.loading", { name: item.name });
     if (!coverReady) {
       $("result").innerHTML = closedBinder(item.name, "binder.loading", "is-loading");
@@ -1470,9 +1522,13 @@
       pendingOpen = 0;
       var data = parts[0];
       var savedLinks = parts[2] || {};
+      var speciesKey = data.key || item.key;
+      var speciesNo = Number(data.number || item.number) || 0;
+      // Each card names its own Pokémon, so My binder can mix them.
       var cards = (data.cards || []).map(function (c, i) {
-        return Object.assign({}, c, savedLinks[c.id] || {}, { ref: i });
+        return Object.assign({}, c, savedLinks[c.id] || {}, { ref: i, species: speciesKey, speciesNo: speciesNo });
       });
+      reconcileSpecies(data);
       current = {
         meta: {
           key: data.key || item.key,
@@ -1515,6 +1571,270 @@
       console.error(err);
     });
   }
+
+  /* ---- My binder ---- */
+
+  // The cards you own in one binder: a pocket per printing with all its
+  // copies, drawn from what was saved with them (collection-core.js), so no
+  // Pokémon file has to load. Prices come from the same TCGplayer service.
+  var MINE_KEY = "my-binder";
+  var mineDirty = false; // the collection changed while a card was out
+  var mineThemeNo = 0;
+  var catalogStamp = ""; // data/index.json's "updated"
+
+  function isMineHash(hash) { return decodeURIComponent(String(hash || "").replace(/^#/, "")) === MINE_KEY; }
+
+  function mineCards() {
+    var groups = {};
+    var order = [];
+    Store.model().all().forEach(function (c) {
+      if (!groups[c.card]) { groups[c.card] = []; order.push(c.card); }
+      groups[c.card].push(c);
+    });
+    return order.map(function (id) {
+      var copies = groups[id];
+      var s = copies[0].snap;
+      return {
+        id: id, ref: id, name: s.name, lang: s.lang, variant: s.variant, rarity: s.rarity,
+        set: [s.set, s.no].filter(Boolean).join(" · "), setName: s.set, cardNumber: s.no, released: s.released,
+        image: s.img, imageLarge: s.imgL || s.img, productId: s.pid, pidUnique: s.pidUnique,
+        tcgUrl: s.pid ? "https://www.tcgplayer.com/product/" + s.pid : "",
+        species: copies[0].species, speciesNo: Core.speciesNumber(copies[0].species),
+        mine: true, copies: copies,
+        unmatched: copies.some(function (c) { return c.unmatched; }),
+        mineAdded: copies.reduce(function (m, c) { return c.added > m ? c.added : m; }, "")
+      };
+    });
+  }
+
+  // Each pocket's value (every copy, my value first) and gain, for sorting.
+  function scoreMineCards() {
+    current.cards.forEach(function (card) {
+      var value = null;
+      var gain = null;
+      card.copies.forEach(function (c) {
+        var v = Core.unitValue(c, card.price);
+        if (v) value = (value || 0) + v.value * c.qty;
+        if (v && c.paid && c.paid.usd != null) gain = (gain || 0) + (v.value - c.paid.usd) * c.qty;
+      });
+      card.mineValue = value;
+      card.mineGain = gain;
+    });
+  }
+
+  // The Pokémon you own, most cards first: they print the cover, and the
+  // first one sits on the page slider.
+  function mineSpeciesNumbers() {
+    var qty = {};
+    Store.model().all().forEach(function (c) {
+      var n = Core.speciesNumber(c.species);
+      if (n) qty[n] = (qty[n] || 0) + c.qty;
+    });
+    return Object.keys(qty).map(Number).sort(function (a, b) { return qty[b] - qty[a] || a - b; }).slice(0, 40);
+  }
+
+  function renderMineSummary() {
+    if (!current || !current.meta.mine) return;
+    var byId = {};
+    current.cards.forEach(function (c) { byId[c.id] = c; });
+    var copies = Store.model().all();
+    var stats = Core.totals(copies, function (copy) { return byId[copy.card] ? byId[copy.card].price : null; });
+    stats.priceTime = current.priceTime;
+    stats.loading = !current.priceTime && current.cards.some(function (c) { return c.productId; });
+    stats.unmatched = copies.reduce(function (n, c) { return n + (c.unmatched ? c.qty : 0); }, 0);
+    Mine.renderSummary(stats);
+  }
+
+  function updateMineCount() {
+    var n = Store.model().count();
+    var chip = $("mine-count");
+    if (chip) {
+      chip.hidden = !n;
+      chip.textContent = num(n);
+    }
+    var link = document.querySelector(".mine-link");
+    if (link) link.setAttribute("aria-label", n ? t("nav.mineCount", { n: num(n) }) : t("nav.mine"));
+  }
+
+  function openMine() {
+    var token = ++loadToken;
+    mineDirty = false;
+    closeSheet(true);
+    closeDexCard(true);
+    hideSuggest();
+    setCoverMessage(null);
+    pendingOpen = 0;
+    titleName = "";
+    if (binder) binder.destroy();
+    binder = null;
+    current = null;
+    document.title = t("title.mine");
+    if (history.replaceState) history.replaceState(null, "", "#" + MINE_KEY);
+    loadFx().then(function () { if (token === loadToken) renderMineSummary(); });
+    // The prices saved last time go on at once, so the binder opens sorted
+    // by value; live ones follow.
+    Promise.all([Store.ready, Store.readPrices()]).then(function (parts) {
+      if (token !== loadToken) return;
+      var numbers = mineSpeciesNumbers();
+      mineThemeNo = numbers[0] || 0;
+      paintSpritePrint(numbers.length ? numbers : 0);
+      paintPokemonTheme(mineThemeNo);
+      var saved = parts[1];
+      current = {
+        meta: { key: MINE_KEY, mine: true, name: t("mine.title"), number: 0 },
+        cards: mineCards(),
+        payloads: (saved && saved.payloads) || {},
+        priced: 0,
+        priceTime: saved && saved.updatedAt ? formatIstanbul(saved.updatedAt) : ""
+      };
+      current.cards.forEach(function (c) {
+        c.price = applyPriceToCard(c, current.payloads, {});
+        if (c.price) current.priced++;
+      });
+      scoreMineCards();
+      mineDirty = false;
+      paintResult();
+      priceMine(token);
+      reconcileMine(token);
+    });
+  }
+
+  // Live prices for every card in My binder, kept for the next visit.
+  function priceMine(token) {
+    if (!current || !current.meta.mine) return;
+    var ids = current.cards.map(function (c) { return c.productId; }).filter(Boolean);
+    if (!ids.length) { renderMineSummary(); return; }
+    var base = current.payloads || {};
+    var t0 = Date.now();
+    current.fetching = true;
+    setStatus("status.fetching");
+    renderMineSummary();
+    fetchPrices(ids, function (partial, updatedAt) {
+      if (token !== loadToken) return;
+      applyFetchedPrices(Object.assign({}, base, partial), updatedAt, t0);
+    }).then(function (result) {
+      if (token !== loadToken || !current) return;
+      current.fetching = false;
+      var merged = Object.assign({}, base, result.prices);
+      var summary = applyFetchedPrices(merged, result.updatedAt, t0);
+      if (result.failed && summary) setStatus("status.partial", { n: summary.priced, time: summary.when }, true);
+      var keep = {};
+      ids.forEach(function (id) { if (merged[id]) keep[id] = merged[id]; });
+      if (Object.keys(result.prices).length) Store.writePrices(keep, result.updatedAt);
+    });
+  }
+
+  // The collection changed: file the cards again, keeping the page and the
+  // prices already fetched, and price any new product.
+  function refileMine() {
+    mineDirty = false;
+    if (!current || !current.meta.mine) return;
+    var payloads = current.payloads || {};
+    var wasEmpty = !current.cards.length;
+    current.cards = mineCards();
+    current.cards.forEach(function (c) { c.price = applyPriceToCard(c, payloads, {}); });
+    scoreMineCards();
+    // The language tabs and the Pokémon picker follow the cards: a tab whose
+    // last card went is hidden; a new language or a second Pokémon needs the
+    // toolbar drawn again.
+    var langs = uniqueValues(current.cards, "lang");
+    var tabLangs = [];
+    document.querySelectorAll('#result .chip[data-filter="lang"]').forEach(function (c) {
+      var value = c.getAttribute("data-value");
+      if (!value) return;
+      tabLangs.push(value);
+      c.hidden = langs.indexOf(value) === -1;
+    });
+    var redraw = langs.some(function (l) { return tabLangs.indexOf(l) === -1; }) ||
+      (uniqueValues(current.cards, "species").length > 1) !== !!$("species-btn");
+    if (wasEmpty !== !current.cards.length || (!binder && current.cards.length) || (binder && redraw)) {
+      if (!current.cards.length) {
+        setStatus(null);
+        paintSpritePrint(0);
+        paintPokemonTheme(0);
+      }
+      paintResult();
+      priceMine(loadToken);
+      return;
+    }
+    if (binder) setLangs(pickedLangs());
+    if (binder) showCards(false);
+    renderResultText();
+    renderMineSummary();
+    var missing = current.cards.filter(function (c) { return c.productId && !payloads[c.productId]; })
+      .map(function (c) { return c.productId; });
+    if (missing.length) {
+      var token = loadToken;
+      fetchPrices(missing).then(function (result) {
+        if (token !== loadToken || !current) return;
+        applyFetchedPrices(Object.assign({}, current.payloads, result.prices), result.updatedAt, 0);
+      });
+    }
+  }
+
+  // A Pokémon's file just loaded: keep your copies of its cards matched to it
+  // (docs/COLLECTION-PLAN.md §5). Nothing is ever removed.
+  function reconcileSpecies(data) {
+    Store.ready.then(function () {
+      var key = data && data.key;
+      if (!key) return;
+      var n = Number(data.number) || Core.speciesNumber(key);
+      var copies = Store.model().all().filter(function (c) {
+        return c.species === key || (n && Core.speciesNumber(c.species) === n);
+      });
+      if (!copies.length) return;
+      var patches = Core.reconcile(copies, data);
+      if (patches.length) Store.patch(patches);
+    });
+  }
+
+  // After a catalog rebuild, check every Pokémon you own cards of, two files
+  // at a time. The stamp is saved only when all of them were checked.
+  var reconciling = false;
+  function reconcileMine() {
+    var stamp = catalogStamp;
+    if (!stamp || reconciling || !speciesIndex.length || Store.model().doc.catalog === stamp) return;
+    reconciling = true;
+    var keys = [];
+    Store.model().all().forEach(function (c) { if (keys.indexOf(c.species) === -1) keys.push(c.species); });
+    var patches = [];
+    var failed = false;
+    var cursor = 0;
+    function next() {
+      if (cursor >= keys.length) return Promise.resolve();
+      var key = keys[cursor++];
+      var copies = Store.model().all().filter(function (c) { return c.species === key; });
+      var item = Core.speciesFor(key, speciesIndex);
+      if (!item) {
+        copies.forEach(function (c) { if (!c.unmatched) patches.push({ uid: c.uid, fields: { unmatched: true } }); });
+        return next();
+      }
+      return fetchSpeciesFile(item.key).then(function (data) {
+        patches = patches.concat(Core.reconcile(copies, data));
+      }).catch(function () { failed = true; }).then(next);
+    }
+    Promise.all([next(), next()]).then(function () {
+      reconciling = false;
+      if (patches.length || !failed) Store.patch(patches, failed ? "" : stamp);
+    });
+  }
+
+  Store.onChange(function () {
+    updateMineCount();
+    if (!current) return;
+    if (current.meta.mine) {
+      // A card is out: re-file once it is back, so its pocket stays put.
+      if (activeCard) {
+        mineDirty = true;
+        renderMineSummary();
+        renderResultText();
+        return;
+      }
+      refileMine();
+    } else if (binder) {
+      binder.refresh();
+    }
+  });
 
   function findByHash(hash) {
     var raw = decodeURIComponent((hash || "").replace(/^#/, "")).trim();
@@ -1701,9 +2021,12 @@
     ctx.restore();
   }
 
+  // featured: one Pokémon's number, a list of them (My binder), or 0 for the
+  // site's crew.
   function paintSpritePrint(featured) {
     var token = ++printToken;
-    var numbers = featured ? [featured] : PRINT_CREW;
+    var numbers = Array.isArray(featured) ? featured : featured ? [featured] : PRINT_CREW;
+    if (Array.isArray(featured)) featured = featured[0] || 0;
     Promise.all(numbers.map(loadIcon)).then(function (icons) {
       if (token !== printToken) return;
       var icon = {};
@@ -2534,8 +2857,12 @@
 
   // CardI18n has already swapped every data-i18n text; redraw the rest.
   function relabel() {
-    document.title = titleName ? t("title.species", { name: titleName }) : t("title.home");
+    document.title = current && current.meta.mine ? t("title.mine") : titleName ? t("title.species", { name: titleName }) : t("title.home");
+    if (current && current.meta.mine) current.meta.name = t("mine.title");
     renderStatus();
+    updateMineCount();
+    Mine.relabel();
+    renderMineSummary();
     renderCatalogCounts();
     renderResultText();
     renderFooter();
@@ -2560,11 +2887,23 @@
     showActive();
     watchCover();
     i18n.onChange(relabel);
-    setStatus("status.catalog");
+    Mine.init({ fxRate: function () { return fxRate; }, speciesName: speciesName });
+    Store.ready.then(updateMineCount);
+    document.addEventListener("click", function (ev) {
+      var link = ev.target.closest && ev.target.closest("[data-open-mine]");
+      if (!link || ev.button || ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.altKey) return;
+      ev.preventDefault();
+      if (current && current.meta.mine) $("result").scrollIntoView({ block: "start" });
+      else openMine();
+    });
+    // My binder needs no catalog to open.
+    if (isMineHash(location.hash)) openMine();
+    setStatus(isMineHash(location.hash) ? null : "status.catalog");
     fetch("data/index.json").then(function (res) {
       if (!res.ok) throw new Error("index " + res.status);
       return res.json();
     }).then(function (data) {
+      catalogStamp = data.updated || "";
       speciesIndex = data.species || data || [];
       catalogTotals = {
         species: speciesIndex.length,
@@ -2574,17 +2913,24 @@
         if (item.number && !speciesByNumber[item.number]) speciesByNumber[item.number] = item;
       });
       renderCatalogCounts();
+      if (isMineHash(location.hash)) {
+        // Names for the Pokémon picker, and a check against this catalog.
+        if (binder) syncPickers();
+        reconcileMine(loadToken);
+        return;
+      }
       setStatus(null);
       var fromHash = findByHash(location.hash);
       if (fromHash) pickSpecies(fromHash, { instant: true });
       else if ($("q").value.trim()) updateFromQuery(); // typed before the catalog arrived
     }).catch(function (err) {
-      setStatus("status.catalogFailed", null, true);
+      if (!isMineHash(location.hash)) setStatus("status.catalogFailed", null, true);
       console.error(err);
     });
     loadFx();
     window.addEventListener("hashchange", function () {
       if (!location.hash.replace(/^#/, "")) { if (!isHome()) goHome(false); return; }
+      if (isMineHash(location.hash)) { if (!(current && current.meta.mine)) openMine(); return; }
       var item = findByHash(location.hash);
       if (item && (!current || current.meta.key !== item.key)) pickSpecies(item, { instant: true });
     });
