@@ -12,7 +12,7 @@
   var formatUsd = root.PricePick.formatUsd;
   var $ = function (id) { return document.getElementById(id); };
 
-  var api = { fxRate: function () { return null; }, speciesName: function (key) { return key; }, filterTo: function () {} };
+  var api = { fxRate: function () { return null; }, speciesName: function (key) { return key; }, filterTo: function () {}, relink: function () {} };
   var history = null; // the saved price history, once read (Store.readHistory)
   // The summary card's drawer: which panel is open and each panel's choice.
   var shelf = { open: "", by: "set", range: "90", days: "7" };
@@ -182,7 +182,11 @@
     var otherSpecies = copies.filter(function (c) { return c.species !== shown.ctx.species; })[0];
     html += '<p class="mine-have"><span class="mine-have-tick" aria-hidden="true"></span>' + esc(plural("own.in", qty)) + "</p>";
     if (otherSpecies) html += '<p class="mine-note">' + esc(t("own.savedFrom", { name: api.speciesName(otherSpecies.species) })) + "</p>";
-    if (copies.some(function (c) { return c.unmatched; })) html += '<p class="mine-note is-warn">' + esc(t("own.unmatched")) + "</p>";
+    var lost = copies.filter(function (c) { return c.unmatched; })[0];
+    if (lost) {
+      html += '<p class="mine-note is-warn">' + esc(t("own.unmatched")) + "</p>" +
+        '<p class="mine-more"><button type="button" class="mine-textbtn" data-mine="relink" data-uid="' + esc(lost.uid) + '">' + esc(t("own.find")) + "</button></p>";
+    }
     html += '<ul class="mine-copies">' + copies.map(function (c) {
       var bits = [];
       if (c.paid) bits.push(t("own.paidEach", { price: money(c.paid.cur, c.paid.amount) }));
@@ -194,6 +198,12 @@
         '<span class="mine-copy-acts"><button type="button" class="mine-mini" data-mine="edit" data-uid="' + esc(c.uid) + '">' + esc(t("own.edit")) + "</button>" +
         '<button type="button" class="mine-mini" data-mine="remove" data-uid="' + esc(c.uid) + '">' + esc(t("own.remove")) + "</button></span></li>";
     }).join("") + "</ul>";
+    // No market price and no value of your own: say so, and offer one.
+    var bare = shown.ctx.waiting ? null : copies.filter(function (c) { return !core.unitValue(c, unit ? { value: unit } : null); })[0];
+    if (bare) {
+      html += '<p class="mine-note">' + esc(t("own.unpriced")) + ' <button type="button" class="mine-textbtn" data-mine="myvalue" data-uid="' +
+        esc(bare.uid) + '">' + esc(t("own.setValue")) + "</button></p>";
+    }
     if (valued) {
       var gain = paid ? paidValue - paid : 0;
       html += '<p class="mine-worth">' + esc(t("own.worth", { n: num(valued), value: formatUsd(Math.round(value * 100) / 100) })) +
@@ -262,7 +272,7 @@
     html += '<div class="mine-field"><label class="mine-field-label" for="' + id + '-date">' + esc(t("own.date")) + "</label>" +
       '<input type="date" id="' + id + '-date" name="bought" max="' + today() + '" value="' + esc(noDate ? "" : bought) + '"' + (noDate ? " disabled" : "") + ">" +
       '<label class="mine-check"><input type="checkbox" name="nodate"' + (noDate ? " checked" : "") + "><span>" + esc(t("own.dateUnknown")) + "</span></label></div>";
-    html += '<details class="mine-extra is-wide"' + (copy && (copy.value || copy.note) ? " open" : "") + "><summary>" + esc(t("own.extra")) + "</summary>" +
+    html += '<details class="mine-extra is-wide"' + (copy && (copy.value || copy.note) || slip.focus === "value" ? " open" : "") + "><summary>" + esc(t("own.extra")) + "</summary>" +
       '<div class="mine-extra-grid"><label class="mine-field"><span class="mine-field-label">' + esc(t("own.myValue")) + "</span>" +
       '<input name="value" inputmode="decimal" autocomplete="off" placeholder="$" value="' + esc(copy && copy.value ? copy.value : "") + '">' +
       '<span class="mine-field-help">' + esc(t("own.myValueHelp")) + "</span></label>" +
@@ -278,8 +288,8 @@
     var box = $("sheet-mine");
     if (!box || !shown) return;
     box.innerHTML = sectionHtml();
-    if (focus === "slip") {
-      var first = box.querySelector("select, input");
+    if (focus === "slip" || focus === "value") {
+      var first = box.querySelector(focus === "value" ? 'input[name="value"]' : "select, input");
       if (first) first.focus({ preventScroll: true });
       box.scrollIntoView({ block: "nearest" });
     } else if (focus) {
@@ -385,6 +395,8 @@
       var act = btn.getAttribute("data-mine");
       if (act === "add") { slip = { uid: "" }; render("slip"); }
       else if (act === "edit") { slip = { uid: btn.getAttribute("data-uid") }; render("slip"); }
+      else if (act === "myvalue") { slip = { uid: btn.getAttribute("data-uid"), focus: "value" }; render("value"); }
+      else if (act === "relink") api.relink(btn.getAttribute("data-uid"));
       else if (act === "cancel") { slip = null; render(".mine-add, .mine-textbtn"); }
       else if (act === "remove") removeCopies([btn.getAttribute("data-uid")]);
       else if (act === "remove-all") removeCopies(Store.model().copiesFor(shown.card).map(function (c) { return c.uid; }));
@@ -556,16 +568,19 @@
       html += '<div><dt>' + esc(t("sum.gain")) + '</dt><dd>—</dd><dd class="mine-sub">' + esc(t("sum.gainNone")) + "</dd></div>";
     }
     html += "</dl></div>";
+    // Notes that name a group of cards show just those cards when clicked.
     var cover = [];
-    if (s.loading) cover.push(t("sheet.priceLoading"));
+    if (s.loading) cover.push([t("sheet.priceLoading")]);
     else {
-      if (s.unpriced) cover.push(plural("sum.unpriced", s.unpriced));
-      if (s.gradedRaw) cover.push(plural("sum.raw", s.gradedRaw));
-      if (s.mine) cover.push(plural("sum.mine", s.mine));
-      if (s.unconverted) cover.push(plural("sum.unconverted", s.unconverted));
+      if (s.unpriced) cover.push([plural("sum.unpriced", s.unpriced), "noPrice"]);
+      if (s.gradedRaw) cover.push([plural("sum.raw", s.gradedRaw), "graded"]);
+      if (s.mine) cover.push([plural("sum.mine", s.mine)]);
+      if (s.unconverted) cover.push([plural("sum.unconverted", s.unconverted)]);
     }
-    if (s.unmatched) cover.push(plural("sum.unmatched", s.unmatched));
-    if (cover.length) html += '<div class="mine-sum-notes"><p>' + esc(cover.join(" · ")) + "</p></div>";
+    if (s.unmatched) cover.push([plural("sum.unmatched", s.unmatched), "unmatched"]);
+    if (cover.length) html += '<div class="mine-sum-notes"><p>' + cover.map(function (c) {
+      return c[1] ? '<button type="button" class="mine-note-link" data-sum="filter" data-kind="' + c[1] + '">' + esc(c[0]) + "</button>" : esc(c[0]);
+    }).join(" · ") + "</p></div>";
     if (s.cards) html += shelfTabsHtml() + (shelf.open ? '<div class="mine-shelf" id="mine-shelf" role="region" aria-label="' +
       esc(t(shelfLabel(shelf.open))) + '">' + shelfHtml(s) + "</div>" : "");
     var local = Store.model().doc.local;
@@ -826,7 +841,7 @@
       shelf[act] = btn.getAttribute("data-val");
       rerender('[data-sum="' + act + '"][data-val="' + shelf[act] + '"]');
     } else if (act === "filter") {
-      // A breakdown row: show just those cards in the binder below.
+      // A breakdown row or a note: show just those cards in the binder below.
       var kind = btn.getAttribute("data-kind");
       var key = btn.getAttribute("data-val");
       shelf.open = "";

@@ -489,6 +489,15 @@
     return patches;
   }
 
+  // "Find its printing" (§5, step 5): the fields that point a copy at the
+  // card you picked, and the fields that undo it. The old id goes to `moved`.
+  function relink(copy, card, species, counts) {
+    var fields = { card: card.id, species: species || copy.species, snap: snapOf(card, counts), unmatched: false };
+    if (card.id !== copy.card) fields.moved = (copy.moved || []).concat([copy.card]);
+    var undo = { card: copy.card, species: copy.species, snap: copy.snap, unmatched: !!copy.unmatched, moved: copy.moved || [] };
+    return { fields: fields, undo: undo };
+  }
+
   /* ---- what it is worth ---- */
 
   // One copy's value: "my value" if set, else the market price of its
@@ -896,6 +905,7 @@
     speciesFor: speciesFor,
     findCard: findCard,
     reconcile: reconcile,
+    relink: relink,
     unitValue: unitValue,
     totals: totals,
     parseAmount: parseAmount,

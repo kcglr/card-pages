@@ -1796,6 +1796,40 @@ body.is-mine .mine-count { background: #fbf7ef; }
 .mine-toast-undo { flex: none; min-height: 34px; padding: 0 14px; border: 0; border-radius: 6px; background: var(--sticker); color: #1f1a16; font: 800 13px/1 var(--font); cursor: pointer; }
 .mine-toast-undo:focus-visible { outline: 2px solid #fbf7ef; outline-offset: 2px; }
 
+/* "Find its printing": a sticker strip under a Pokémon's header while the
+   next tap picks the printing an unmatched card becomes. */
+.relink-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+  margin: 0 0 14px;
+  padding: 10px 12px 10px 16px;
+  border: 2px solid #1f1a16;
+  border-radius: 8px;
+  background: var(--sticker);
+  color: #1f1a16;
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, .35);
+}
+.relink-strip p { flex: 1 1 260px; margin: 0; font-size: 14px; font-weight: 750; line-height: 1.35; }
+.relink-strip .chip { background: #fbf7ef; color: #1f1a16; border-color: #1f1a16; }
+.relink-strip .chip:focus-visible { outline: 3px solid #1f1a16; outline-offset: 2px; }
+
+/* The summary's notes that show a group of cards. */
+.mine-note-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  text-decoration: underline 2px #d3c4aa;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.mine-note-link:hover { text-decoration-color: #1f1a16; }
+.mine-note-link:focus-visible { outline: none; border-radius: 2px; box-shadow: 0 0 0 3px var(--sticker); }
+
 /* My binder's summary: a cream index card with the total on a sticker. */
 .mine-summary {
   --px: 3px;

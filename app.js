@@ -263,12 +263,15 @@
 
   var binder = null;
   var animating = false;
-  var filterState = { langs: {}, variants: {}, species: {}, set: "", hideReverse: false, own: "", query: "" };
+  var filterState = { langs: {}, variants: {}, species: {}, set: "", hideReverse: false, own: "", query: "", graded: false, noPrice: false, unmatched: false };
   var LANG_STORE = "pullfolio.langs";
   // "Mark cards I own" (collect mode): taps mark pockets instead of pulling
   // cards out. It stays on from one Pokémon's binder to the next until it is
   // turned off or the page is reloaded.
   var collecting = false;
+  // "Find its printing" (plan §5, step 5): { uid, name } while the next tap in
+  // a Pokémon's binder picks the card an unmatched copy becomes.
+  var relinking = null;
   var COLLECT_ICON = '<svg class="collect-tick" viewBox="0 0 7 6" shape-rendering="crispEdges" aria-hidden="true"><path fill="currentColor" ' +
     'd="M6 0h1v1H6zM5 1h2v1H5zM0 2h1v1H0zM4 2h2v1H4zM0 3h2v1H0zM3 3h2v1H3zM1 4h3v1H1zM2 5h1v1H2z"/></svg>';
 
@@ -287,7 +290,7 @@
     var mine = current && current.meta.mine;
     // In a Pokémon's binder: collect mode, then Owned and Missing (the
     // master-set checklist). My binder holds only cards you own.
-    var chips = (mine ? "" :
+    var chips = (mine ? mineChips(cards) :
       '<button type="button" class="chip collect-chip" data-filter="collect" aria-pressed="false">' + COLLECT_ICON + said("span", "collect.mode") + "</button>" +
       said("button", "filter.owned", 'type="button" class="chip" data-filter="own" data-value="owned" aria-pressed="false"') +
       said("button", "filter.missing", 'type="button" class="chip" data-filter="own" data-value="missing" aria-pressed="false"')) +
@@ -322,6 +325,37 @@
         '<div class="picker" id="picker"><div class="picker-clip"><div class="picker-card" id="picker-card"></div></div></div>' +
       "</div>"
     );
+  }
+
+  // My binder's chips: "Graded only" when you have a slab, "No price"
+  // always, and "Not in the catalog" while any card is unmatched (§4.6, §5).
+  var MINE_CHIPS = [["graded", "filter.graded"], ["noPrice", "filter.noPrice"], ["unmatched", "filter.unmatched"]];
+  function mineChipKinds(cards) {
+    return MINE_CHIPS.filter(function (m) {
+      if (m[0] === "graded") return cards.some(isGradedCard);
+      if (m[0] === "unmatched") return cards.some(function (c) { return c.unmatched; });
+      return true;
+    }).map(function (m) { return m[0]; });
+  }
+  function mineChips(cards) {
+    var kinds = mineChipKinds(cards);
+    return MINE_CHIPS.filter(function (m) { return kinds.indexOf(m[0]) !== -1; }).map(function (m) {
+      return said("button", m[1], 'type="button" class="chip" data-filter="mine" data-value="' + m[0] + '" aria-pressed="false"');
+    }).join("");
+  }
+  function syncMineChips() {
+    document.querySelectorAll('#result .chip[data-filter="mine"]').forEach(function (chip) {
+      var on = !!filterState[chip.getAttribute("data-value")];
+      chip.classList.toggle("is-on", on);
+      chip.setAttribute("aria-pressed", on ? "true" : "false");
+    });
+  }
+  function isGradedCard(card) {
+    return (card.copies || []).some(function (c) { return c.cond && c.cond.kind === "graded"; });
+  }
+  // Not counted in the total: a copy with neither a market price nor your value.
+  function isUnpricedCard(card) {
+    return (card.copies || []).some(function (c) { return !Core.unitValue(c, card.price); });
   }
 
   // Language filters are the divider tabs on the binder's top edge. "All"
@@ -408,8 +442,9 @@
           '<p class="result-dex" id="result-dex"></p>' + title +
           '<p class="subtitle" id="result-sub"></p>' + (mine ? "" : '<div class="own-progress" id="own-progress" hidden></div>') +
           '<p class="status result-status" id="result-status"></p></div>' +
-        (mine ? "" : said("p", "result.hint", 'class="result-hint"')) +
+        (mine || relinking ? "" : said("p", "result.hint", 'class="result-hint"')) +
       "</header>" +
+      (relinking && !mine ? relinkStripHtml() : "") +
       (mine && cards.length ? '<section class="mine-summary" id="mine-summary"' + saidAttr("aria-label", "sum.value") + "></section>" : "") +
       (mine && !cards.length ? '<div class="welcome-state mine-empty-state"><div class="closed-binder"><span class="cover-tape">' + escapeHtml(t("mine.title")) +
         "</span></div>" + Mine.emptyHtml() + "</div>" :
@@ -422,6 +457,8 @@
     renderStatus();
     if (mine) renderMineSummary();
     $("result").querySelector("[data-go-home]").addEventListener("click", function () { goHome(true); });
+    var cancelRelink = $("result").querySelector("[data-relink-cancel]");
+    if (cancelRelink) cancelRelink.addEventListener("click", function () { endRelink(); });
     if (binder) binder.destroy();
     binder = null;
     if (mine && !cards.length) {
@@ -480,7 +517,8 @@
     if (!current || !$("count")) return;
     var total = current.cards.length;
     var shown = current.shown == null ? total : current.shown;
-    $("count").textContent = shown === total ? countText("count.cards", total) : t("count.of", { n: num(shown), total: num(total) });
+    $("count").textContent = shown === total ? countText(current.meta.mine ? "count.printings" : "count.cards", total) :
+      t("count.of", { n: num(shown), total: num(total) });
   }
 
   function renderFooter() {
@@ -580,6 +618,9 @@
       (!filterState.hideReverse || lower.indexOf("reverse") === -1 || lower.indexOf("holo") === -1) &&
       (skip === "own" || !filterState.own || (filterState.own === "owned") === (Store.model().qtyFor(card) > 0)) &&
       (skip === "set" || !filterState.set || cardSetKey(card) === filterState.set) &&
+      (!filterState.graded || isGradedCard(card)) &&
+      (!filterState.noPrice || isUnpricedCard(card)) &&
+      (!filterState.unmatched || !!card.unmatched) &&
       (!q || searchBlob(card).indexOf(q) !== -1);
   }
 
@@ -955,7 +996,7 @@
       var waiting = !!current && !current.priceTime;
       box.className = "sheet-price is-none" + (waiting ? " is-busy" : "");
       box.innerHTML = '<div class="price-tag"><span class="price-kind">' + escapeHtml(t(waiting ? "sheet.priceLoading" : "sheet.noPrice")) + "</span></div>" +
-        (waiting ? "" : '<p class="price-meta">' + escapeHtml(t("sheet.noPriceNote")) + "</p>");
+        (waiting ? "" : '<p class="price-meta">' + escapeHtml(t(card.productId ? "sheet.noPriceNote" : "sheet.noProduct")) + "</p>");
       return;
     }
     var lira = formatTry(p.value, fxRate);
@@ -1023,6 +1064,7 @@
     Mine.showCard(card, {
       species: card.species || (current && current.meta.key),
       price: card.price || null,
+      waiting: !card.price && !!card.productId && !!current && !current.priceTime,
       cards: mine ? null : current && current.cards
     });
     if (!mine || !card.species) return;
@@ -1101,8 +1143,51 @@
   // A tap on a pocket: in collect mode it marks the card, otherwise the card
   // is pulled out.
   function pickPocket(card, pocket) {
-    if (collecting && current && !current.meta.mine) collectTap(card);
+    if (relinking && current && !current.meta.mine) relinkTap(card);
+    else if (collecting && current && !current.meta.mine) collectTap(card);
     else pullCard(card, pocket);
+  }
+
+  // "Vaporeon (Gem Pack 001, Standard)": the copy being given a printing.
+  function relinkName(snap) {
+    var where = [[snap.set, snap.no].filter(Boolean).join(" "), snap.variant].filter(Boolean).join(", ");
+    return (snap.name || t("card.fallback")) + (where ? " (" + where + ")" : "");
+  }
+  function relinkStripHtml() {
+    return '<div class="relink-strip" id="relink-strip" role="status"><p>' + escapeHtml(t("relink.strip", { name: relinking.name })) + "</p>" +
+      '<button type="button" class="chip" data-relink-cancel>' + escapeHtml(t("relink.cancel")) + "</button></div>";
+  }
+  // Opens the copy's Pokémon (found by Dex number if its key was renamed);
+  // the strip stays from binder to binder until a pick or Cancel.
+  function startRelink(uid) {
+    var copy = Store.model().get(uid);
+    if (!copy) return;
+    relinking = { uid: uid, name: relinkName(copy.snap) };
+    closeSheet(true);
+    var item = speciesIndex.length ? Core.speciesFor(copy.species, speciesIndex) : null;
+    if (item) {
+      if (history.pushState) history.pushState(null, "", "#" + encodeURIComponent(item.slug || item.key));
+      pickSpecies(item, { instant: true });
+    } else {
+      goHome(true);
+      Mine.toast(t("relink.lost"));
+    }
+  }
+  function endRelink() {
+    relinking = null;
+    var strip = $("relink-strip");
+    if (strip) strip.remove();
+  }
+  function relinkTap(card) {
+    if (!card || activeCard || animating) return;
+    var copy = Store.model().get(relinking.uid);
+    var old = relinking.name;
+    endRelink();
+    if (!copy) return;
+    var r = Core.relink(copy, card, card.species || current.meta.key, Core.pidCounts(current.cards));
+    if (Store.update(copy.uid, r.fields, "relink")) {
+      Mine.toast(t("relink.done", { old: old, name: tapName(card) }), function () { Store.update(copy.uid, r.undo, "relink"); });
+    }
   }
 
   // "Vaporeon · Jungle 12/64 · Holo": which printing a tap marked.
@@ -1250,10 +1335,11 @@
   }
 
   function bindToolbar() {
-    filterState = { langs: {}, variants: {}, species: {}, set: "", hideReverse: false, own: "", query: "" };
+    filterState = { langs: {}, variants: {}, species: {}, set: "", hideReverse: false, own: "", query: "", graded: false, noPrice: false, unmatched: false };
     setLangs(savedLangs());
     syncCollect();
     syncOwnChips();
+    syncMineChips();
     document.querySelectorAll("#result .chip").forEach(function (chip) {
       chip.addEventListener("click", function () {
         var kind = chip.getAttribute("data-filter");
@@ -1270,6 +1356,9 @@
         if (kind === "own") {
           filterState.own = filterState.own === value ? "" : value;
           syncOwnChips();
+        } else if (kind === "mine") {
+          filterState[value] = !filterState[value];
+          syncMineChips();
         } else if (kind === "lang") {
           var list = pickedLangs();
           if (!value) list = [];
@@ -1569,7 +1658,10 @@
     }
     updateTiles();
     renderFooter();
-    if (activeCard) fillPrice(activeCard);
+    if (activeCard) {
+      fillPrice(activeCard);
+      Mine.updateCard({ price: activeCard.price || null, waiting: false });
+    }
     return { priced: priced, elapsed: elapsed, when: when };
   }
 
@@ -1764,6 +1856,7 @@
   function openMine() {
     var token = ++loadToken;
     mineDirty = false;
+    relinking = null;
     closeSheet(true);
     closeDexCard(true);
     hideSuggest();
@@ -1848,6 +1941,8 @@
       chip.classList.remove("is-on");
       chip.setAttribute("aria-pressed", "false");
     });
+    MINE_CHIPS.forEach(function (m) { filterState[m[0]] = kind === m[0]; });
+    syncMineChips();
     var input = $("filter");
     if (input) input.value = "";
     setLangs(kind === "lang" ? [key] : []);
@@ -1883,8 +1978,10 @@
       tabLangs.push(value);
       c.hidden = langs.indexOf(value) === -1;
     });
+    var chipsShown = [].map.call(document.querySelectorAll('#result .chip[data-filter="mine"]'), function (c) { return c.getAttribute("data-value"); });
     var redraw = langs.some(function (l) { return tabLangs.indexOf(l) === -1; }) ||
-      (uniqueValues(current.cards, "species").length > 1) !== !!$("species-btn");
+      (uniqueValues(current.cards, "species").length > 1) !== !!$("species-btn") ||
+      mineChipKinds(current.cards).join() !== chipsShown.join();
     if (wasEmpty !== !current.cards.length || (!binder && current.cards.length) || (binder && redraw)) {
       if (!current.cards.length) {
         setStatus(null);
@@ -3028,7 +3125,7 @@
     showActive();
     watchCover();
     i18n.onChange(relabel);
-    Mine.init({ fxRate: function () { return fxRate; }, speciesName: speciesName, filterTo: filterMineTo });
+    Mine.init({ fxRate: function () { return fxRate; }, speciesName: speciesName, filterTo: filterMineTo, relink: startRelink });
     Store.ready.then(updateMineCount);
     document.addEventListener("click", function (ev) {
       var link = ev.target.closest && ev.target.closest("[data-open-mine]");
