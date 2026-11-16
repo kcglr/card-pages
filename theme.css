@@ -627,16 +627,23 @@ body.is-viewing .search-hero { display: none; }
 .dex-open svg { flex: none; width: 18px; height: 18px; transition: translate .15s ease; }
 .dex-open:hover, .dex-open:focus-visible { background: #1f1a16; outline: none; }
 .dex-open:hover svg { translate: 3px 0; }
-/* The line from the card to its sprite: a yellow cable with an ink edge and a
-   hard shadow. Light runs along it from the sprite into the card, where it
-   ends in a plug (the #dex-plug marker in index.html). */
+/* The line from the card to its sprite: a yellow cable with an ink edge, a
+   lit top edge and a hard shadow, laid in a soft dark band so it reads over
+   the print. It leaves the sprite from a socket (#dex-jack in index.html) and
+   ends in a two-prong plug pushed into the card (#dex-plug). Pulses in the
+   Pokémon's colour (--glow) step along it from the sprite to the card. */
 .dex-link { position: absolute; inset: 0; z-index: 5; display: none; width: 100%; height: 100%; overflow: visible; pointer-events: none; filter: drop-shadow(3px 3px 0 rgba(0, 0, 0, .5)); }
 .dex-link.is-on { display: block; }
 .dex-link polyline { fill: none; stroke-linejoin: miter; stroke-linecap: square; shape-rendering: crispEdges; }
+.dex-link-halo { stroke: rgba(12, 11, 10, .4); stroke-width: 16; stroke-linecap: butt; }
 .dex-link-edge { stroke: #1f1a16; stroke-width: 8; }
 .dex-link-line { stroke: #ffd43b; stroke-width: 4; }
-.dex-link .dex-link-glint { stroke: #fff8d6; stroke-width: 2; stroke-linecap: butt; stroke-dasharray: 4 12; animation: dex-flow .55s linear infinite; }
-@keyframes dex-flow { from { stroke-dashoffset: 16; } to { stroke-dashoffset: 0; } }
+.dex-link-shine { stroke: #fff6c9; stroke-width: 1; transform: translate(-1px, -1px); }
+.dex-link .dex-link-glint, .dex-link .dex-link-spark { stroke-linecap: butt; stroke-dasharray: 8 32; animation: dex-flow 1s steps(10, end) infinite; }
+.dex-link .dex-link-glint { stroke: rgb(var(--glow, 255 248 214)); stroke-width: 4; }
+.dex-link .dex-link-spark { stroke: #fff; stroke-width: 2; }
+.dex-link .dex-link-jack, .dex-link .dex-link-plug { stroke: none; }
+@keyframes dex-flow { from { stroke-dashoffset: 40; } to { stroke-dashoffset: 0; } }
 /* The chosen sprite hops, glows in its own colour (--glow, read from the
    sprite by app.js) and is framed by pixel corner brackets that snap on, then
    tick in and out like a game's cursor. */
@@ -653,9 +660,9 @@ body.is-viewing .search-hero { display: none; }
 .cover-sprite.is-chosen::after {
   content: "";
   position: absolute;
-  inset: -18px -16px -12px;
+  inset: -10px -14px -18px;
   z-index: -1;
-  background: radial-gradient(closest-side, rgb(var(--glow, 255 212 59) / .62), rgb(var(--glow, 255 212 59) / .2) 60%, rgb(var(--glow, 255 212 59) / 0));
+  background: radial-gradient(closest-side, rgb(var(--glow, 255 212 59) / .42), rgb(var(--glow, 255 212 59) / .13) 60%, rgb(var(--glow, 255 212 59) / 0));
   animation: glow-in .3s ease-out both;
 }
 @keyframes reticle-snap { from { inset: -24px; opacity: 0; } }
@@ -704,7 +711,7 @@ body.is-viewing .search-hero { display: none; }
 .toolbar { position: static; margin: 0 0 26px; padding: 0; border: 0; background: none; backdrop-filter: none; -webkit-backdrop-filter: none; }
 .toolbar-row { gap: 10px; flex-wrap: wrap; }
 .toolbar-row.wraps { margin-top: 10px; }
-.sort-wrap select, .variant-wrap select, .search-wrap input {
+.sort-wrap select, .search-wrap input, .picker-btn {
   height: 40px;
   border: 2px solid var(--edge);
   border-radius: 8px;
@@ -714,12 +721,106 @@ body.is-viewing .search-hero { display: none; }
   font-weight: 600;
   letter-spacing: 0;
 }
-.sort-wrap select, .variant-wrap select { padding: 0 34px 0 12px; }
-.variant-wrap select { max-width: 260px; }
-.search-wrap { flex: 1 1 220px; max-width: 340px; }
+.sort-wrap select { padding: 0 34px 0 12px; }
+.search-wrap { flex: 1 1 240px; max-width: 360px; }
 .search-wrap input { padding: 0 12px; font-weight: 500; }
 .search-wrap input::placeholder { color: var(--soft); }
-.sort-wrap select:focus, .variant-wrap select:focus, .search-wrap input:focus { outline: 3px solid var(--accent); outline-offset: 2px; }
+/* Focus is the sticker yellow, not the browser's blue ring. */
+.sort-wrap select:focus-visible, .search-wrap input:focus, .picker-btn:focus-visible {
+  outline: none;
+  border-color: var(--sticker);
+  box-shadow: 0 0 0 3px rgb(255 212 59 / .28);
+}
+/* A picked set or variant shows in sticker yellow. */
+.search-wrap input.is-set, .picker-btn.is-on { border-color: var(--sticker); background-color: var(--sticker); color: #1f1a16; font-weight: 750; }
+.search-wrap input.is-set::-webkit-search-cancel-button { filter: brightness(0); }
+.picker-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 280px;
+  padding: 0 12px;
+  font-family: var(--font);
+  cursor: pointer;
+}
+.picker-btn-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.picker-caret { flex: none; width: 12px; height: 8px; transition: rotate .2s ease; }
+.picker-btn.is-open .picker-caret { rotate: 180deg; }
+
+/* The shelf under the toolbar: an index card that lists the Pokémon's sets
+   (by language, newest first) or its variants, with a count on each. It grows
+   in place and pushes the binder down, so the binder is never covered. */
+.picker {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  visibility: hidden;
+  transition: grid-template-rows .28s cubic-bezier(.2, .8, .25, 1), margin-top .28s cubic-bezier(.2, .8, .25, 1), opacity .18s ease, visibility 0s linear .28s;
+}
+.picker.is-open {
+  grid-template-rows: 1fr;
+  margin-top: 14px;
+  opacity: 1;
+  visibility: visible;
+  transition: grid-template-rows .28s cubic-bezier(.2, .8, .25, 1), margin-top .28s cubic-bezier(.2, .8, .25, 1), opacity .18s ease;
+}
+.picker-clip { min-height: 0; overflow: hidden; padding: 0 6px 6px 0; } /* room for the hard shadow */
+.picker-card { --fill: #fbf7ef; --ink: #1f1a16; padding: var(--px); color: #1f1a16; filter: drop-shadow(5px 5px 0 rgba(0, 0, 0, .5)); }
+.picker-head { display: flex; align-items: center; gap: 10px; padding: 8px 8px 8px 16px; border-bottom: 2px dashed #d3c4aa; }
+.picker-title { flex: 1; margin: 0; font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.picker-title span { margin-left: 8px; color: #66584b; font-weight: 700; letter-spacing: .02em; text-transform: none; }
+.picker-clear { padding: 5px 11px; border: 2px solid #1f1a16; border-radius: 999px; background: #fffdf8; color: #1f1a16; font: 750 12px/1 var(--font); cursor: pointer; }
+.picker-clear:hover, .picker-clear:focus-visible { background: var(--sticker); outline: none; }
+.picker-close { display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 0; background: none; color: #66584b; font: 700 22px/1 var(--font); cursor: pointer; }
+.picker-close:hover, .picker-close:focus-visible { color: #c8302a; outline: none; }
+.picker-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  align-content: start;
+  gap: 6px 8px;
+  max-height: min(250px, 40vh);
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 10px 12px 12px 16px;
+  scrollbar-width: thin;
+  scrollbar-color: #d3c4aa transparent;
+}
+.picker-group { grid-column: 1 / -1; display: flex; align-items: center; gap: 8px; margin: 6px 0 0; color: #66584b; font-size: 12px; font-weight: 700; }
+.picker-group:first-child { margin-top: 0; }
+.picker-lang { padding: 2px 7px; border: 2px solid #1f1a16; border-radius: 4px; background: var(--tab, #f4ecdc); color: #1f1a16; font-size: 10.5px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+.lang-eng { --tab: #a8c2ff; }
+.lang-jp { --tab: #ffab9d; }
+.lang-cn { --tab: #ffd970; }
+.pick {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  min-height: 40px;
+  padding: 6px 10px;
+  border: 2px solid #1f1a16;
+  border-radius: 6px;
+  background: #fffdf8;
+  color: #1f1a16;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: transform .12s ease, box-shadow .12s ease, background-color .12s ease;
+}
+.is-sets .pick { padding-left: 16px; }
+.is-sets .pick::before { content: ""; position: absolute; top: 0; bottom: 0; left: 0; width: 6px; border-right: 2px solid #1f1a16; border-radius: 3px 0 0 3px; background: var(--tab, #e8dec9); }
+.pick-name { flex: 1; min-width: 0; font-size: 13.5px; font-weight: 700; line-height: 1.2; overflow-wrap: anywhere; }
+.pick-meta { flex: none; color: #66584b; font-size: 12px; font-weight: 650; font-variant-numeric: tabular-nums; }
+.pick:hover, .pick:focus-visible { transform: translate(-1px, -1px); box-shadow: 2px 2px 0 #1f1a16; outline: none; }
+.pick:focus-visible { background: #fff3bf; }
+.pick.is-on { background: var(--sticker); box-shadow: 2px 2px 0 #1f1a16; }
+.pick.is-on .pick-meta { color: #1f1a16; }
+.pick-tick { flex: none; width: 14px; height: 14px; border: 2px solid #1f1a16; border-radius: 2px; background: #fffdf8; }
+.pick.is-on .pick-tick {
+  background: #1f1a16 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M1.5 5.2 4 7.6 8.6 2.4' fill='none' stroke='%23fbf7ef' stroke-width='2'/%3E%3C/svg%3E") center / 10px no-repeat;
+}
+.picker-empty { margin: 0; padding: 14px 16px; color: #66584b; font-size: 13.5px; }
 .count { font-size: 14px; font-weight: 700; color: var(--muted); }
 .chip {
   min-height: 34px;
@@ -1112,13 +1213,13 @@ body.is-viewing .search-hero { display: none; }
   width: 210%;
   aspect-ratio: .88;
   translate: -50% -50%;
-  background: radial-gradient(closest-side, rgb(var(--poke)) 40%, rgb(var(--poke) / .5) 60%, rgb(var(--poke) / .14) 80%, transparent);
+  background: radial-gradient(closest-side, rgb(var(--poke) / .5) 38%, rgb(var(--poke) / .2) 60%, rgb(var(--poke) / .05) 80%, transparent);
   pointer-events: none;
   animation: spot-in .7s ease .2s backwards;
 }
 @keyframes spot-in { from { opacity: 0; scale: .6; } }
 
-.sheet-info, .price-tag {
+.sheet-info, .price-tag, .picker-card {
   --px: 3px;
   background:
     linear-gradient(var(--ink), var(--ink)) var(--px) 0 / calc(100% - 2 * var(--px)) var(--px) no-repeat,
@@ -1191,9 +1292,6 @@ body.is-viewing .search-hero { display: none; }
   letter-spacing: .06em;
   text-transform: uppercase;
 }
-.sheet-lang.lang-eng { --tab: #a8c2ff; }
-.sheet-lang.lang-jp { --tab: #ffab9d; }
-.sheet-lang.lang-cn { --tab: #ffd970; }
 .rarity {
   display: inline-block;
   padding: 4px 9px;
@@ -1347,8 +1445,10 @@ body.is-viewing .search-hero { display: none; }
   .result-header { gap: 10px; }
   .result-art { width: 80px; height: 80px; margin: -8px -4px -8px -8px; }
   .toolbar-row { gap: 8px; }
-  .sort-wrap, .variant-wrap { flex: 1 1 140px; min-width: 0; }
-  .sort-wrap select, .variant-wrap select { width: 100%; max-width: none; height: 44px; }
+  .sort-wrap, .picker-btn { flex: 1 1 140px; min-width: 0; }
+  .sort-wrap select { width: 100%; max-width: none; height: 44px; }
+  .picker-btn { max-width: none; height: 44px; justify-content: space-between; }
+  .picker-list { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); max-height: 42vh; }
   .search-wrap { order: 3; flex: 1 1 100%; max-width: none; }
   .search-wrap input { height: 44px; font-size: 16px; }
   .chip { min-height: 36px; }
@@ -1387,7 +1487,8 @@ body.is-viewing .search-hero { display: none; }
   .search-cover.is-loading, .cover-sprite.is-active, .search-cover.is-picked .cover-sprite, .cover-list, .cover-sprite.is-chosen::before, .dex-line, .dex-chart.is-loading,
   .welcome-state.is-loading .closed-binder, .overlay.is-on, .sheet-info, .bpage.is-dealing .pocket, .sheet-art.is-landing, .sheet-art.is-landing::before { animation: none; }
   .pocket[data-key]:hover .pk-card, .closed-binder:hover { transform: none; }
-  .cover-sprite.is-chosen::after, .cover-sprite.is-chosen img, .dex-link .dex-link-glint, .cover-match.is-busy::after { animation: none; }
+  .cover-sprite.is-chosen::after, .cover-sprite.is-chosen img, .dex-link .dex-link-glint, .dex-link .dex-link-spark, .cover-match.is-busy::after { animation: none; }
+  .picker, .picker.is-open, .pick, .picker-caret { transition: none; }
   .sheet-stage::before, .sheet-info::before, .sheet-part, .fact-wait, .sheet-price.is-busy .price-kind::after, .site.is-busy .site-note::after { animation: none; }
   .site { transition: none; }
   .site:hover, .site:focus-visible { transform: none; }

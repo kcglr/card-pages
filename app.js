@@ -372,7 +372,7 @@
 
   var binder = null;
   var animating = false;
-  var filterState = { langs: {}, rarities: {}, hideReverse: false, variant: "", query: "" };
+  var filterState = { langs: {}, variants: {}, set: "", hideReverse: false, query: "" };
   var LANG_STORE = "pullfolio.langs";
 
   // Markup for text that follows the site language: CardI18n.apply() re-reads
@@ -384,26 +384,13 @@
     return " " + attr + '="' + escapeHtml(t(key)) + '" data-i18n-attr="' + attr + ":" + key + '"';
   }
 
+  // Sort, the variant button and the set field; the shelf for the last two
+  // opens under them (see the pickers below).
   function renderToolbar(cards) {
-    var rarities = uniqueValues(cards, "rarity");
-    var variants = uniqueValues(cards, "variant");
-    var useVariantSelect = variants.length > 8 || rarities.length > 8;
-    var chips = "";
-    if (!useVariantSelect) {
-      chips += rarities.map(function (r) {
-        return '<button type="button" class="chip rarity-chip ' + rarityClass(r) + '" data-filter="rarity" data-value="' + escapeHtml(r) + '" aria-pressed="false">' + escapeHtml(r) + "</button>";
-      }).join("");
-    }
-    if (hasReverse(cards)) {
-      chips += said("button", "toolbar.hideReverse", 'type="button" class="chip" data-filter="hide-reverse" data-value="1" aria-pressed="false"');
-    }
-    var variantHtml = "";
-    if (useVariantSelect && variants.length) {
-      variantHtml = '<label class="variant-wrap">' + said("span", "toolbar.variant", 'class="sr-only"') +
-        '<select id="variant">' + said("option", "toolbar.allVariants", 'value="" selected') +
-        variants.map(function (v) { return '<option value="' + escapeHtml(v) + '">' + escapeHtml(v) + "</option>"; }).join("") +
-        "</select></label>";
-    }
+    var chips = hasReverse(cards) ? said("button", "toolbar.hideReverse", 'type="button" class="chip" data-filter="hide-reverse" data-value="1" aria-pressed="false"') : "";
+    var variantBtn = uniqueValues(cards, "variant").length > 1 ?
+      '<button type="button" class="picker-btn" id="variant-btn" aria-haspopup="true" aria-expanded="false" aria-controls="picker">' +
+        said("span", "toolbar.variant", 'class="sr-only"') + '<span class="picker-btn-label" id="variant-label" lang="en"></span>' + CARET + "</button>" : "";
     var dated = hasDates(cards);
     var sortOptions = (dated ? said("option", "sort.newest", 'value="newest" selected') + said("option", "sort.oldest", 'value="oldest"') : "") +
       said("option", "sort.priceDesc", 'value="price-desc"' + (dated ? "" : " selected")) +
@@ -412,12 +399,14 @@
       '<div class="toolbar" id="toolbar">' +
         '<div class="toolbar-row">' +
           '<label class="sort-wrap">' + said("span", "toolbar.sort", 'class="sr-only"') + '<select id="sort">' + sortOptions + "</select></label>" +
-          variantHtml +
+          variantBtn +
           '<label class="search-wrap">' + said("span", "toolbar.filter", 'class="sr-only"') +
-          '<input id="filter" type="search"' + saidAttr("placeholder", "toolbar.filterHint") + ' autocomplete="off" spellcheck="false"></label>' +
+          '<input id="filter" type="search" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="picker"' +
+          saidAttr("placeholder", "toolbar.filterHint") + ' autocomplete="off" spellcheck="false"></label>' +
           '<div class="count" id="count"></div>' +
         "</div>" +
-        (chips ? '<div class="toolbar-row wraps"><div class="chips" role="group"' + saidAttr("aria-label", "toolbar.rarity") + ">" + chips + "</div></div>" : "") +
+        (chips ? '<div class="toolbar-row wraps"><div class="chips">' + chips + "</div></div>" : "") +
+        '<div class="picker" id="picker"><div class="picker-clip"><div class="picker-card" id="picker-card"></div></div></div>' +
       "</div>"
     );
   }
@@ -550,22 +539,253 @@
     };
   }
 
-  function visibleCards() {
-    var rarityOn = Object.keys(filterState.rarities).filter(function (k) { return filterState.rarities[k]; });
-    var langOn = pickedLangs();
-    var q = filterState.query.trim().toLowerCase();
-    var list = current.cards.filter(function (card) {
-      var rarity = (card.rarity || card.variant || "").trim();
-      var variant = card.variant || rarity;
-      var lower = variant.toLowerCase();
-      return (!langOn.length || langOn.indexOf((card.lang || "").toUpperCase()) !== -1) &&
-        (!rarityOn.length || rarityOn.indexOf(rarity) !== -1) &&
-        (!filterState.hideReverse || lower.indexOf("reverse") === -1 || lower.indexOf("holo") === -1) &&
-        (!filterState.variant || variant === filterState.variant || rarity === filterState.variant) &&
-        (!q || searchBlob(card).indexOf(q) !== -1);
-    });
-    return list.sort(compareCards($("sort") ? $("sort").value : ""));
+  /* ---- set and variant pickers ---- */
+
+  // The set field and the variant button open a shelf under the toolbar that
+  // lists only the sets and variants this Pokémon's cards have, counted under
+  // the other filters (language tabs, hidden reverse holos, the other picker).
+  // The lists are worked out from the loaded cards every time they show, so a
+  // catalog update changes them with no other step. The shelf pushes the
+  // binder down instead of covering it, and the binder follows each pick.
+  var pickerMode = "";
+  var CARET = '<svg class="picker-caret" viewBox="0 0 12 8" aria-hidden="true"><path d="M1 1.5 6 6.5 11 1.5" fill="none" stroke="currentColor" stroke-width="2.2"/></svg>';
+
+  function cardVariant(card) { return (card.variant || card.rarity || "").trim(); }
+  function cardSetName(card) { return String(card.setName || String(card.set || "").split(" · ")[0]).trim(); }
+  function cardSetKey(card) { return (card.lang || "").toUpperCase() + "|" + cardSetName(card); }
+  function pickedVariants() {
+    return Object.keys(filterState.variants).filter(function (k) { return filterState.variants[k]; });
   }
+
+  // `skip` leaves one filter out, so a picker can count its own options. The
+  // set list leaves out the typed text too: that narrows the list by name.
+  function passes(card, skip) {
+    var langOn = pickedLangs();
+    var variantsOn = pickedVariants();
+    var q = skip === "set" ? "" : filterState.query.trim().toLowerCase();
+    var variant = cardVariant(card);
+    var lower = variant.toLowerCase();
+    return (!langOn.length || langOn.indexOf((card.lang || "").toUpperCase()) !== -1) &&
+      (skip === "variant" || !variantsOn.length || variantsOn.indexOf(variant) !== -1) &&
+      (!filterState.hideReverse || lower.indexOf("reverse") === -1 || lower.indexOf("holo") === -1) &&
+      (skip === "set" || !filterState.set || cardSetKey(card) === filterState.set) &&
+      (!q || searchBlob(card).indexOf(q) !== -1);
+  }
+
+  function visibleCards() {
+    return current.cards.filter(function (card) { return passes(card, ""); })
+      .sort(compareCards($("sort") ? $("sort").value : ""));
+  }
+
+  // Sets by language (binder-tab order), newest first. A picked set stays
+  // listed even when the other filters leave it empty, so it can be cleared.
+  function setOptions() {
+    var sets = {};
+    current.cards.forEach(function (card) {
+      var name = cardSetName(card);
+      if (!name || !passes(card, "set")) return;
+      var key = cardSetKey(card);
+      var s = sets[key] || (sets[key] = { key: key, lang: (card.lang || "").toUpperCase(), name: name, n: 0, first: "" });
+      s.n++;
+      if (hasDate(card) && (!s.first || card.released < s.first)) s.first = card.released;
+    });
+    if (filterState.set && !sets[filterState.set]) {
+      var parts = filterState.set.split("|");
+      sets[filterState.set] = { key: filterState.set, lang: parts[0], name: parts.slice(1).join("|"), n: 0, first: "" };
+    }
+    return Object.keys(sets).map(function (k) { return sets[k]; }).sort(function (a, b) {
+      return langRank(a.lang) - langRank(b.lang) || b.first.localeCompare(a.first) || a.name.localeCompare(b.name);
+    });
+  }
+
+  // Variants, most cards first.
+  function variantOptions() {
+    var counts = {};
+    current.cards.forEach(function (card) {
+      var v = cardVariant(card);
+      if (v && passes(card, "variant")) counts[v] = (counts[v] || 0) + 1;
+    });
+    pickedVariants().forEach(function (v) { if (!counts[v]) counts[v] = 0; });
+    return Object.keys(counts).map(function (v) { return { key: v, n: counts[v] }; })
+      .sort(function (a, b) { return b.n - a.n || a.key.localeCompare(b.key); });
+  }
+
+  function variantLabel() {
+    var on = pickedVariants();
+    if (!on.length) return t("toolbar.allVariants");
+    return on.length === 1 ? on[0] : t("picker.variantsOn", { name: on[0], n: on.length - 1 });
+  }
+
+  function pickerHead(titleKey, count, canClear) {
+    return '<div class="picker-head"><p class="picker-title">' + escapeHtml(t(titleKey)) + "<span>" + escapeHtml(count) + "</span></p>" +
+      (canClear ? '<button type="button" class="picker-clear" data-act="clear">' + escapeHtml(t("picker.clear")) + "</button>" : "") +
+      '<button type="button" class="picker-close" data-act="close" aria-label="' + escapeHtml(t("picker.close")) + '">&times;</button></div>';
+  }
+
+  function renderPicker() {
+    var box = $("picker-card");
+    if (!box || !pickerMode || !current) return;
+    var focused = document.activeElement;
+    var focusKey = focused && focused.closest && focused.closest("#picker") ? focused.getAttribute("data-key") : null;
+    var html = "";
+    if (pickerMode === "sets") {
+      var typed = filterState.set ? "" : filterState.query.trim();
+      var all = setOptions();
+      var shown = typed ? all.filter(function (s) { return s.name.toLowerCase().indexOf(typed.toLowerCase()) !== -1; }) : all;
+      html += pickerHead("picker.sets", t("count.sets", { n: num(all.length) }), !!filterState.set);
+      if (!shown.length) {
+        html += '<p class="picker-empty">' + escapeHtml(t(typed ? "picker.noSets" : "picker.none", { q: typed })) + "</p>";
+      } else {
+        var body = "";
+        var lang = null;
+        shown.forEach(function (s) {
+          if (s.lang !== lang) {
+            lang = s.lang;
+            var inLang = shown.filter(function (x) { return x.lang === lang; }).length;
+            body += '<p class="picker-group"><span class="picker-lang lang-' + escapeHtml(lang.toLowerCase()) + '">' + escapeHtml(cardLangName(lang)) +
+              "</span>" + escapeHtml(t("count.sets", { n: num(inLang) })) + "</p>";
+          }
+          var on = s.key === filterState.set;
+          body += '<button type="button" class="pick lang-' + escapeHtml(s.lang.toLowerCase()) + (on ? " is-on" : "") + '" data-key="' + escapeHtml(s.key) +
+            '" aria-pressed="' + on + '"><span class="pick-name" lang="en">' + escapeHtml(s.name) + '</span><span class="pick-meta">' +
+            escapeHtml((s.first ? s.first.slice(0, 4) + " · " : "") + num(s.n)) + "</span></button>";
+        });
+        html += '<div class="picker-list is-sets">' + body + "</div>";
+      }
+    } else {
+      var opts = variantOptions();
+      html += pickerHead("picker.variants", t("count.variants", { n: num(opts.length) }), pickedVariants().length > 0);
+      html += opts.length ? '<div class="picker-list is-variants">' + opts.map(function (v) {
+        var on = !!filterState.variants[v.key];
+        return '<button type="button" class="pick' + (on ? " is-on" : "") + '" data-key="' + escapeHtml(v.key) + '" aria-pressed="' + on + '">' +
+          '<span class="pick-tick" aria-hidden="true"></span><span class="pick-name" lang="en">' + escapeHtml(v.key) + '</span><span class="pick-meta">' + num(v.n) + "</span></button>";
+      }).join("") + "</div>" : '<p class="picker-empty">' + escapeHtml(t("picker.none")) + "</p>";
+    }
+    box.innerHTML = html;
+    if (focusKey != null) {
+      var again = [].filter.call(box.querySelectorAll(".pick"), function (b) { return b.getAttribute("data-key") === focusKey; })[0];
+      if (again) again.focus({ preventScroll: true });
+    }
+  }
+
+  function syncPickerButtons() {
+    var btn = $("variant-btn");
+    if (btn) {
+      btn.setAttribute("aria-expanded", pickerMode === "variants" ? "true" : "false");
+      btn.classList.toggle("is-open", pickerMode === "variants");
+      btn.classList.toggle("is-on", pickedVariants().length > 0);
+      $("variant-label").textContent = variantLabel();
+    }
+    var input = $("filter");
+    if (input) {
+      input.setAttribute("aria-expanded", pickerMode === "sets" ? "true" : "false");
+      input.classList.toggle("is-set", !!filterState.set);
+    }
+  }
+
+  function syncPickers() {
+    syncPickerButtons();
+    if (pickerMode) renderPicker();
+  }
+
+  function openPicker(mode) {
+    var box = $("picker");
+    if (!box || !current) return;
+    pickerMode = mode;
+    box.setAttribute("data-mode", mode);
+    box.classList.add("is-open");
+    syncPickers();
+  }
+
+  function closePicker(focusBack) {
+    var box = $("picker");
+    if (!box || !pickerMode) return;
+    var mode = pickerMode;
+    pickerMode = "";
+    box.classList.remove("is-open");
+    syncPickerButtons();
+    if (focusBack) (mode === "sets" ? $("filter") : $("variant-btn")).focus();
+  }
+
+  function bindPickers() {
+    pickerMode = "";
+    var input = $("filter");
+    var box = $("picker");
+    input.addEventListener("click", function () { if (pickerMode !== "sets") openPicker("sets"); });
+    input.addEventListener("input", function () {
+      filterState.set = "";
+      filterState.query = input.value || "";
+      if (pickerMode !== "sets" && input.value) openPicker("sets");
+      showCards(true);
+    });
+    input.addEventListener("keydown", function (ev) {
+      if (ev.key === "ArrowDown") {
+        ev.preventDefault();
+        if (pickerMode !== "sets") openPicker("sets");
+        var first = box.querySelector(".pick");
+        if (first) first.focus();
+      } else if (ev.key === "Enter") {
+        // Typing part of a set's name and pressing Enter picks the first match.
+        var match = pickerMode === "sets" && filterState.query.trim() ? box.querySelector(".pick") : null;
+        if (match) match.click();
+        else closePicker(false);
+      } else if (ev.key === "Escape" && pickerMode) {
+        closePicker(false);
+      }
+    });
+    var btn = $("variant-btn");
+    if (btn) btn.addEventListener("click", function () {
+      if (pickerMode === "variants") closePicker(false);
+      else openPicker("variants");
+    });
+    box.addEventListener("click", function (ev) {
+      var act = ev.target.closest("[data-act]");
+      if (act) {
+        if (act.getAttribute("data-act") === "close") { closePicker(true); return; }
+        if (pickerMode === "sets") {
+          filterState.set = "";
+          filterState.query = "";
+          input.value = "";
+        } else {
+          filterState.variants = {};
+        }
+        showCards(true);
+        return;
+      }
+      var pick = ev.target.closest(".pick");
+      if (!pick) return;
+      var key = pick.getAttribute("data-key");
+      if (pickerMode === "sets") {
+        var off = filterState.set === key;
+        filterState.set = off ? "" : key;
+        filterState.query = "";
+        input.value = off ? "" : key.split("|").slice(1).join("|");
+        showCards(true);
+        if (!off) { closePicker(false); input.focus({ preventScroll: true }); }
+      } else {
+        filterState.variants[key] = !filterState.variants[key];
+        showCards(true);
+      }
+    });
+    box.addEventListener("keydown", function (ev) {
+      if (ev.key === "Escape") { ev.stopPropagation(); closePicker(true); return; }
+      if (["ArrowDown", "ArrowUp", "ArrowLeft", "ArrowRight"].indexOf(ev.key) === -1) return;
+      ev.stopPropagation(); // not a page turn
+      var picks = [].slice.call(box.querySelectorAll(".pick"));
+      var i = picks.indexOf(document.activeElement);
+      if (i < 0) return;
+      ev.preventDefault();
+      var next = picks[i + (ev.key === "ArrowDown" || ev.key === "ArrowRight" ? 1 : -1)];
+      if (next) next.focus();
+      else if (i === 0 && pickerMode === "sets") input.focus();
+    });
+    syncPickerButtons();
+  }
+
+  // A click anywhere outside the toolbar puts the shelf away.
+  document.addEventListener("pointerdown", function (ev) {
+    if (pickerMode && !(ev.target.closest && ev.target.closest("#toolbar"))) closePicker(false);
+  });
 
   // Re-files the binder after a filter, sort or price change.
   function showCards(fromStart) {
@@ -574,6 +794,7 @@
     binder.setCards(list, { keepPage: !fromStart, deal: fromStart });
     current.shown = list.length;
     updateCount();
+    syncPickers();
     $("empty").classList.toggle("is-on", !list.length);
   }
 
@@ -881,7 +1102,7 @@
   }
 
   function bindToolbar() {
-    filterState = { langs: {}, rarities: {}, hideReverse: false, variant: "", query: "" };
+    filterState = { langs: {}, variants: {}, set: "", hideReverse: false, query: "" };
     setLangs(savedLangs());
     document.querySelectorAll("#result .chip").forEach(function (chip) {
       chip.addEventListener("click", function () {
@@ -894,11 +1115,6 @@
           else list.push(value);
           var picked = setLangs(list);
           try { window.localStorage.setItem(LANG_STORE, JSON.stringify(picked)); } catch (err) { /* not remembered */ }
-        } else if (kind === "rarity") {
-          var on = !chip.classList.contains("is-on");
-          chip.classList.toggle("is-on", on);
-          chip.setAttribute("aria-pressed", on ? "true" : "false");
-          filterState.rarities[value] = on;
         } else if (kind === "hide-reverse") {
           filterState.hideReverse = !filterState.hideReverse;
           chip.classList.toggle("is-on", filterState.hideReverse);
@@ -908,15 +1124,7 @@
       });
     });
     $("sort").addEventListener("change", function () { showCards(true); });
-    var variantEl = $("variant");
-    if (variantEl) variantEl.addEventListener("change", function () {
-      filterState.variant = variantEl.value || "";
-      showCards(true);
-    });
-    $("filter").addEventListener("input", function () {
-      filterState.query = $("filter").value || "";
-      showCards(true);
-    });
+    bindPickers();
   }
 
   $("overlay").addEventListener("click", function (ev) {
@@ -2147,17 +2355,20 @@
       top = clamp(sy - h / 2, 0, Math.max(0, hero.height - h));
       var y = clamp(sy, top + 22, top + h - 22);
       var bend = left + w + gap / 2;
-      var start = sprite.left - hero.left + 2;
+      // Sprites in the edge columns hang past the cover and are half hidden;
+      // the cable then starts at the cover's edge, by the half that shows.
+      var start = Math.max(sprite.left, cover.left) - hero.left - 6;
       line = y === sy ? [[start, sy], [left + w, y]] : [[start, sy], [bend, sy], [bend, y], [left + w, y]];
     } else {
       left = clamp(sx - w / 2, cover.left - hero.left + 8, cover.right - hero.left - 8 - w);
       var below = sprite.top - cover.top < cover.height * 0.45;
       dexSide = below ? "top" : "bottom";
       top = below ? sy + sprite.height / 2 + 18 : sy - sprite.height / 2 - 18 - h;
-      var x = clamp(sx, left + 22, left + w - 22);
+      var tx = clamp(sx, cover.left - hero.left + 12, cover.right - hero.left - 12);
+      var x = clamp(tx, left + 22, left + w - 22);
       var edge = below ? top : top + h;
-      var tip = below ? sy + sprite.height / 2 - 2 : sy - sprite.height / 2 + 2;
-      line = x === sx ? [[sx, tip], [x, edge]] : [[sx, tip], [sx, (edge + tip) / 2], [x, (edge + tip) / 2], [x, edge]];
+      var tip = below ? sy + sprite.height / 2 + 6 : sy - sprite.height / 2 - 6;
+      line = x === tx ? [[tx, tip], [x, edge]] : [[tx, tip], [tx, (edge + tip) / 2], [x, (edge + tip) / 2], [x, edge]];
     }
     card.style.left = Math.round(left) + "px";
     card.style.top = Math.round(top) + "px";
@@ -2182,8 +2393,11 @@
   // along it and the plug appears on the card.
   function drawDexLink(duration, delay) {
     var link = $("dex-link");
-    var polys = link.querySelectorAll(".dex-link-edge, .dex-link-line");
-    play(link.querySelector(".dex-link-glint"), [{ opacity: 0 }, { opacity: 1 }], { duration: 120, delay: (delay || 0) + duration, fill: "backwards" });
+    var polys = link.querySelectorAll(".dex-link-halo, .dex-link-edge, .dex-link-line, .dex-link-shine");
+    // The socket shows at once; the plug and the pulses once the cable is in.
+    link.querySelectorAll(".dex-link-glint, .dex-link-spark, .dex-link-plug").forEach(function (el) {
+      play(el, [{ opacity: 0 }, { opacity: 1 }], { duration: 120, delay: (delay || 0) + duration, fill: "backwards" });
+    });
     var pts = polys[0].getAttribute("points").split(" ").map(function (p) { return p.split(",").map(Number); });
     var length = 0;
     for (var i = 1; i < pts.length; i++) length += Math.abs(pts[i][0] - pts[i - 1][0]) + Math.abs(pts[i][1] - pts[i - 1][1]);
@@ -2220,6 +2434,7 @@
     cell.el.classList.remove("is-chosen");
     var glow = spriteColor(cell.img);
     if (glow) cell.el.style.setProperty("--glow", glow);
+    $("dex-link").style.setProperty("--glow", glow || "255 248 214"); // the cable's pulses
     void cell.el.offsetWidth; // restart the cursor's snap
     cell.el.classList.add("is-chosen");
     $("explore").classList.add("has-dex");
@@ -2320,6 +2535,7 @@
       fillSheetText(activeCard);
       fillSites(activeCard);
     }
+    if (binder) syncPickers();
     if (suggestItems.length) showSuggest($("q").value.trim(), true);
     else showActive();
     if (dexItem) { renderDexCard(); placeDexCard(); }
