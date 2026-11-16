@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&display=swap">
 <link rel="stylesheet" href="styles.css">
 <link rel="stylesheet" href="card-tilt.css?v=2">
-<link rel="stylesheet" href="theme.css?v=19">
+<link rel="stylesheet" href="theme.css?v=20">
 <link rel="icon" href="assets/pullfolio-icon.svg?v=2" type="image/svg+xml">
 <link rel="preload" href="assets/binder-charcoal.webp" as="image" type="image/webp">
 </head>
@@ -66,30 +66,38 @@
   <div class="overlay" id="overlay" aria-hidden="true">
     <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
       <div class="sheet-handle" aria-hidden="true"></div>
-      <button type="button" class="sheet-close" id="sheet-close" aria-label="Put the card back" data-i18n-attr="aria-label:sheet.close">&times;</button>
       <div class="sheet-body">
         <div class="sheet-stage">
           <div class="sheet-art" id="sheet-art"></div>
           <p class="tilt-hint"><span class="hint-pointer" data-i18n="tilt.pointer">Move over the card to tilt it</span><span class="hint-touch" data-i18n="tilt.touch">Press and slide on the card to tilt it</span></p>
         </div>
         <div class="sheet-info">
-          <div class="sheet-kicker">
-            <h2 id="sheet-title"></h2>
-            <span class="rarity" id="sheet-rarity" hidden></span>
+          <button type="button" class="sheet-close" id="sheet-close" aria-label="Put the card back" data-i18n-attr="aria-label:sheet.close">&times;</button>
+          <div class="sheet-file">
+            <header class="sheet-head">
+              <div class="sheet-tags" id="sheet-tags"></div>
+              <h2 id="sheet-title"></h2>
+            </header>
+            <section class="sheet-part" aria-labelledby="sheet-price-label">
+              <h3 class="sheet-label" id="sheet-price-label" data-i18n="sheet.prices">Price</h3>
+              <div class="sheet-price" id="sheet-price"></div>
+              <ul class="site-grid" id="sheet-sites" aria-label="Check prices on" data-i18n-attr="aria-label:sheet.check"></ul>
+            </section>
+            <section class="sheet-part" aria-labelledby="sheet-facts-label">
+              <h3 class="sheet-label" id="sheet-facts-label" data-i18n="sheet.details">Card details</h3>
+              <dl class="fact-grid" id="sheet-facts"></dl>
+              <p class="fact-note" id="sheet-note" hidden></p>
+            </section>
           </div>
-          <p class="sheet-set" id="sheet-set"></p>
-          <p class="sheet-try" id="sheet-try"></p>
-          <div class="markets" id="sheet-markets"></div>
-          <div class="sheet-links" id="sheet-links"></div>
         </div>
       </div>
     </div>
   </div>
-  <script src="i18n.js?v=7"></script>
+  <script src="i18n.js?v=8"></script>
   <script src="market-links.js?v=4"></script>
   <script src="cardmarket-resolver.js?v=3"></script>
   <script src="card-tilt.js?v=1"></script>
   <script src="binder.js?v=10"></script>
-  <script src="app.js?v=25"></script>
+  <script src="app.js?v=26"></script>
 </body>
 </html>

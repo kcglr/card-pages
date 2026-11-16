@@ -1033,13 +1033,13 @@ body.is-viewing .search-hero { display: none; }
 #result-footer a { color: var(--text); }
 
 /* ---- inspect stage ---- */
-.overlay { padding: 24px; background: rgba(30, 19, 10, .62); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+.overlay { padding: 24px; background: rgba(24, 16, 10, .7); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
 /* The backdrop waits until the card has slid out of its sleeve. */
 .overlay.is-on { animation: overlay-in .3s ease .2s backwards; }
 .overlay.is-closing { opacity: 0; pointer-events: none; transition: opacity .4s ease .08s; }
 @keyframes overlay-in { from { opacity: 0; } }
-.sheet { position: relative; width: 100%; max-width: 1000px; max-height: none; padding: 0; overflow: visible; border-radius: 0; background: none; box-shadow: none; }
-.sheet-body { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 48px; align-items: center; padding: 0; }
+.sheet { position: relative; width: 100%; max-width: 1060px; max-height: none; padding: 0; overflow: visible; border-radius: 0; background: none; box-shadow: none; }
+.sheet-body { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 44px; align-items: center; padding: 0; }
 .sheet-stage { display: flex; flex-direction: column; align-items: center; gap: 16px; }
 .sheet-art {
   width: min(380px, 36vw, (100vh - 120px) * .716);
@@ -1085,18 +1085,79 @@ body.is-viewing .search-hero { display: none; }
 @media (hover: none) { .hint-pointer { display: none; } .hint-touch { display: inline; } }
 .card-fly { position: fixed; z-index: 60; margin: 0; border-radius: 4.6% / 3.3%; object-fit: cover; pointer-events: none; transform-origin: 50% 50%; will-change: transform; }
 
+/* The card's file beside it: the binder's cream card with the notched ink
+   frame (like the cover's info card), the binder's Pokémon sitting on its top
+   edge and its colour on the header and in the light behind the card. The
+   colours stay light in both themes, as on the cover's info card. */
+.sheet {
+  --text: #1f1a16;
+  --muted: #66584b;
+  --line: #d3c4aa;
+  --edge: #1f1a16;
+  --edge-shadow: #1f1a16;
+  --field: #fffdf8;
+  --chip: #e8dec9;
+  --paper: #fbf7ef;
+  --ink: #1f1a16;
+  --poke: var(--poke-rgb, 232 222 201);
+  color-scheme: light;
+}
+.sheet-stage { position: relative; isolation: isolate; }
+.sheet-stage::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  top: 47%;
+  left: 50%;
+  width: 210%;
+  aspect-ratio: .88;
+  translate: -50% -50%;
+  background: radial-gradient(closest-side, rgb(var(--poke)) 40%, rgb(var(--poke) / .5) 60%, rgb(var(--poke) / .14) 80%, transparent);
+  pointer-events: none;
+  animation: spot-in .7s ease .2s backwards;
+}
+@keyframes spot-in { from { opacity: 0; scale: .6; } }
+
+.sheet-info, .price-tag {
+  --px: 3px;
+  background:
+    linear-gradient(var(--ink), var(--ink)) var(--px) 0 / calc(100% - 2 * var(--px)) var(--px) no-repeat,
+    linear-gradient(var(--ink), var(--ink)) var(--px) 100% / calc(100% - 2 * var(--px)) var(--px) no-repeat,
+    linear-gradient(var(--ink), var(--ink)) 0 var(--px) / var(--px) calc(100% - 2 * var(--px)) no-repeat,
+    linear-gradient(var(--ink), var(--ink)) 100% var(--px) / var(--px) calc(100% - 2 * var(--px)) no-repeat,
+    linear-gradient(var(--fill), var(--fill)) var(--px) var(--px) / calc(100% - 2 * var(--px)) calc(100% - 2 * var(--px)) no-repeat;
+}
 .sheet-info {
-  max-height: min(680px, calc(100vh - 48px));
-  overflow: auto;
-  padding: 26px 26px 22px;
-  border: 2px solid var(--edge);
-  border-radius: 12px;
-  background: var(--paper);
-  box-shadow: 7px 7px 0 rgba(0, 0, 0, .35);
+  --fill: #fbf7ef;
+  position: relative;
+  margin-top: 40px; /* room for the Pokémon on the top edge */
+  padding: var(--px);
+  color: var(--text);
+  filter: drop-shadow(6px 6px 0 rgba(0, 0, 0, .5));
   animation: info-in .42s cubic-bezier(.25, .8, .3, 1) .38s backwards;
+}
+@keyframes info-in { from { opacity: 0; transform: translateX(24px); } }
+.sheet-info::before {
+  content: "";
+  position: absolute;
+  bottom: calc(100% - 1px);
+  left: 22px;
+  width: 56px;
+  height: 44px;
+  background: var(--scrub-sprite, none) 50% var(--scrub-sprite-y, 0px) / var(--scrub-sprite-size, 0 0) no-repeat;
+  image-rendering: var(--scrub-render, auto);
+  pointer-events: none;
+  animation: perch-in .5s cubic-bezier(.3, .7, .3, 1.4) .7s backwards;
+}
+@keyframes perch-in { from { opacity: 0; transform: translateY(-18px); } }
+.sheet-file {
+  container-type: inline-size;
+  max-height: min(700px, calc(100vh - 110px));
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
   scrollbar-color: var(--line) transparent;
 }
-@keyframes info-in { from { opacity: 0; transform: translateX(26px) rotate(1.5deg); } }
 .sheet-close {
   position: absolute;
   top: -16px;
@@ -1112,10 +1173,27 @@ body.is-viewing .search-hero { display: none; }
   font-size: 26px;
   box-shadow: 2px 2px 0 var(--edge-shadow);
 }
-.sheet-close:hover { background: var(--sticker); color: #1f1a16; }
-.sheet-kicker { flex-wrap: wrap; align-items: center; gap: 8px 12px; padding-right: 20px; }
-.sheet h2 { font-size: 32px; font-weight: 800; line-height: 1.05; letter-spacing: -.035em; }
-.sheet h2 .lang { font-size: 18px; font-weight: 600; color: var(--muted); }
+.sheet-close:hover, .sheet-close:focus-visible { background: var(--sticker); color: #1f1a16; outline: none; }
+
+.sheet-head {
+  padding: 20px 24px 18px;
+  border-bottom: 3px solid var(--ink);
+  background: linear-gradient(rgb(var(--poke) / .38), rgb(var(--poke) / .2));
+}
+.sheet-tags { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin: 0 26px 10px 0; }
+.sheet-lang {
+  padding: 3px 8px;
+  border: 2px solid var(--ink);
+  border-radius: 4px;
+  background: var(--tab, #f4ecdc);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.sheet-lang.lang-eng { --tab: #a8c2ff; }
+.sheet-lang.lang-jp { --tab: #ffab9d; }
+.sheet-lang.lang-cn { --tab: #ffd970; }
 .rarity {
   display: inline-block;
   padding: 4px 9px;
@@ -1128,21 +1206,95 @@ body.is-viewing .search-hero { display: none; }
   letter-spacing: .05em;
   text-transform: uppercase;
 }
-.sheet-set { margin-top: 8px; font-size: 15px; color: var(--muted); }
-.sheet-try { display: inline-block; margin-top: 12px; padding: 3px 8px; border-radius: 3px; background: var(--sticker); color: #1f1a16; font-size: 13px; font-weight: 750; transform: rotate(-2deg); }
-.markets { margin-top: 18px; border-top: 2px solid var(--edge); }
-.market { margin: 0 -8px; padding: 12px 8px; border-bottom: 1.5px dashed var(--line); border-radius: 6px; transition: background .15s ease; }
-a.market:hover { background: var(--chip); }
-a.market:hover .market-name { text-decoration: none; }
-.market-name { font-size: 15px; font-weight: 750; }
-.market-go { padding-left: 6px; color: var(--accent); }
-.market-price { font-size: 18px; font-weight: 800; }
-.market-note, .market-range { font-size: 13px; color: var(--muted); }
-.sheet-links { gap: 8px; margin-top: 18px; }
-.sheet-links a { padding: 9px 14px; border: 2px solid var(--edge); border-radius: 999px; background: var(--field); color: var(--text); font-size: 13px; font-weight: 700; }
-.sheet-links a:hover { background: var(--chip); }
-.sheet-links a:first-child { background: var(--ink-btn); color: var(--on-ink); border-color: var(--ink-btn); }
-.sheet-links a:first-child:hover { box-shadow: 3px 3px 0 #b3302a; }
+.sheet-tags .rarity { max-width: 100%; padding: 3px 9px; border-width: 2px; border-radius: 6px; }
+.sheet-no { margin-left: auto; color: var(--muted); font-size: 12px; font-weight: 750; font-variant-numeric: tabular-nums; }
+.sheet h2 { margin: 0; font-size: 34px; font-weight: 800; line-height: 1.02; letter-spacing: -.035em; overflow-wrap: anywhere; }
+
+.sheet-part { padding: 18px 24px 20px; animation: part-in .45s cubic-bezier(.25, .8, .3, 1) .5s backwards; }
+.sheet-part + .sheet-part { border-top: 2px dashed var(--line); animation-delay: .58s; }
+@keyframes part-in { from { opacity: 0; transform: translateY(8px); } }
+.sheet-label { margin: 0 0 12px; color: var(--muted); font-size: 11px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+
+/* The price: TCGplayer's on a sticker, the lira under it. */
+.sheet-price { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 18px; margin-bottom: 16px; }
+.price-tag {
+  --fill: var(--sticker);
+  display: grid;
+  justify-items: start;
+  padding: calc(var(--px) + 8px) calc(var(--px) + 16px) calc(var(--px) + 9px);
+  color: #1f1a16;
+  filter: drop-shadow(3px 3px 0 var(--ink));
+}
+.price-kind { font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; opacity: .75; }
+.price-value { font-size: 38px; font-weight: 800; line-height: 1.05; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+.price-try { font-size: 14px; font-weight: 750; }
+.price-meta { display: grid; gap: 4px; margin: 0; color: var(--muted); font-size: 13px; line-height: 1.4; }
+.price-meta p { margin: 0; }
+.price-source { display: flex; align-items: center; gap: 7px; color: var(--text); font-weight: 750; }
+.price-source img { border-radius: 4px; }
+.sheet-price.is-none .price-tag { --fill: var(--chip); filter: none; }
+.sheet-price.is-none .price-kind { font-size: 14px; letter-spacing: 0; text-transform: none; opacity: 1; }
+.sheet-price.is-none .price-meta { flex: 1 1 180px; }
+.sheet-price.is-busy .price-kind::after, .site.is-busy .site-note::after {
+  content: "";
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  margin-left: 6px;
+  vertical-align: 1px;
+  background: currentColor;
+  animation: busy-blink .8s steps(1, end) infinite;
+}
+
+/* One logo tile per site, all in one row while they fit. */
+.site-grid { display: grid; grid-auto-columns: minmax(0, 1fr); grid-auto-flow: column; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.site-grid li { display: flex; min-width: 0; }
+.site {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  padding: 12px 6px 10px;
+  border: 2px solid var(--ink);
+  border-radius: 8px;
+  background: var(--field);
+  color: var(--text);
+  text-align: center;
+  text-decoration: none;
+  transition: transform .12s ease, box-shadow .12s ease, background-color .12s ease;
+}
+.site::after { content: "↗"; position: absolute; top: 4px; right: 7px; color: var(--muted); font-size: 11px; font-weight: 800; }
+.site:hover { transform: translate(-2px, -2px); box-shadow: 3px 3px 0 var(--ink); }
+.site:focus-visible { outline: none; transform: translate(-2px, -2px); box-shadow: 3px 3px 0 var(--ink); background: var(--sticker); }
+.site:active { transform: none; box-shadow: none; }
+.site-logo { width: 32px; height: 32px; margin-bottom: 5px; border-radius: 7px; background: #fff; box-shadow: 0 0 0 1px rgba(31, 26, 22, .16); }
+.site-name { max-width: 100%; font-size: 12.5px; font-weight: 800; line-height: 1.15; letter-spacing: -.01em; overflow-wrap: anywhere; }
+.site-note { color: var(--muted); font-size: 11px; font-weight: 600; line-height: 1.2; }
+@container (max-width: 460px) {
+  .site-grid { grid-auto-flow: row; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+/* The card's facts, ruled like an index card. */
+.fact-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 0 18px; margin: 0; }
+.fact { min-width: 0; padding: 9px 0 10px; border-top: 1.5px dashed var(--line); }
+.fact.is-full { grid-column: 1 / -1; }
+.fact.is-wide { grid-column: span 2; }
+.fact dt { color: var(--muted); font-size: 11px; font-weight: 750; letter-spacing: .06em; text-transform: uppercase; }
+.fact dd { margin: 3px 0 0; font-size: 15px; font-weight: 700; line-height: 1.3; overflow-wrap: anywhere; }
+.fact-set { margin-right: 8px; }
+.fact-chip { display: inline-block; padding: 1px 7px; border: 1.5px solid var(--ink); border-radius: 4px; background: var(--chip); font-size: 11px; font-weight: 750; vertical-align: 2px; }
+.fact-sub { display: block; margin-top: 2px; color: var(--muted); font-size: 12px; font-weight: 600; }
+.fact-wait { display: inline-block; width: 8em; height: .75em; border-radius: 3px; background: linear-gradient(90deg, var(--chip), #f7f1e6, var(--chip)) 0 0 / 200% 100%; animation: wait-shine 1.1s linear infinite; }
+@keyframes wait-shine { to { background-position: -200% 0; } }
+.fact-note { margin: 12px 0 0; padding: 10px 12px; border-left: 3px solid var(--ink); background: var(--chip); font-size: 13.5px; line-height: 1.45; }
+.fact-note[hidden] { display: none; }
+.fact-note strong { display: block; margin-bottom: 2px; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; }
+@container (max-width: 300px) {
+  .fact.is-wide { grid-column: 1 / -1; }
+}
 
 /* ---- guide and footer ---- */
 .market-guide { margin-top: 52px; border: 2px solid var(--edge); border-radius: 10px; background: var(--paper); box-shadow: 5px 5px 0 var(--edge-shadow); }
@@ -1206,14 +1358,21 @@ a.market:hover .market-name { text-decoration: none; }
   .site-footer { flex-wrap: wrap; gap: 10px; }
 
   .overlay { align-items: flex-end; padding: 0; }
-  .sheet { max-height: 92dvh; overflow: auto; padding: 12px 18px 24px; border-top: 2px solid var(--edge); border-radius: 20px 20px 0 0; background: var(--paper); }
+  .sheet { max-height: 92dvh; overflow: auto; overscroll-behavior: contain; padding: 12px 0 calc(20px + env(safe-area-inset-bottom)); border-top: 3px solid var(--ink); border-radius: 18px 18px 0 0; background: var(--paper); }
   .sheet-handle { display: block; background: var(--line); }
   .sheet-body { display: flex; flex-direction: column; gap: 14px; }
   .sheet-art { width: min(230px, 60vw); }
+  .sheet-stage::before { top: 0; left: 0; width: 100%; height: 100%; aspect-ratio: auto; translate: none; } /* inside the scrolling sheet */
   .tilt-hint { color: var(--muted); font-size: 12px; }
-  .sheet-info { max-height: none; overflow: visible; padding: 0; border: 0; border-radius: 0; background: none; box-shadow: none; animation-name: info-up; }
+  .sheet-info { position: static; align-self: stretch; margin: 0; padding: 0; background: none; filter: none; animation-name: info-up; }
+  .sheet-info::before { display: none; }
+  .sheet-file { max-height: none; overflow: visible; }
   .sheet-close { top: 10px; right: 10px; width: 40px; height: 40px; }
-  .sheet h2 { font-size: 26px; }
+  .sheet-head { padding: 14px 18px; border-top: 3px solid var(--ink); }
+  .sheet-tags { margin-right: 0; }
+  .sheet-part { padding: 16px 18px 18px; }
+  .sheet h2 { font-size: 28px; }
+  .price-value { font-size: 32px; }
 }
 @keyframes info-up { from { opacity: 0; transform: translateY(18px); } }
 /* The narrowest phones: the logo drops to its next size so the top bar fits
@@ -1229,5 +1388,8 @@ a.market:hover .market-name { text-decoration: none; }
   .welcome-state.is-loading .closed-binder, .overlay.is-on, .sheet-info, .bpage.is-dealing .pocket, .sheet-art.is-landing, .sheet-art.is-landing::before { animation: none; }
   .pocket[data-key]:hover .pk-card, .closed-binder:hover { transform: none; }
   .cover-sprite.is-chosen::after, .cover-sprite.is-chosen img, .dex-link .dex-link-glint, .cover-match.is-busy::after { animation: none; }
+  .sheet-stage::before, .sheet-info::before, .sheet-part, .fact-wait, .sheet-price.is-busy .price-kind::after, .site.is-busy .site-note::after { animation: none; }
+  .site { transition: none; }
+  .site:hover, .site:focus-visible { transform: none; }
   .overlay.is-closing { transition: none; }
 }

@@ -585,20 +585,126 @@
     else binder.refresh();
   }
 
+  /* ---- the inspect sheet ---- */
+
+  // Card details from build_details.py: the illustrator, the set's series, the
+  // product a promo was first found in, a collector's note and better promo
+  // dates. One small file per Pokémon, fetched when its binder opens.
+  var DETAILS_V = "20261116r4";
+  var detailsCache = {};
+
+  function loadDetails(key) {
+    if (!key) return Promise.resolve(null);
+    if (!detailsCache[key]) {
+      detailsCache[key] = fetch("details/" + encodeURIComponent(key) + ".json?v=" + DETAILS_V).then(function (res) {
+        if (!res.ok) throw new Error("Card details " + res.status);
+        return res.json();
+      }).then(function (data) {
+        return (data && data.cards) || {};
+      }).catch(function () {
+        delete detailsCache[key]; // asked again for the next card
+        return null;
+      });
+    }
+    return detailsCache[key];
+  }
+
+  function withDetails(card) {
+    if (card.details || !current) return;
+    var key = current.meta.key;
+    loadDetails(key).then(function (map) {
+      if (!current || current.meta.key !== key) return;
+      card.details = map ? map[card.id] || {} : {};
+      if (activeCard === card) fillFacts(card);
+    });
+  }
+
+  function cardLangName(lang) {
+    var name = t("cardlang." + lang);
+    return name === "cardlang." + lang ? lang : name;
+  }
+
+  // The catalog's rarity reads "variant · official rarity" when the two differ.
+  function officialRarity(card) {
+    var parts = String(card.rarity || "").split(" · ");
+    var official = parts.length > 1 ? parts.slice(1).join(" · ").trim() : "";
+    return /^(no rarity|none)$/i.test(official) ? "" : official;
+  }
+
+  function monthDate(iso) {
+    var p = iso.split("-");
+    return new Date(Date.UTC(Number(p[0]), Number(p[1]) - 1, 1))
+      .toLocaleDateString(i18n.locale(), { month: "long", year: "numeric", timeZone: "UTC" });
+  }
+
+  // Promo sets date many cards with the day the set began. The details give
+  // the day a promo first came out where the catalog knows it; otherwise the
+  // set's start is said as such.
+  function releaseHtml(card, d) {
+    var iso = d.d || card.released || "";
+    if (!hasDate({ released: iso })) return "";
+    if (d.m) return escapeHtml(monthDate(iso));
+    var n = current ? Number(current.meta.number) || 0 : 0;
+    var setStart = !d.d && (d.x || (n && !plausibleDate({ released: iso }, n)));
+    return escapeHtml(cardDate(iso)) + (setStart ? '<span class="fact-sub">' + escapeHtml(t("fact.setStart")) + "</span>" : "");
+  }
+
   function fillSheetText(card) {
     var lang = (card.lang || "").toUpperCase();
-    $("sheet-title").innerHTML = escapeHtml(card.name || t("card.fallback")) +
-      (lang ? ' <span class="lang">(' + escapeHtml(lang) + ")</span>" : "");
-    var r = (card.rarity || card.variant || "").trim();
-    var rarityEl = $("sheet-rarity");
-    rarityEl.hidden = !r;
-    rarityEl.className = "rarity " + rarityClass(r);
-    rarityEl.textContent = r;
-    $("sheet-set").textContent = card.set || "";
-    $("sheet-set").hidden = !card.set;
-    var lira = card.price ? formatTry(card.price.value, fxRate) : "";
-    $("sheet-try").textContent = lira;
-    $("sheet-try").hidden = !lira;
+    var variant = (card.variant || card.rarity || "").trim();
+    var n = current ? Number(current.meta.number) || 0 : 0;
+    $("sheet-tags").innerHTML =
+      (lang ? '<span class="sheet-lang lang-' + escapeHtml(lang.toLowerCase()) + '">' + escapeHtml(cardLangName(lang)) + "</span>" : "") +
+      // The catalog's variant names are English; lang keeps Turkish capitals (İ) off them.
+      (variant ? '<span class="rarity ' + (rarityClass(officialRarity(card)) || rarityClass(variant)) + '" lang="en">' + escapeHtml(variant) + "</span>" : "") +
+      (n ? '<span class="sheet-no">' + escapeHtml(t("dex.no", { n: String(n).padStart(3, "0") })) + "</span>" : "");
+    $("sheet-title").textContent = card.name || t("card.fallback");
+    fillPrice(card);
+    fillFacts(card);
+  }
+
+  // One price, TCGplayer's, on a sticker, with the lira beside it. The other
+  // sites are the logo tiles under it.
+  function fillPrice(card) {
+    var box = $("sheet-price");
+    var p = card.price;
+    if (!p) {
+      var waiting = !!current && !current.priceTime;
+      box.className = "sheet-price is-none" + (waiting ? " is-busy" : "");
+      box.innerHTML = '<div class="price-tag"><span class="price-kind">' + escapeHtml(t(waiting ? "sheet.priceLoading" : "sheet.noPrice")) + "</span></div>" +
+        (waiting ? "" : '<p class="price-meta">' + escapeHtml(t("sheet.noPriceNote")) + "</p>");
+      return;
+    }
+    var lira = formatTry(p.value, fxRate);
+    box.className = "sheet-price";
+    box.innerHTML = '<div class="price-tag"><span class="price-kind">' + escapeHtml(t("kind." + p.kind)) + "</span>" +
+      '<strong class="price-value">' + escapeHtml(p.headline) + "</strong>" +
+      (lira ? '<span class="price-try">' + escapeHtml(lira) + "</span>" : "") + "</div>" +
+      '<div class="price-meta"><p class="price-source"><img src="assets/markets/tcgplayer.png" alt="" width="18" height="18">' +
+      escapeHtml("TCGplayer" + (p.subtype ? " · " + p.subtype : "")) + "</p>" +
+      (p.range ? '<p class="price-range">' + escapeHtml(t("sheet.listed", { range: p.range })) + "</p>" : "") + "</div>";
+  }
+
+  function fillFacts(card) {
+    var d = card.details || {};
+    var rows = [];
+    function row(key, html, size) {
+      rows.push('<div class="fact' + (size ? " " + size : "") + '"><dt>' + escapeHtml(t(key)) + "</dt><dd>" + html + "</dd></div>");
+    }
+    var setName = card.setName || String(card.set || "").split(" · ")[0];
+    if (setName) row("fact.set", '<span class="fact-set">' + escapeHtml(setName) + "</span>" + (d.s ? '<span class="fact-chip">' + escapeHtml(d.s) + "</span>" : ""), "is-full");
+    if (card.cardNumber) row("fact.number", escapeHtml(card.cardNumber));
+    var released = releaseHtml(card, d);
+    if (released) row("fact.released", released);
+    if (d.a) row("fact.artist", escapeHtml(d.a));
+    else if (!card.details) row("fact.artist", '<span class="fact-wait" role="img" aria-label="' + escapeHtml(t("fact.loading")) + '"></span>');
+    var official = officialRarity(card);
+    if (official) row("fact.rarity", escapeHtml(official));
+    if (d.f) row("fact.found", escapeHtml(d.f), "is-wide");
+    $("sheet-facts").innerHTML = rows.join("");
+    var note = $("sheet-note");
+    note.hidden = !d.n;
+    note.innerHTML = d.n ? "<strong>" + escapeHtml(t("fact.note")) + "</strong>" + escapeHtml(d.n) : "";
   }
 
   function fillSheet(card) {
@@ -621,55 +727,33 @@
       art.classList.add("is-empty");
       art.innerHTML = "";
     }
-    fillMarkets(card);
+    fillSites(card);
+    withDetails(card);
   }
 
-  function linkNote(exactUrl, status) {
-    if (exactUrl) return t("link.exact");
-    return t({ loading: "link.loading", not_found: "link.notFound", unavailable: "link.unavailable" }[status] || "link.none");
-  }
-
-  function fillMarkets(card) {
+  // A logo tile per site. PriceCharting and Cardmarket open the exact card
+  // once it is found (on this PC; on Pages, Cardmarket only) and a search until
+  // then. eBay opens sold listings, the useful price there.
+  function fillSites(card) {
     var links = marketLinks(card);
-    var rows = [];
-    var tcgPrice = "—";
-    var tcgNote = t(links.tcgDirect ? "market.productPage" : "market.search");
-    var tcgRange = "";
-    if (card.price) {
-      tcgPrice = card.price.headline;
-      tcgNote = t("kind." + card.price.kind) + (card.price.subtype ? " · " + card.price.subtype : "");
-      tcgRange = card.price.range || "";
+    function exact(url, search, status) {
+      if (url) return { url: url, note: "site.exact" };
+      return { url: search, note: status === "loading" ? "site.finding" : "site.search", busy: status === "loading" };
     }
-    rows.push({ name: "TCGplayer", price: tcgPrice, note: tcgNote, range: tcgRange, url: links.tcg });
-    rows.push({ name: t("market.ebaySold"), price: "—", note: t("market.ebaySoldNote"), url: links.ebaySold });
-    rows.push({ name: t("market.ebay"), price: "—", note: t("market.ebayNote"), url: links.ebay });
-    var pcStatus = card.pcResolution && card.pcResolution.status;
-    rows.push({ name: "PriceCharting", price: "—", note: linkNote(links.pc, pcStatus), url: links.pc });
-    var cmStatus = card.cmResolution && card.cmResolution.status;
-    rows.push({ name: "Cardmarket", price: "—", note: linkNote(links.cm, cmStatus), url: links.cm });
-    rows.push({ name: "Collectr", price: "—", note: t(links.collectr ? "link.collectr" : "link.none"), url: links.collectr });
-    $("sheet-markets").innerHTML = rows.map(function (m) {
-      var body = '<span class="market-name">' + escapeHtml(m.name) +
-        (m.url ? '<span class="market-go">↗</span>' : "") + "</span>" +
-        '<span class="market-price">' + escapeHtml(m.price || "—") + "</span>" +
-        (m.note ? '<span class="market-note">' + escapeHtml(m.note) + "</span>" : "") +
-        (m.range ? '<span class="market-range">' + escapeHtml(m.range) + "</span>" : "");
-      if (m.url) {
-        return '<a class="market" href="' + escapeHtml(m.url) + '" target="_blank" rel="noopener noreferrer">' + body + "</a>";
-      }
-      return '<div class="market">' + body + "</div>";
+    var pc = exact(links.pc, links.pcSearch, card.pcResolution && card.pcResolution.status);
+    var cm = exact(links.cm, links.cmSearch, card.cmResolution && card.cmResolution.status);
+    var sites = [
+      { name: "TCGplayer", logo: "tcgplayer", url: links.tcg, note: links.tcgDirect ? "site.product" : "site.search" },
+      { name: "eBay", logo: "ebay", url: links.ebaySold, note: "site.sold" },
+      { name: "PriceCharting", logo: "pricecharting", url: pc.url, note: pc.note, busy: pc.busy },
+      { name: "Cardmarket", logo: "cardmarket", url: cm.url, note: cm.note, busy: cm.busy }
+    ];
+    if (links.collectr) sites.push({ name: "Collectr", logo: "collectr", url: links.collectr, note: "site.card" });
+    $("sheet-sites").innerHTML = sites.filter(function (s) { return s.url; }).map(function (s) {
+      return '<li><a class="site' + (s.busy ? " is-busy" : "") + '" href="' + escapeHtml(s.url) + '" target="_blank" rel="noopener noreferrer">' +
+        '<img class="site-logo" src="assets/markets/' + s.logo + '.png" alt="" width="32" height="32">' +
+        '<span class="site-name">' + escapeHtml(s.name) + '</span><span class="site-note">' + escapeHtml(t(s.note)) + "</span></a></li>";
     }).join("");
-    var out = [];
-    function link(url, key) {
-      out.push('<a href="' + escapeHtml(url) + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(t(key)) + "</a>");
-    }
-    if (links.pc) link(links.pc, "link.pcOpen");
-    else if (pcStatus !== "loading") link(links.pcSearch, "link.pcSearch");
-    if (links.cm) link(links.cm, "link.cmOpen");
-    else if (cmStatus !== "loading") link(links.cmSearch, "link.cmSearch");
-    if (links.collectr) link(links.collectr, "link.collectr");
-    if (links.ebaySold) link(links.ebaySold, "link.ebaySold");
-    $("sheet-links").innerHTML = out.join("");
   }
 
   function resolveCardLinks(card) {
@@ -684,7 +768,7 @@
     // Pages uses the saved PriceCharting catalog and TCGdex's public Cardmarket IDs.
     if (!local && (market !== "cm" || !window.CardmarketResolver)) return;
     card[stateKey] = { status: "loading" };
-    fillMarkets(card);
+    fillSites(card);
     var controller = new AbortController();
     var timeout = setTimeout(function () { controller.abort(); }, 30000);
     var url = "api/" + endpoint + "?species=" + encodeURIComponent(current.meta.key) + "&card=" + encodeURIComponent(card.id);
@@ -698,7 +782,7 @@
       card[stateKey] = { status: "unavailable" };
     }).then(function () {
       clearTimeout(timeout);
-      if (activeCard === card) fillMarkets(card);
+      if (activeCard === card) fillSites(card);
     });
   }
 
@@ -1029,7 +1113,7 @@
     cancelPendingOpen();
     closeDexCard(); // the print is about to change
     setCoverMessage(null);
-    if (!q) { hideSuggest(); fillCover(PRINT_CREW, { ripple: true }); showActive(); return; }
+    if (!q) { hideSuggest(); fillCover(COVER_CREW, { ripple: true }); showActive(); return; }
     exactItem = null;
     showSuggest(q);
     $("search-cover").classList.toggle("is-empty", !suggestItems.length && speciesIndex.length > 0);
@@ -1081,7 +1165,7 @@
     hideSuggest();
     setCoverMessage(null);
     $("search-cover").classList.remove("is-loading", "is-picked", "is-empty");
-    fillCover(PRINT_CREW, { ripple: false });
+    fillCover(COVER_CREW, { ripple: false });
     window.scrollTo({ top: 0, left: 0, behavior: "instant" });
     if (focus) $("q").focus({ preventScroll: true });
   }
@@ -1111,6 +1195,7 @@
     });
     updateTiles();
     renderFooter();
+    if (activeCard) fillPrice(activeCard);
     return { priced: priced, elapsed: elapsed, when: when };
   }
 
@@ -1151,6 +1236,7 @@
       if (top < 0 || top > window.innerHeight * 0.5) $("result").scrollIntoView({ block: "start" });
     }
     if (history.replaceState) history.replaceState(null, "", "#" + encodeURIComponent(item.slug || item.key));
+    loadDetails(item.key); // ready by the time a card is pulled out
     Promise.all([
       fetchSpeciesFile(item.key),
       loadFx(),
@@ -1333,9 +1419,12 @@
   var ICON_BASE = SPRITE_BASE + "versions/generation-vii/icons/";
   var ICON_LAST = 807; // the icon set ends here; later Pokémon use their front sprite
   var DEX_LAST = 1025;
-  // A fresh handful of Pokémon from every region on each visit: the cover's
-  // usual print, and the fabric of a binder before its Pokémon is known.
+  // A fresh handful of Pokémon from every region on each visit: the fabric of
+  // a binder before its Pokémon is known.
   var PRINT_CREW = randomCrew(40);
+  // The search cover's usual print: every Pokémon in a new order on each visit,
+  // so each sprite on it is a different one.
+  var COVER_CREW = randomCrew(DEX_LAST);
   var COVER_SEED = (Math.random() * 4294967296) >>> 0;
   var PRINT_COLS = 8;
   var PRINT_ROWS = 8;
@@ -1670,8 +1759,21 @@
     return true;
   }
 
+  // Which Pokémon goes on each sprite. With enough of them to go round (the
+  // usual print, a broad search) each appears once; otherwise they repeat, but
+  // never next to themselves.
   function planCover(numbers) {
     var rand = seededRandom(numbers.reduce(function (s, n) { return (Math.imul(s, 31) + n) >>> 0; }, 17));
+    var unique = numbers.filter(function (n, i) { return numbers.indexOf(n) === i; });
+    if (unique.length >= coverCells.length) {
+      for (var k = unique.length - 1; k > 0; k--) {
+        var j = Math.floor(rand() * (k + 1));
+        var swap = unique[k];
+        unique[k] = unique[j];
+        unique[j] = swap;
+      }
+      return unique.slice(0, coverCells.length);
+    }
     var plan = [];
     coverCells.forEach(function (cell, i) {
       var avoid = cell.up.map(function (j) { return plan[j]; });
@@ -1737,7 +1839,8 @@
         swapSprite(cell, n, animate, delay);
       });
     });
-    return Promise.all(numbers.map(loadIcon)).then(function () {
+    var used = plan.filter(function (n, i) { return plan.indexOf(n) === i; });
+    return Promise.all(used.map(loadIcon)).then(function () {
       return animate && token === coverFill ? wait(Math.max(0, started + 640 - Date.now()) + 120) : null;
     });
   }
@@ -2215,7 +2318,7 @@
     }
     if (activeCard) {
       fillSheetText(activeCard);
-      fillMarkets(activeCard);
+      fillSites(activeCard);
     }
     if (suggestItems.length) showSuggest($("q").value.trim(), true);
     else showActive();
@@ -2225,7 +2328,7 @@
   function boot() {
     bindSearch();
     bindDexCard();
-    fillCover(PRINT_CREW, { ripple: true });
+    fillCover(COVER_CREW, { ripple: true });
     showActive();
     watchCover();
     i18n.onChange(relabel);
