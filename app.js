@@ -372,7 +372,8 @@
 
   var binder = null;
   var animating = false;
-  var filterState = { lang: "", rarities: {}, hideReverse: false, variant: "", query: "" };
+  var filterState = { langs: {}, rarities: {}, hideReverse: false, variant: "", query: "" };
+  var LANG_STORE = "pullfolio.langs";
 
   // Markup for text that follows the site language: CardI18n.apply() re-reads
   // the data-i18n key when the language changes.
@@ -421,12 +422,15 @@
     );
   }
 
-  // Language filters are the divider tabs on the binder's top edge.
+  // Language filters are the divider tabs on the binder's top edge. "All"
+  // shows every language; the language tabs toggle, so any mix can be picked
+  // (English and Japanese without Chinese, say). The pick is remembered for
+  // the next binder.
   function renderLangTabs(cards) {
     var tabs = said("button", "tabs.all", 'type="button" class="chip tab is-on" data-filter="lang" data-value="" aria-pressed="true"');
     uniqueValues(cards, "lang").forEach(function (lang) {
       tabs += '<button type="button" class="chip tab tab-' + escapeHtml(lang.toLowerCase()) + '" data-filter="lang" data-value="' +
-        escapeHtml(lang) + '" aria-pressed="false">' + escapeHtml(lang) + "</button>";
+        escapeHtml(lang) + '" aria-pressed="false"><span class="tab-tick" aria-hidden="true"></span>' + escapeHtml(lang) + "</button>";
     });
     return '<div class="binder-tabs" role="group"' + saidAttr("aria-label", "tabs.label") + ">" + tabs + "</div>";
   }
@@ -491,7 +495,7 @@
     showCards(false);
     // Coming from the cover, the hero has just been put away: start at the top so
     // the binder is seen opening.
-    if (fromCover) window.scrollTo(0, 0);
+    if (fromCover) window.scrollTo({ top: 0, left: 0, behavior: "instant" });
     binder.openCover(meta.name);
   }
 
@@ -548,12 +552,13 @@
 
   function visibleCards() {
     var rarityOn = Object.keys(filterState.rarities).filter(function (k) { return filterState.rarities[k]; });
+    var langOn = pickedLangs();
     var q = filterState.query.trim().toLowerCase();
     var list = current.cards.filter(function (card) {
       var rarity = (card.rarity || card.variant || "").trim();
       var variant = card.variant || rarity;
       var lower = variant.toLowerCase();
-      return (!filterState.lang || (card.lang || "").toUpperCase() === filterState.lang) &&
+      return (!langOn.length || langOn.indexOf((card.lang || "").toUpperCase()) !== -1) &&
         (!rarityOn.length || rarityOn.indexOf(rarity) !== -1) &&
         (!filterState.hideReverse || lower.indexOf("reverse") === -1 || lower.indexOf("holo") === -1) &&
         (!filterState.variant || variant === filterState.variant || rarity === filterState.variant) &&
@@ -758,19 +763,53 @@
     art.classList.add("is-waiting");
   }
 
+  function pickedLangs() {
+    return Object.keys(filterState.langs).filter(function (k) { return filterState.langs[k]; });
+  }
+
+  function savedLangs() {
+    try {
+      var list = JSON.parse(window.localStorage.getItem(LANG_STORE) || "[]");
+      return Array.isArray(list) ? list.map(String) : [];
+    } catch (err) {
+      return [];
+    }
+  }
+
+  // Picking every language is the same as "All", and so is picking none.
+  function setLangs(list) {
+    var present = [];
+    document.querySelectorAll('#result .chip[data-filter="lang"]').forEach(function (c) {
+      var value = c.getAttribute("data-value");
+      if (value) present.push(value);
+    });
+    var picked = list.filter(function (lang) { return present.indexOf(lang) !== -1; });
+    if (picked.length === present.length) picked = [];
+    filterState.langs = {};
+    picked.forEach(function (lang) { filterState.langs[lang] = true; });
+    document.querySelectorAll('#result .chip[data-filter="lang"]').forEach(function (c) {
+      var value = c.getAttribute("data-value");
+      var on = value ? picked.indexOf(value) !== -1 : !picked.length;
+      c.classList.toggle("is-on", on);
+      c.setAttribute("aria-pressed", on ? "true" : "false");
+    });
+    return picked;
+  }
+
   function bindToolbar() {
-    filterState = { lang: "", rarities: {}, hideReverse: false, variant: "", query: "" };
+    filterState = { langs: {}, rarities: {}, hideReverse: false, variant: "", query: "" };
+    setLangs(savedLangs());
     document.querySelectorAll("#result .chip").forEach(function (chip) {
       chip.addEventListener("click", function () {
         var kind = chip.getAttribute("data-filter");
         var value = chip.getAttribute("data-value") || "";
         if (kind === "lang") {
-          filterState.lang = value;
-          document.querySelectorAll('#result .chip[data-filter="lang"]').forEach(function (c) {
-            var on = c === chip;
-            c.classList.toggle("is-on", on);
-            c.setAttribute("aria-pressed", on ? "true" : "false");
-          });
+          var list = pickedLangs();
+          if (!value) list = [];
+          else if (filterState.langs[value]) list.splice(list.indexOf(value), 1);
+          else list.push(value);
+          var picked = setLangs(list);
+          try { window.localStorage.setItem(LANG_STORE, JSON.stringify(picked)); } catch (err) { /* not remembered */ }
         } else if (kind === "rarity") {
           var on = !chip.classList.contains("is-on");
           chip.classList.toggle("is-on", on);
@@ -803,6 +842,7 @@
   document.addEventListener("keydown", function (ev) {
     if (ev.key === "Escape") {
       if (activeCard) closeSheet(false); // the search field handles its own Escape
+      else if (dexItem) closeDexCard();
     } else if ((ev.key === "ArrowLeft" || ev.key === "ArrowRight") && binder && !activeCard && $("binder") &&
         !(ev.target.closest && ev.target.closest("input, select, textarea"))) {
       ev.preventDefault();
@@ -942,35 +982,39 @@
     setActiveSuggest((activeSuggest + dir + suggestItems.length) % suggestItems.length);
   }
 
-  // The yellow tag under the cover's search, when the list is closed: the match
-  // Enter would open (or the sprite under the pointer), a "no match" note, or
-  // the binder opening.
+  // The strip under the label, inside its pocket: the Pokémon Enter would open
+  // (or the sprite under the pointer) with its icon, number and card count; a
+  // "no match" note; the binder opening; or a hint when there is nothing yet.
   function showActive() {
     var item = hoverItem || suggestItems[activeSuggest] || null;
     markActiveSprites(item && item.number);
     var tag = $("cover-match");
-    tag.classList.remove("is-error", "is-busy");
-    if (coverMessage) {
-      tag.textContent = t(coverMessage.key, coverMessage.vars);
-      tag.classList.toggle("is-error", !!coverMessage.isError);
-      tag.classList.toggle("is-busy", !coverMessage.isError);
-      tag.hidden = false;
-      return;
-    }
-    if (listOpen) { tag.hidden = true; return; } // the highlighted row says it
     var q = $("q").value.trim();
-    if (!item && q && speciesIndex.length) {
-      tag.textContent = t("search.none", { q: q });
-      tag.classList.add("is-error");
-      tag.hidden = false;
-      return;
+    var state = "";
+    var html;
+    if (coverMessage) {
+      state = coverMessage.isError ? "is-error" : "is-busy";
+      html = escapeHtml(t(coverMessage.key, coverMessage.vars));
+    } else if (!item && q && speciesIndex.length) {
+      state = "is-error";
+      html = escapeHtml(t("search.none", { q: q }));
+    } else if (item) {
+      var n = Number(item.number) || 0;
+      html = (n ? '<img class="cover-match-icon' + (n > ICON_LAST ? " is-big" : "") + '" src="' + escapeHtml(iconSrc(n)) +
+          '" alt="" width="40" height="30" onerror="this.style.visibility=\'hidden\'">' : "") +
+        '<span class="cover-match-name">' + escapeHtml(item.name) + "</span>" +
+        (n ? '<span class="cover-match-no">#' + String(n).padStart(3, "0") + "</span>" : "") +
+        '<span class="cover-match-count">' + escapeHtml(countText("count.cards", item.cards || item.variants || 0)) + "</span>" +
+        (hoverItem ? "" : '<kbd class="cover-match-key">↵</kbd>');
+    } else {
+      state = "is-idle";
+      html = escapeHtml(t("cover.hint"));
     }
-    if (!item) { tag.hidden = true; return; }
-    tag.innerHTML = '<strong>' + escapeHtml(item.name) + "</strong> " +
-      escapeHtml((item.number ? "#" + String(item.number).padStart(3, "0") + " · " : "") +
-        countText("count.cards", item.cards || item.variants || 0)) +
-      (hoverItem ? "" : ' <kbd aria-hidden="true">↵</kbd>');
-    tag.hidden = false;
+    var key = state + "|" + html;
+    if (tag.getAttribute("data-key") === key) return;
+    tag.setAttribute("data-key", key);
+    tag.className = "cover-match" + (state ? " " + state : "");
+    tag.innerHTML = html;
   }
 
   function setCoverMessage(key, vars, isError) {
@@ -983,6 +1027,7 @@
   function updateFromQuery() {
     var q = $("q").value.trim();
     cancelPendingOpen();
+    closeDexCard(); // the print is about to change
     setCoverMessage(null);
     if (!q) { hideSuggest(); fillCover(PRINT_CREW, { ripple: true }); showActive(); return; }
     exactItem = null;
@@ -996,6 +1041,7 @@
 
   function pickSpecies(item, opts) {
     if (!item) return;
+    closeDexCard(true);
     $("q").value = item.name;
     hoverItem = null;
     hideSuggest();
@@ -1031,11 +1077,12 @@
     if (speciesIndex.length) setStatus(null);
     $("q").value = "";
     hoverItem = null;
+    closeDexCard(true);
     hideSuggest();
     setCoverMessage(null);
     $("search-cover").classList.remove("is-loading", "is-picked", "is-empty");
     fillCover(PRINT_CREW, { ripple: false });
-    window.scrollTo(0, 0);
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
     if (focus) $("q").focus({ preventScroll: true });
   }
 
@@ -1090,6 +1137,7 @@
     pendingOpen = coverReady ? token : 0;
     titleName = item.name;
     paintSpritePrint(Number(item.number) || 0);
+    paintPokemonTheme(Number(item.number) || 0);
     document.title = t("title.species", { name: item.name });
     closeSheet(true);
     if (binder) binder.destroy();
@@ -1104,10 +1152,7 @@
     }
     if (history.replaceState) history.replaceState(null, "", "#" + encodeURIComponent(item.slug || item.key));
     Promise.all([
-      fetch("data/" + encodeURIComponent(item.key) + ".json", { cache: "default" }).then(function (res) {
-        if (!res.ok) throw new Error("data " + res.status);
-        return res.json();
-      }),
+      fetchSpeciesFile(item.key),
       loadFx(),
       fetch("links/" + encodeURIComponent(item.key) + ".json?v=20261116r3").then(function (res) {
         if (!res.ok) return {};
@@ -1246,12 +1291,17 @@
       if (i >= 0 && i !== activeSuggest) setActiveSuggest(i);
     });
     // Every sprite on the cover is a way in: point at one to read its name (or
-    // highlight its row), click or tap it to open its binder.
+    // highlight its row), click or tap it for its info card. Clicking the same
+    // sprite again puts the card away.
     var sprites = $("cover-sprites");
     sprites.addEventListener("click", function (event) {
-      var cell = event.target.closest(".cover-sprite");
-      var item = cell && speciesByNumber[cell.getAttribute("data-n")];
-      if (item) pickSpecies(item);
+      var el = event.target.closest(".cover-sprite");
+      var item = el && speciesByNumber[el.getAttribute("data-n")];
+      var cell = null;
+      for (var i = 0; el && i < coverCells.length; i++) if (coverCells[i].el === el) cell = coverCells[i];
+      if (!item || !cell) return;
+      if (dexCell === cell) closeDexCard();
+      else openDexCard(item, cell);
     });
     sprites.addEventListener("pointerover", function (event) {
       if (event.pointerType === "touch") return;
@@ -1282,8 +1332,11 @@
   // printed with that Pokémon only.
   var ICON_BASE = SPRITE_BASE + "versions/generation-vii/icons/";
   var ICON_LAST = 807; // the icon set ends here; later Pokémon use their front sprite
-  var PRINT_CREW = [1, 2, 3, 4, 5, 6, 7, 8, 9, 25, 35, 37, 38, 39, 52, 54, 58, 63, 79, 94, 129, 130, 131, 132,
-    133, 134, 135, 136, 143, 144, 145, 146, 147, 148, 149, 150, 151];
+  var DEX_LAST = 1025;
+  // A fresh handful of Pokémon from every region on each visit: the cover's
+  // usual print, and the fabric of a binder before its Pokémon is known.
+  var PRINT_CREW = randomCrew(40);
+  var COVER_SEED = (Math.random() * 4294967296) >>> 0;
   var PRINT_COLS = 8;
   var PRINT_ROWS = 8;
   var PRINT_CELL_W = 48;
@@ -1291,6 +1344,18 @@
   var printIcons = {};
   var printToken = 0;
   var printUrl = "";
+
+  function randomCrew(count) {
+    var pool = [];
+    for (var n = 1; n <= DEX_LAST; n++) pool.push(n);
+    for (var i = pool.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var swap = pool[i];
+      pool[i] = pool[j];
+      pool[j] = swap;
+    }
+    return pool.slice(0, count);
+  }
 
   function iconSrc(number) {
     return number <= ICON_LAST ? ICON_BASE + number + ".png" : SPRITE_BASE + number + ".png";
@@ -1375,6 +1440,155 @@
     });
   }
 
+  /* ---- a Pokémon's own colour ---- */
+
+  function toHsl(r, g, b) {
+    r /= 255; g /= 255; b /= 255;
+    var max = Math.max(r, g, b);
+    var min = Math.min(r, g, b);
+    var l = (max + min) / 2;
+    var d = max - min;
+    if (!d) return [0, 0, l];
+    var s = d / (1 - Math.abs(2 * l - 1));
+    var h = max === r ? ((g - b) / d + 6) % 6 : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
+    return [h * 60, s, l];
+  }
+
+  function fromHsl(h, s, l) {
+    var c = (1 - Math.abs(2 * l - 1)) * s;
+    var x = c * (1 - Math.abs((h / 60) % 2 - 1));
+    var m = l - c / 2;
+    var rgb = h < 60 ? [c, x, 0] : h < 120 ? [x, c, 0] : h < 180 ? [0, c, x] : h < 240 ? [0, x, c] : h < 300 ? [x, 0, c] : [c, 0, x];
+    return rgb.map(function (v) { return Math.round((v + m) * 255); });
+  }
+
+  function spritePixels(img) {
+    var w = img.naturalWidth;
+    var h = img.naturalHeight;
+    if (!w || !h) return null;
+    try {
+      var canvas = document.createElement("canvas");
+      canvas.width = w;
+      canvas.height = h;
+      var ctx = canvas.getContext("2d", { willReadFrequently: true });
+      ctx.drawImage(img, 0, 0);
+      return ctx.getImageData(0, 0, w, h).data;
+    } catch (err) {
+      return null; // a sprite served without CORS can't be read
+    }
+  }
+
+  // The colour a Pokémon is known by, read from its sprite: the most common
+  // hue (with its neighbours, so shading counts too), skipping the ink outline
+  // and greys unless the Pokémon is mostly grey or white. It is lifted so it
+  // reads on the charcoal binder. Returns "r g b" for rgb(), or "".
+  var spriteColors = {};
+  function spriteColor(img) {
+    var key = img && (img.currentSrc || img.src);
+    if (!key) return "";
+    if (spriteColors[key] != null) return spriteColors[key];
+    var data = spritePixels(img);
+    if (!data) return "";
+    var HUES = 18;
+    var bins = [];
+    for (var b = 0; b < HUES; b++) bins.push({ n: 0, r: 0, g: 0, b: 0 });
+    var grey = { n: 0, r: 0, g: 0, b: 0 };
+    for (var i = 0; i < data.length; i += 4) {
+      if (data[i + 3] < 200) continue;
+      var hsl = toHsl(data[i], data[i + 1], data[i + 2]);
+      if (hsl[2] < 0.14) continue;
+      var bin = hsl[1] < 0.2 || hsl[2] > 0.93 ? grey : bins[Math.floor(hsl[0] / (360 / HUES)) % HUES];
+      bin.n++;
+      bin.r += data[i];
+      bin.g += data[i + 1];
+      bin.b += data[i + 2];
+    }
+    var best = -1;
+    var bestScore = 0;
+    bins.forEach(function (bin, k) {
+      var score = bin.n + 0.5 * (bins[(k + HUES - 1) % HUES].n + bins[(k + 1) % HUES].n);
+      if (score > bestScore) { bestScore = score; best = k; }
+    });
+    var pick = { n: 0, r: 0, g: 0, b: 0 };
+    if (best >= 0) [best - 1, best, best + 1].forEach(function (k) {
+      var bin = bins[(k + HUES) % HUES];
+      pick.n += bin.n; pick.r += bin.r; pick.g += bin.g; pick.b += bin.b;
+    });
+    var isGrey = pick.n < grey.n * 0.4;
+    if (isGrey) pick = grey;
+    if (!pick.n) return (spriteColors[key] = "");
+    var c = toHsl(pick.r / pick.n, pick.g / pick.n, pick.b / pick.n);
+    var rgb = isGrey
+      ? fromHsl(c[0], Math.min(c[1], 0.12), Math.min(0.84, Math.max(0.64, c[2])))
+      : fromHsl(c[0], Math.max(c[1], 0.5), Math.min(0.7, Math.max(0.52, c[2])));
+    return (spriteColors[key] = rgb.join(" "));
+  }
+
+  // The sprite cut to its drawn pixels, for the page slider's thumb: box icons
+  // grow in whole steps so their pixels stay square, front sprites (after
+  // #807) are scaled smoothly. Drawn facing right (forwards) and left.
+  function thumbSprite(img) {
+    var data = spritePixels(img);
+    if (!data) return null;
+    var w = img.naturalWidth;
+    var h = img.naturalHeight;
+    var x0 = w, y0 = h, x1 = -1, y1 = -1;
+    for (var y = 0; y < h; y++) {
+      for (var x = 0; x < w; x++) {
+        if (data[(y * w + x) * 4 + 3] < 24) continue;
+        if (x < x0) x0 = x;
+        if (x > x1) x1 = x;
+        if (y < y0) y0 = y;
+        if (y > y1) y1 = y;
+      }
+    }
+    if (x1 < 0) return null;
+    var cw = x1 - x0 + 1;
+    var ch = y1 - y0 + 1;
+    var pixel = w <= 48;
+    var MAX_W = 54;
+    var MAX_H = 42;
+    var k = pixel
+      ? [2, 1.5, 1].filter(function (s) { return cw * s <= MAX_W && ch * s <= MAX_H; })[0] || 1
+      : Math.min(1, MAX_W / cw, MAX_H / ch);
+    var dpr = 2;
+    var draw = function (flip) {
+      var canvas = document.createElement("canvas");
+      canvas.width = Math.round(cw * k * dpr);
+      canvas.height = Math.round(ch * k * dpr);
+      var ctx = canvas.getContext("2d");
+      ctx.imageSmoothingEnabled = !pixel;
+      if (flip) { ctx.translate(canvas.width, 0); ctx.scale(-1, 1); }
+      ctx.drawImage(img, x0, y0, cw, ch, 0, 0, canvas.width, canvas.height);
+      return canvas.toDataURL("image/png");
+    };
+    // Box icons look left, so the forward-walking one is the mirrored copy.
+    return { right: draw(true), left: draw(false), w: Math.round(cw * k), h: Math.round(ch * k), pixel: pixel };
+  }
+
+  // A binder takes its Pokémon's colour (--poke-rgb) and puts the Pokémon on
+  // its page slider (--scrub-sprite).
+  var THEME_PROPS = ["--poke-rgb", "--scrub-sprite", "--scrub-sprite-back", "--scrub-sprite-size", "--scrub-sprite-y", "--scrub-render"];
+  var themeToken = 0;
+  function paintPokemonTheme(number) {
+    var token = ++themeToken;
+    var root = document.documentElement.style;
+    THEME_PROPS.forEach(function (name) { root.removeProperty(name); });
+    if (!number) return;
+    loadIcon(number).then(function (img) {
+      if (token !== themeToken || !img) return;
+      var rgb = spriteColor(img);
+      if (rgb) root.setProperty("--poke-rgb", rgb);
+      var sprite = thumbSprite(img);
+      if (!sprite) return;
+      root.setProperty("--scrub-sprite", 'url("' + sprite.right + '")');
+      root.setProperty("--scrub-sprite-back", 'url("' + sprite.left + '")');
+      root.setProperty("--scrub-sprite-size", sprite.w + "px " + sprite.h + "px");
+      root.setProperty("--scrub-sprite-y", (44 - sprite.h) + "px"); // feet on the bar
+      root.setProperty("--scrub-render", sprite.pixel ? "pixelated" : "auto");
+    });
+  }
+
   /* ---- the search cover's sprites ---- */
 
   // The search cover is printed with real <img> sprites rather than the canvas
@@ -1405,15 +1619,29 @@
     if (!w || !h) return false;
     var cols = Math.max(5, Math.round(w / COVER_CELL_W));
     var rows = Math.max(6, Math.round(h / COVER_CELL_H));
-    var shape = cols + "x" + rows;
+    // The label sits in a pocket sewn into the cover, and the print stops
+    // around it rather than running underneath.
+    var pocket = document.querySelector(".cover-head");
+    var gap = 10; // clear of the stitching
+    var hole = pocket ? {
+      left: pocket.offsetLeft - gap,
+      top: pocket.offsetTop - gap,
+      right: pocket.offsetLeft + pocket.offsetWidth + gap,
+      bottom: pocket.offsetTop + pocket.offsetHeight + gap
+    } : null;
+    var shape = cols + "x" + rows + (hole ? ":" + [hole.left, hole.top, hole.right, hole.bottom].map(Math.round).join(",") : "");
     if (shape === coverShape) return false;
     coverShape = shape;
-    var rand = seededRandom(7);
+    var rand = seededRandom(COVER_SEED);
     var cells = [];
     for (var r = 0; r < rows; r++) {
       var shift = r % 2 ? 0.5 : 0;
       for (var c = shift ? -1 : 0; c < cols; c++) {
-        cells.push({ x: (c + 0.5 + shift) / cols, y: (r + 0.5) / rows, row: r, flip: rand() < 0.5, number: 0, want: 0 });
+        var cx = (c + 0.5 + shift) / cols;
+        var cy = (r + 0.5) / rows;
+        var flip = rand() < 0.5;
+        if (hole && cx * w + 20 > hole.left && cx * w - 20 < hole.right && cy * h + 15 > hole.top && cy * h - 15 < hole.bottom) continue;
+        cells.push({ x: cx, y: cy, row: r, flip: flip, number: 0, want: 0 });
       }
     }
     var far = 0;
@@ -1541,7 +1769,12 @@
   function watchCover() {
     if (window.ResizeObserver) {
       new ResizeObserver(function () {
-        if (layoutCover() && coverNumbers.length) fillCover(coverNumbers, { ripple: false });
+        if (layoutCover()) {
+          closeDexCard(true); // its sprite is gone
+          if (coverNumbers.length) fillCover(coverNumbers, { ripple: false });
+        } else {
+          placeDexCard();
+        }
       }).observe($("cover-sprites"));
     }
     setInterval(function () {
@@ -1551,6 +1784,412 @@
         { translate: "0 0" }, { translate: "0 -7px", offset: 0.4 }, { translate: "0 0" }
       ], { duration: 450, easing: "ease-out" });
     }, 650);
+  }
+
+  /* ---- the cover's info card ---- */
+
+  // Clicking a sprite on the cover opens a card about that Pokémon's trading
+  // cards, laid out like a game's summary screen: its in-game sprite, its first
+  // and newest cards with their release dates, how many printings came out each
+  // year, its sets and languages, and a button that opens its binder. A yellow
+  // line runs from the card to the sprite. The facts come from the catalog file
+  // the binder loads, so opening the binder from the card reuses it.
+  var BW_LAST = 649; // Black and White's animated battle sprites end here
+  var speciesFiles = {};
+  var dexFacts = {};
+  var portraitFits = {};
+  var dexItem = null;
+  var dexCell = null;
+  var dexSide = "right"; // the card's edge the line meets
+  var dexAnims = [];
+  var dexClosing = null;
+
+  function fetchSpeciesFile(key) {
+    if (!speciesFiles[key]) {
+      var load = speciesFiles[key] = fetch("data/" + encodeURIComponent(key) + ".json", { cache: "default" }).then(function (res) {
+        if (!res.ok) throw new Error("data " + res.status);
+        return res.json();
+      });
+      load.catch(function () { if (speciesFiles[key] === load) delete speciesFiles[key]; });
+    }
+    return speciesFiles[key];
+  }
+
+  function langRank(code) { return LANG_ORDER[code] != null ? LANG_ORDER[code] : 9; }
+
+  // The year each generation's games came out in Japan, by last National Dex
+  // number.
+  var GEN_START = [[151, 1996], [251, 1999], [386, 2002], [493, 2006], [649, 2010], [721, 2013], [809, 2016], [905, 2019], [1025, 2022]];
+
+  function hasDate(c) { return /^\d{4}-\d\d-\d\d$/.test(c.released || ""); }
+
+  // A card up to a year before its Pokémon's games is kept: some Pokémon were
+  // on cards (movie packs) before their games came out. Earlier than that the
+  // date is a placeholder.
+  function plausibleDate(c, number) {
+    var year = Number(c.released.slice(0, 4));
+    for (var i = 0; i < GEN_START.length; i++) {
+      if (number <= GEN_START[i][0]) return year >= GEN_START[i][1] - 1;
+    }
+    return true;
+  }
+
+  // Promo sets give most of their cards the set's start date (a 2023 Pokémon
+  // dated 2001 in "Unnumbered Promos"), so the dates come from the other sets,
+  // falling back to promos and then to any dated card.
+  function datedCards(all, number) {
+    var dated = all.filter(hasDate);
+    var plausible = dated.filter(function (c) { return plausibleDate(c, number); });
+    var sets = plausible.filter(function (c) { return !/promo/i.test(c.setName || c.set || ""); });
+    return sets.length ? sets : plausible.length ? plausible : dated;
+  }
+
+  // First and newest printing (on a shared date, English first), printings per
+  // year, sets and languages. Totals count every card; the dates and the chart
+  // use datedCards().
+  function cardFacts(data, item) {
+    var all = data.cards || [];
+    var trusted = datedCards(all, Number(data.number || item.number) || 0);
+    var first = null;
+    var newest = null;
+    var years = {};
+    var sets = {};
+    var langs = {};
+    all.forEach(function (c) {
+      sets[(c.lang || "") + "|" + (c.setName || c.set || "")] = true;
+      if (c.lang) langs[c.lang] = (langs[c.lang] || 0) + 1;
+    });
+    trusted.forEach(function (c) {
+      var year = Number(c.released.slice(0, 4));
+      years[year] = (years[year] || 0) + 1;
+      if (!first || c.released < first.released || (c.released === first.released && langRank(c.lang) < langRank(first.lang))) first = c;
+      if (!newest || c.released > newest.released || (c.released === newest.released && langRank(c.lang) < langRank(newest.lang))) newest = c;
+    });
+    return {
+      first: first,
+      newest: newest,
+      firstYear: first ? Number(first.released.slice(0, 4)) : 0,
+      lastYear: newest ? Number(newest.released.slice(0, 4)) : 0,
+      years: years,
+      sets: Object.keys(sets).length,
+      langs: Object.keys(langs).sort(function (a, b) { return langRank(a) - langRank(b); }).map(function (code) {
+        return { code: code, n: langs[code] };
+      }),
+      printings: all.length,
+      cards: (data.counts && data.counts.cards) || item.cards || 0
+    };
+  }
+
+  function cardDate(iso) {
+    var p = iso.split("-");
+    return new Date(Date.UTC(Number(p[0]), Number(p[1]) - 1, Number(p[2])))
+      .toLocaleDateString(i18n.locale(), { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
+  }
+
+  function portraitSrc(n) {
+    return n <= BW_LAST ? SPRITE_BASE + "versions/generation-v/black-white/animated/" + n + ".gif" : SPRITE_BASE + n + ".png";
+  }
+
+  // In-game sprites come in very different sizes (a Joltik is a speck, a
+  // Wailord fills its frame). Measure the drawn part of the first frame and
+  // scale every Pokémon to fill the plate about the same.
+  function fitPortrait(img) {
+    var box = img.parentNode.clientWidth || 96;
+    var key = img.currentSrc || img.src;
+    var fit = portraitFits[key];
+    if (!fit) {
+      var w = img.naturalWidth;
+      var h = img.naturalHeight;
+      var x0 = w, y0 = h, x1 = -1, y1 = -1;
+      try {
+        var canvas = document.createElement("canvas");
+        canvas.width = w;
+        canvas.height = h;
+        var ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0);
+        var px = ctx.getImageData(0, 0, w, h).data;
+        for (var y = 0; y < h; y++) {
+          for (var x = 0; x < w; x++) {
+            if (px[(y * w + x) * 4 + 3] > 24) {
+              if (x < x0) x0 = x;
+              if (x > x1) x1 = x;
+              if (y < y0) y0 = y;
+              if (y > y1) y1 = y;
+            }
+          }
+        }
+      } catch (err) {
+        x1 = -1; // the image could not be read; show it whole
+      }
+      if (x1 < 0) { x0 = 0; y0 = 0; x1 = w - 1; y1 = h - 1; }
+      fit = portraitFits[key] = { w: w, h: h, cx: (x0 + x1 + 1) / 2, cy: (y0 + y1 + 1) / 2, size: Math.max(x1 - x0 + 1, y1 - y0 + 1) };
+    }
+    var scale = Math.min(3, box * 0.76 / fit.size);
+    img.style.width = fit.w * scale + "px";
+    img.style.height = fit.h * scale + "px";
+    img.style.left = box / 2 - fit.cx * scale + "px";
+    img.style.top = box / 2 - fit.cy * scale + "px";
+    img.classList.add("is-fitted");
+  }
+
+  function watchPortrait(img) {
+    var n = Number(img.getAttribute("data-n"));
+    img.addEventListener("load", function () { fitPortrait(img); });
+    img.addEventListener("error", function () {
+      // The animated sprite, then the still one, then the box icon.
+      var next = img.src.slice(-4) === ".gif" ? SPRITE_BASE + n + ".png" : img.src !== iconSrc(n) ? iconSrc(n) : "";
+      if (next) img.src = next;
+    });
+    if (img.complete && img.naturalWidth) fitPortrait(img);
+  }
+
+  function dexSkeleton() {
+    var print = '<figure class="dex-print"><span class="dex-thumb"></span><figcaption><span class="dex-line"></span><span class="dex-line"></span><span class="dex-line is-short"></span></figcaption></figure>';
+    var bars = "";
+    for (var i = 0; i < 14; i++) bars += '<span class="dex-year" style="--h:' + (0.25 + 0.5 * Math.abs(Math.sin(i * 1.7))).toFixed(2) + '"></span>';
+    return '<div class="dex-prints">' + print + print + '</div><span class="dex-section dex-line is-short"></span>' +
+      '<div class="dex-chart is-loading">' + bars + '</div><div class="dex-axis"><span class="dex-line is-tiny"></span><span class="dex-line is-tiny"></span></div>' +
+      '<p class="dex-facts"><span class="dex-line"></span></p><p class="dex-langs"><span class="dex-line is-short"></span></p>';
+  }
+
+  function dexBodyHtml(facts) {
+    if (facts === false) return '<p class="dex-note">' + escapeHtml(t("dex.missing")) + "</p>";
+    if (!facts) return dexSkeleton();
+    if (!facts.first) return '<p class="dex-note">' + escapeHtml(t("dex.none")) + "</p>";
+    var shown = facts.newest && facts.newest !== facts.first ? [["dex.first", facts.first], ["dex.newest", facts.newest]] : [["dex.first", facts.first]];
+    var prints = shown.map(function (entry) {
+      var c = entry[1];
+      return '<figure class="dex-print">' +
+        (c.image ? '<img class="dex-thumb" src="' + escapeHtml(c.image) + '" alt="" loading="lazy" onerror="this.style.visibility=\'hidden\'">' : '<span class="dex-thumb"></span>') +
+        '<figcaption><span class="dex-section">' + escapeHtml(t(entry[0])) + '</span><span class="dex-set">' + escapeHtml(c.setName || c.set || "") +
+        '</span><span class="dex-when">' + escapeHtml((c.cardNumber ? c.cardNumber + " · " : "") + cardDate(c.released) + " · " + t("cardlang." + c.lang)) + "</span></figcaption></figure>";
+    }).join("");
+    var max = 0;
+    var year;
+    for (year = facts.firstYear; year <= facts.lastYear; year++) max = Math.max(max, facts.years[year] || 0);
+    var bars = "";
+    for (year = facts.firstYear; year <= facts.lastYear; year++) {
+      var n = facts.years[year] || 0;
+      bars += '<span class="dex-year' + (n === max ? " is-peak" : "") + '" style="--h:' + (n / max).toFixed(3) + '" title="' +
+        escapeHtml(t("dex.chart", { year: year, n: num(n) })) + '"></span>';
+    }
+    return '<div class="dex-prints">' + prints + "</div>" +
+      '<p class="dex-section">' + escapeHtml(t("dex.years")) + "</p>" +
+      '<div class="dex-chart" aria-hidden="true">' + bars + "</div>" +
+      '<div class="dex-axis" aria-hidden="true"><span>' + facts.firstYear + "</span><span>" + facts.lastYear + "</span></div>" +
+      '<p class="dex-facts">' + escapeHtml(countText("count.cards", facts.cards) + " · " + countText("count.printings", facts.printings) + " · " + countText("dex.sets", facts.sets)) + "</p>" +
+      '<p class="dex-langs">' + facts.langs.map(function (l) {
+        return '<span class="dex-lang" title="' + escapeHtml(t("cardlang." + l.code)) + '">' + escapeHtml(l.code) + " <b>" + num(l.n) + "</b></span>";
+      }).join("") + "</p>";
+  }
+
+  function renderDexCard() {
+    var item = dexItem;
+    if (!item) return;
+    var n = Number(item.number) || 0;
+    var facts = dexFacts[item.key];
+    var card = $("dex-card");
+    card.innerHTML = '<button type="button" class="dex-close" data-dex-close aria-label="' + escapeHtml(t("dex.close")) + '">&times;</button>' +
+      '<div class="dex-top"><span class="dex-portrait">' +
+      (n ? '<img alt="" draggable="false" crossorigin="anonymous" data-n="' + n + '" src="' + portraitSrc(n) + '">' : "") +
+      '</span><div class="dex-id"><p class="dex-no">' + escapeHtml(t("dex.no", { n: String(n).padStart(3, "0") })) + "</p>" +
+      '<h2 class="dex-name" id="dex-name">' + escapeHtml(item.name) + "</h2>" +
+      '<p class="dex-since" data-dex-since>' + (facts && facts.firstYear ? escapeHtml(t("dex.since", { year: facts.firstYear })) : "&nbsp;") + "</p></div></div>" +
+      '<div class="dex-body" data-dex-body>' + dexBodyHtml(facts) + "</div>" +
+      '<button type="button" class="dex-open" data-dex-open>' + escapeHtml(t("dex.open", { name: item.name })) +
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M5 12h13m-5-6 6 6-6 6"/></svg></button>';
+    card.setAttribute("aria-label", t("dex.label", { name: item.name }));
+    var img = card.querySelector(".dex-portrait img");
+    if (img) watchPortrait(img);
+  }
+
+  // The card's facts arrived: swap the placeholder rows for them.
+  function fillDexBody(facts) {
+    var card = $("dex-card");
+    var body = card.querySelector("[data-dex-body]");
+    if (!body) return;
+    body.innerHTML = dexBodyHtml(facts);
+    card.querySelector("[data-dex-since]").innerHTML = facts && facts.firstYear ? escapeHtml(t("dex.since", { year: facts.firstYear })) : "&nbsp;";
+    placeDexCard();
+    if (motionOff()) return;
+    play(body, [{ opacity: 0 }, { opacity: 1 }], { duration: 220, easing: "ease-out" });
+    [].forEach.call(body.querySelectorAll(".dex-year"), function (bar, i) {
+      play(bar, [{ transform: "scaleY(0)" }, { transform: "scaleY(1)" }], { duration: 320, delay: 60 + i * 14, easing: "cubic-bezier(.2,.8,.25,1)", fill: "backwards" });
+    });
+  }
+
+  function clamp(value, low, high) { return Math.max(low, Math.min(high, value)); }
+
+  // Beside the binder when there is room on its left, the line leaving the
+  // sprite for the card's right edge; otherwise over the cover, under or above
+  // the sprite. The line's points start at the sprite.
+  function placeDexCard() {
+    var card = $("dex-card");
+    var link = $("dex-link");
+    if (!dexItem || !dexCell) return;
+    if (!dexCell.el.isConnected) { closeDexCard(true); return; }
+    var hero = $("explore").getBoundingClientRect();
+    var cover = $("search-cover").getBoundingClientRect();
+    var sprite = dexCell.el.getBoundingClientRect();
+    var sx = sprite.left + sprite.width / 2 - hero.left;
+    var sy = sprite.top + sprite.height / 2 - hero.top;
+    var w = card.offsetWidth;
+    var h = card.offsetHeight;
+    var gap = 34;
+    var left, top, line;
+    var coverLeft = cover.left - hero.left;
+    if (coverLeft - gap - w >= 0) {
+      dexSide = "right";
+      left = coverLeft - gap - w;
+      top = clamp(sy - h / 2, 0, Math.max(0, hero.height - h));
+      var y = clamp(sy, top + 22, top + h - 22);
+      var bend = left + w + gap / 2;
+      var start = sprite.left - hero.left + 2;
+      line = y === sy ? [[start, sy], [left + w, y]] : [[start, sy], [bend, sy], [bend, y], [left + w, y]];
+    } else {
+      left = clamp(sx - w / 2, cover.left - hero.left + 8, cover.right - hero.left - 8 - w);
+      var below = sprite.top - cover.top < cover.height * 0.45;
+      dexSide = below ? "top" : "bottom";
+      top = below ? sy + sprite.height / 2 + 18 : sy - sprite.height / 2 - 18 - h;
+      var x = clamp(sx, left + 22, left + w - 22);
+      var edge = below ? top : top + h;
+      var tip = below ? sy + sprite.height / 2 - 2 : sy - sprite.height / 2 + 2;
+      line = x === sx ? [[sx, tip], [x, edge]] : [[sx, tip], [sx, (edge + tip) / 2], [x, (edge + tip) / 2], [x, edge]];
+    }
+    card.style.left = Math.round(left) + "px";
+    card.style.top = Math.round(top) + "px";
+    var points = line.map(function (p) { return Math.round(p[0]) + "," + Math.round(p[1]); }).join(" ");
+    link.setAttribute("viewBox", "0 0 " + Math.round(hero.width) + " " + Math.round(hero.height));
+    link.querySelectorAll("polyline").forEach(function (poly) { poly.setAttribute("points", points); });
+  }
+
+  function play(el, frames, opts) {
+    if (!el || !el.animate) return null;
+    var anim = el.animate(frames, opts);
+    dexAnims.push(anim);
+    return anim;
+  }
+
+  function stopDexAnims() {
+    dexAnims.forEach(function (anim) { anim.cancel(); });
+    dexAnims = [];
+  }
+
+  // The cable draws itself out of the sprite, then the light starts running
+  // along it and the plug appears on the card.
+  function drawDexLink(duration, delay) {
+    var link = $("dex-link");
+    var polys = link.querySelectorAll(".dex-link-edge, .dex-link-line");
+    play(link.querySelector(".dex-link-glint"), [{ opacity: 0 }, { opacity: 1 }], { duration: 120, delay: (delay || 0) + duration, fill: "backwards" });
+    var pts = polys[0].getAttribute("points").split(" ").map(function (p) { return p.split(",").map(Number); });
+    var length = 0;
+    for (var i = 1; i < pts.length; i++) length += Math.abs(pts[i][0] - pts[i - 1][0]) + Math.abs(pts[i][1] - pts[i - 1][1]);
+    polys.forEach(function (poly) {
+      poly.style.strokeDasharray = length + 8 + " " + (length + 8);
+      var anim = play(poly, [{ strokeDashoffset: length + 8 }, { strokeDashoffset: 0 }], { duration: duration, delay: delay || 0, easing: "cubic-bezier(.4,0,.2,1)", fill: "backwards" });
+      var done = function () { poly.style.strokeDasharray = ""; };
+      if (anim) { anim.onfinish = done; anim.oncancel = done; } else done();
+    });
+  }
+
+  // The card opens out of the edge the line meets, and its rows follow.
+  function revealDexCard() {
+    var card = $("dex-card");
+    var from = { right: "inset(0 0 0 100%)", top: "inset(0 0 100% 0)", bottom: "inset(100% 0 0 0)" }[dexSide];
+    var shift = { right: "translateX(10px)", top: "translateY(-8px)", bottom: "translateY(8px)" }[dexSide];
+    play(card, [{ clipPath: from }, { clipPath: "inset(-14px)" }], { duration: 300, delay: 120, easing: "cubic-bezier(.2,.85,.25,1)", fill: "backwards" });
+    [].forEach.call(card.querySelectorAll(".dex-top, .dex-body > *, .dex-open"), function (row, i) {
+      play(row, [{ opacity: 0, transform: shift }, { opacity: 1, transform: "none" }], { duration: 260, delay: 190 + i * 35, easing: "cubic-bezier(.2,.8,.25,1)", fill: "backwards" });
+    });
+  }
+
+  function openDexCard(item, cell) {
+    if (!item || !cell) return;
+    var card = $("dex-card");
+    if (dexClosing) { dexClosing.cancel(); dexClosing = null; }
+    var switching = !!dexItem && !card.hidden;
+    var oldLeft = card.offsetLeft;
+    var oldTop = card.offsetTop;
+    stopDexAnims();
+    if (dexCell && dexCell !== cell) dexCell.el.classList.remove("is-chosen");
+    dexItem = item;
+    dexCell = cell;
+    cell.el.classList.remove("is-chosen");
+    var glow = spriteColor(cell.img);
+    if (glow) cell.el.style.setProperty("--glow", glow);
+    void cell.el.offsetWidth; // restart the cursor's snap
+    cell.el.classList.add("is-chosen");
+    $("explore").classList.add("has-dex");
+    renderDexCard();
+    card.hidden = false;
+    $("dex-link").classList.add("is-on");
+    placeDexCard();
+    if (!motionOff()) {
+      if (switching) {
+        // Already open: glide to the new sprite and swap the contents.
+        var dx = oldLeft - card.offsetLeft;
+        var dy = oldTop - card.offsetTop;
+        if (Math.abs(dx) + Math.abs(dy) > 1) play(card, [{ transform: "translate(" + dx + "px," + dy + "px)" }, { transform: "none" }], { duration: 260, easing: "cubic-bezier(.2,.8,.25,1)" });
+        play(card.querySelector(".dex-top"), [{ opacity: 0 }, { opacity: 1 }], { duration: 200, easing: "ease-out" });
+        play(card.querySelector("[data-dex-body]"), [{ opacity: 0 }, { opacity: 1 }], { duration: 200, delay: 40, easing: "ease-out", fill: "backwards" });
+        drawDexLink(200, 160);
+      } else {
+        drawDexLink(170, 0);
+        revealDexCard();
+      }
+    }
+    var rect = card.getBoundingClientRect();
+    if (rect.bottom > window.innerHeight || rect.top < 0) card.scrollIntoView({ block: "nearest", behavior: motionOff() ? "auto" : "smooth" });
+    if (dexFacts[item.key]) return;
+    fetchSpeciesFile(item.key).then(function (data) {
+      dexFacts[item.key] = cardFacts(data, item);
+      if (dexItem === item) fillDexBody(dexFacts[item.key]);
+    }, function (err) {
+      console.warn(err);
+      if (dexItem === item) fillDexBody(false);
+    });
+  }
+
+  // Put the card away: a quick fade, or at once when the page is changing.
+  function closeDexCard(quick) {
+    if (!dexItem) return;
+    dexItem = null;
+    if (dexCell) dexCell.el.classList.remove("is-chosen");
+    dexCell = null;
+    $("explore").classList.remove("has-dex");
+    stopDexAnims();
+    var card = $("dex-card");
+    var link = $("dex-link");
+    var hide = function () {
+      card.hidden = true;
+      link.classList.remove("is-on");
+    };
+    if (quick || motionOff() || !card.animate) { hide(); return; }
+    var out = dexClosing = card.animate([{ opacity: 1, transform: "none" }, { opacity: 0, transform: "scale(.985)" }], { duration: 140, easing: "ease-in" });
+    link.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 120, easing: "ease-in" });
+    out.onfinish = function () {
+      if (dexClosing !== out) return;
+      dexClosing = null;
+      hide();
+    };
+  }
+
+  function bindDexCard() {
+    var card = $("dex-card");
+    card.addEventListener("click", function (event) {
+      if (event.target.closest("[data-dex-close]")) { closeDexCard(); return; }
+      if (event.target.closest("[data-dex-open]")) {
+        var item = dexItem;
+        closeDexCard(true);
+        pickSpecies(item);
+      }
+    });
+    // A click anywhere else puts the card away (a sprite opens its own instead).
+    document.addEventListener("pointerdown", function (event) {
+      if (!dexItem || card.contains(event.target) || event.target.closest(".cover-sprite")) return;
+      closeDexCard();
+    });
+    window.addEventListener("resize", placeDexCard);
   }
 
   /* ---- language ---- */
@@ -1580,11 +2219,14 @@
     }
     if (suggestItems.length) showSuggest($("q").value.trim(), true);
     else showActive();
+    if (dexItem) { renderDexCard(); placeDexCard(); }
   }
 
   function boot() {
     bindSearch();
+    bindDexCard();
     fillCover(PRINT_CREW, { ripple: true });
+    showActive();
     watchCover();
     i18n.onChange(relabel);
     setStatus("status.catalog");

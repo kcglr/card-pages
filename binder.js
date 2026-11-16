@@ -131,9 +131,26 @@
     var views = Math.ceil(count / this.perView);
     this.label.textContent = !this.cards.length ? t("binder.empty")
       : last > first ? t("binder.pages", { a: first, b: last, n: count }) : t("binder.page", { a: first, n: count });
+    var at = Math.floor(this.page / this.perView);
     this.scrub.max = String(Math.max(0, views - 1));
-    this.scrub.value = String(Math.floor(this.page / this.perView));
+    this.scrub.value = String(at);
     this.scrub.disabled = views <= 1;
+    // The slider fills one segment per spread, up to and including the one
+    // open, so the last spread fills it. The segments show when each is at
+    // least 7 px wide. The thumb faces the way the pages last turned and hops
+    // on each turn.
+    this.scrub.style.setProperty("--done", this.cards.length ? String((at + 1) / Math.max(1, views)) : "0");
+    this.scrub.style.setProperty("--views", String(Math.max(1, views)));
+    this.scrub.classList.toggle("is-segmented", views > 1 && this.scrub.clientWidth / views >= 7);
+    if (this.scrubAt != null && at !== this.scrubAt) {
+      this.scrub.classList.toggle("is-back", at < this.scrubAt);
+      if (!reducedMotion()) {
+        this.scrub.classList.remove("is-hop");
+        void this.scrub.offsetWidth;
+        this.scrub.classList.add("is-hop");
+      }
+    }
+    this.scrubAt = at;
     this.scrub.setAttribute("aria-label", t("binder.jump"));
     this.prevBtn.disabled = this.page <= 0;
     this.nextBtn.disabled = this.page + this.perView >= count;
