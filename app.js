@@ -9,7 +9,6 @@
   ];
   var CHUNK = 80;
   var LANG_ORDER = { ENG: 0, JP: 1, CN: 2 };
-  var SPECIAL_VARIANT = /expansion stamp|championships|\bstaff\b|jumbo|no symbol|meiji|play!?\s*pok[eé]mon|world championships|yu nagaba/i;
 
   var speciesIndex = [];
   var current = null; // { meta, cards, payloads, updatedAt }
@@ -20,6 +19,11 @@
   var activeCard = null;
 
   var $ = function (id) { return document.getElementById(id); };
+  var i18n = window.CardI18n;
+  var t = i18n.t;
+  var num = i18n.num;
+
+  function countText(key, n) { return t(key, { n: num(n) }); }
 
   function fold(value) {
     var text = String(value == null ? "" : value);
@@ -101,8 +105,7 @@
   function formatTry(amount, rate) {
     if (!rate || !isFinite(amount)) return "";
     var lira = amount * rate;
-    if (lira >= 1000) return "≈ ₺" + (Math.round(lira / 10) * 10).toLocaleString("en-US");
-    return "≈ ₺" + Math.round(lira).toLocaleString("en-US");
+    return "≈ ₺" + num(lira >= 1000 ? Math.round(lira / 10) * 10 : Math.round(lira));
   }
 
   function formatIstanbul(iso) {
@@ -166,21 +169,8 @@
     return [card.name, card.lang, card.rarity, card.variant, card.set, card.id].join(" ").toLowerCase();
   }
 
-  function quote(q) { return encodeURIComponent(q); }
-
   function marketLinks(card) {
     return window.CardMarketLinks.build(card);
-  }
-
-  function parsePrice(value) {
-    if (value == null) return null;
-    var raw = String(value).trim();
-    if (!raw || raw === "—" || raw === "tap for links") return null;
-    var cleaned = raw.replace(/[^0-9.,-]/g, "");
-    if (!cleaned) return null;
-    if (cleaned.indexOf(",") !== -1) cleaned = cleaned.replace(/,/g, "");
-    var n = parseFloat(cleaned);
-    return isFinite(n) ? n : null;
   }
 
   /* ---- subtype matching, same rules as prices.py ---- */
@@ -293,8 +283,6 @@
     }
     return {
       headline: formatUsd(amount.value),
-      headlineNote: "TCGplayer " + amount.kind,
-      try: formatTry(amount.value, fxRate),
       value: amount.value,
       subtype: subName(row),
       kind: amount.kind,
@@ -382,246 +370,206 @@
 
   /* ---- rendering ---- */
 
+  var binder = null;
+  var animating = false;
+  var filterState = { lang: "", rarities: {}, hideReverse: false, variant: "", query: "" };
+
+  // Markup for text that follows the site language: CardI18n.apply() re-reads
+  // the data-i18n key when the language changes.
+  function said(tag, key, attrs) {
+    return "<" + tag + (attrs ? " " + attrs : "") + ' data-i18n="' + key + '">' + escapeHtml(t(key)) + "</" + tag + ">";
+  }
+  function saidAttr(attr, key) {
+    return " " + attr + '="' + escapeHtml(t(key)) + '" data-i18n-attr="' + attr + ":" + key + '"';
+  }
+
   function renderToolbar(cards) {
-    var langs = uniqueValues(cards, "lang");
     var rarities = uniqueValues(cards, "rarity");
     var variants = uniqueValues(cards, "variant");
     var useVariantSelect = variants.length > 8 || rarities.length > 8;
-    var langChips = '<button type="button" class="chip is-on" data-filter="lang" data-value="" aria-pressed="true">All</button>';
-    langs.forEach(function (lang) {
-      langChips += '<button type="button" class="chip" data-filter="lang" data-value="' + escapeHtml(lang) + '" aria-pressed="false">' + escapeHtml(lang) + "</button>";
-    });
-    if (hasReverse(cards)) {
-      langChips += '<button type="button" class="chip" data-filter="hide-reverse" data-value="1" aria-pressed="false">Hide Reverse Holo</button>';
-    }
-    var rarityHtml = "";
-    if (!useVariantSelect && rarities.length) {
-      rarityHtml = '<div class="chips" role="group" aria-label="Rarity">' + rarities.map(function (r) {
+    var chips = "";
+    if (!useVariantSelect) {
+      chips += rarities.map(function (r) {
         return '<button type="button" class="chip rarity-chip ' + rarityClass(r) + '" data-filter="rarity" data-value="' + escapeHtml(r) + '" aria-pressed="false">' + escapeHtml(r) + "</button>";
-      }).join("") + "</div>";
+      }).join("");
+    }
+    if (hasReverse(cards)) {
+      chips += said("button", "toolbar.hideReverse", 'type="button" class="chip" data-filter="hide-reverse" data-value="1" aria-pressed="false"');
     }
     var variantHtml = "";
     if (useVariantSelect && variants.length) {
-      variantHtml = '<label class="variant-wrap"><span class="sr-only">Variant</span><select id="variant" aria-label="Variant">';
-      variantHtml += '<option value="" selected>All variants</option>';
-      variants.forEach(function (v) {
-        variantHtml += '<option value="' + escapeHtml(v) + '">' + escapeHtml(v) + "</option>";
-      });
-      variantHtml += "</select></label>";
+      variantHtml = '<label class="variant-wrap">' + said("span", "toolbar.variant", 'class="sr-only"') +
+        '<select id="variant">' + said("option", "toolbar.allVariants", 'value="" selected') +
+        variants.map(function (v) { return '<option value="' + escapeHtml(v) + '">' + escapeHtml(v) + "</option>"; }).join("") +
+        "</select></label>";
     }
-    var sortOptions = "";
-    if (hasDates(cards)) {
-      sortOptions += '<option value="newest" selected>Newest</option><option value="oldest">Oldest</option>';
-    }
-    sortOptions += '<option value="price-desc"' + (hasDates(cards) ? "" : " selected") + '>Price high→low</option>';
-    sortOptions += '<option value="price-asc">Price low→high</option><option value="name">Name</option><option value="set">Set</option>';
-    var count = cards.length === 1 ? "1 card" : cards.length + " cards";
+    var dated = hasDates(cards);
+    var sortOptions = (dated ? said("option", "sort.newest", 'value="newest" selected') + said("option", "sort.oldest", 'value="oldest"') : "") +
+      said("option", "sort.priceDesc", 'value="price-desc"' + (dated ? "" : " selected")) +
+      said("option", "sort.priceAsc", 'value="price-asc"') + said("option", "sort.name", 'value="name"') + said("option", "sort.set", 'value="set"');
     return (
       '<div class="toolbar" id="toolbar">' +
         '<div class="toolbar-row">' +
-          '<label class="sort-wrap"><span class="sr-only">Sort</span><select id="sort" aria-label="Sort">' + sortOptions + "</select></label>" +
+          '<label class="sort-wrap">' + said("span", "toolbar.sort", 'class="sr-only"') + '<select id="sort">' + sortOptions + "</select></label>" +
           variantHtml +
-          '<label class="search-wrap"><span class="sr-only">Filter</span><input id="filter" type="search" placeholder="Filter by set, number or rarity…" autocomplete="off" spellcheck="false"></label>' +
-          '<div class="count" id="count">' + escapeHtml(count) + "</div>" +
+          '<label class="search-wrap">' + said("span", "toolbar.filter", 'class="sr-only"') +
+          '<input id="filter" type="search"' + saidAttr("placeholder", "toolbar.filterHint") + ' autocomplete="off" spellcheck="false"></label>' +
+          '<div class="count" id="count"></div>' +
         "</div>" +
-        '<div class="toolbar-row wraps"><div class="chips" role="group" aria-label="Language">' + langChips + "</div>" + rarityHtml + "</div>" +
+        (chips ? '<div class="toolbar-row wraps"><div class="chips" role="group"' + saidAttr("aria-label", "toolbar.rarity") + ">" + chips + "</div></div>" : "") +
       "</div>"
     );
   }
 
-  function tileHtml(card, index) {
+  // Language filters are the divider tabs on the binder's top edge.
+  function renderLangTabs(cards) {
+    var tabs = said("button", "tabs.all", 'type="button" class="chip tab is-on" data-filter="lang" data-value="" aria-pressed="true"');
+    uniqueValues(cards, "lang").forEach(function (lang) {
+      tabs += '<button type="button" class="chip tab tab-' + escapeHtml(lang.toLowerCase()) + '" data-filter="lang" data-value="' +
+        escapeHtml(lang) + '" aria-pressed="false">' + escapeHtml(lang) + "</button>";
+    });
+    return '<div class="binder-tabs" role="group"' + saidAttr("aria-label", "tabs.label") + ">" + tabs + "</div>";
+  }
+
+  function describeCard(card) {
     var lang = (card.lang || "").toUpperCase();
-    var rarity = (card.rarity || card.variant || "").trim();
-    var priced = card.price && card.price.headline;
-    var headline = priced ? escapeHtml(card.price.headline) : "tap for links";
-    var headlineCls = priced ? "headline" : "headline is-links";
-    var side = "";
-    if (priced) {
-      var bits = "";
-      if (card.price.headlineNote) bits += '<span class="headline-note">' + escapeHtml(card.price.headlineNote) + "</span>";
-      if (card.price.try) bits += '<span class="try">' + escapeHtml(card.price.try) + "</span>";
-      if (bits) side = '<div class="side">' + bits + "</div>";
-    }
-    var rarityHtml = "";
-    if (rarity) {
-      rarityHtml = '<span class="rarity ' + rarityClass(rarity) + '">' + escapeHtml(rarity) + "</span>";
-    }
-    var art = card.image
-      ? '<div class="art"><img src="' + escapeHtml(card.image) + '" alt="' + escapeHtml((card.name || "card") + " " + lang) + '" loading="lazy" decoding="async"></div>'
-      : '<div class="art"><div class="placeholder">no img</div></div>';
-    var priceVal = priced ? String(card.price.value) : "";
-    var setName = card.set || "";
-    return (
-      '<article class="tile" role="button" tabindex="0" data-idx="' + index +
-      '" data-lang="' + escapeHtml(lang) + '" data-rarity="' + escapeHtml(rarity) +
-      '" data-variant="' + escapeHtml(card.variant || rarity) +
-      '" data-released="' + escapeHtml(card.released || "") +
-      '" data-search="' + escapeHtml(searchBlob(card)) +
-      '" data-name="' + escapeHtml((card.name || "").toLowerCase()) +
-      '" data-set="' + escapeHtml(setName.toLowerCase()) +
-      '" data-price="' + escapeHtml(priceVal) + '">' +
-        art +
-        '<div class="info"><div class="meta"><div class="name"><span class="name-text">' + escapeHtml(card.name || "Unknown") + "</span>" +
-        (lang ? '<span class="lang">(' + escapeHtml(lang) + ")</span>" : "") + "</div>" + rarityHtml + "</div>" +
-        '<div class="price-row"><div class="' + headlineCls + '">' + headline + "</div>" + side + "</div>" +
-        (setName ? '<p class="set">' + escapeHtml(setName) + "</p>" : "") +
-      "</div></article>"
-    );
+    var price = (card.price && card.price.headline) || "";
+    var name = card.name || t("card.fallback");
+    return {
+      key: String(card.ref),
+      name: name,
+      image: card.image || "",
+      lang: lang,
+      price: price,
+      label: [name, lang, (card.variant || card.rarity || "").trim(), card.set, price || t("card.noPrice")]
+        .filter(Boolean).join(", ")
+    };
+  }
+
+  function speciesArt(number) {
+    return number ? "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/" +
+      encodeURIComponent(number) + ".png" : "";
+  }
+
+  function closedBinder(title, noteKey, extra) {
+    return '<div class="welcome-state' + (extra ? " " + extra : "") + '"><div class="closed-binder"><span class="cover-tape">' +
+      escapeHtml(title) + "</span>" + said("span", noteKey, 'class="cover-note"') +
+      '<img class="cover-badge" src="assets/pullfolio-mark.svg" alt="" width="56" height="56"></div></div>';
   }
 
   function paintResult() {
     if (!current) return;
     var cards = current.cards;
     var meta = current.meta;
-    var subtitle = (meta.cards || cards.length) + " card" + ((meta.cards || cards.length) === 1 ? "" : "s") +
-      " · " + cards.length + " variant" + (cards.length === 1 ? "" : "s");
+    var art = speciesArt(meta.number);
+    $("result").innerHTML =
+      '<header class="result-header">' +
+        (art ? '<img class="result-art" src="' + escapeHtml(art) + '" alt="" width="112" height="112" onerror="this.remove()">' : "") +
+        '<div class="result-heading"><p class="result-dex" id="result-dex"></p><h2 class="result-title">' + escapeHtml(meta.name) +
+        '</h2><p class="subtitle" id="result-sub"></p></div>' +
+        said("p", "result.hint", 'class="result-hint"') +
+      "</header>" +
+      renderToolbar(cards) +
+      '<div class="binder-wrap"><div class="binder-stack">' + renderLangTabs(cards) + '<div id="binder"></div></div>' +
+      said("p", "empty", 'class="empty" id="empty"') + "</div>" +
+      '<footer id="result-footer"></footer>';
+    renderResultText();
+    renderFooter();
+    if (binder) binder.destroy();
+    binder = new window.CardBinder($("binder"), { describe: describeCard, onPick: pullCard });
+    bindToolbar();
+    showCards(false);
+    binder.openCover(meta.name);
+  }
+
+  // The result text that carries numbers; redrawn when the language changes.
+  function renderResultText() {
+    if (!current || !$("result-sub")) return;
+    var meta = current.meta;
+    var cards = current.cards;
     var langs = uniqueValues(cards, "lang");
-    if (langs.length) subtitle += " · " + langs.join("+");
-    var html = '<header class="result-header"><div><p class="result-eyebrow">THE COMPLETE COLLECTION</p><h2 class="result-title">' +
-      escapeHtml(meta.name) + ' <span>/ Master Set</span></h2><p class="subtitle">' + escapeHtml(subtitle) +
-      '</p></div><span class="result-badge">Explore every printing</span></header>';
-    html += renderToolbar(cards);
-    html += '<div class="grid" id="grid">';
-    for (var i = 0; i < cards.length; i++) html += tileHtml(cards[i], i);
-    html += '</div><p class="empty" id="empty">No cards match these filters.</p>';
-    var live = current.priceNote || "";
-    html += "<footer>" + (live ? escapeHtml(live) + " " : "") +
-      'Card list: <a href="https://pokecottage.com/pokemon-master-sets/' + encodeURIComponent(meta.slug || meta.key.replace(/^\d+-/, "")) +
-      '" target="_blank" rel="noopener noreferrer">PokéCottage</a>. USD unless ₺. Prices only where shown.</footer>';
-    $("result").innerHTML = html;
-    bindGrid();
-  }
-
-  function updateTiles() {
-    if (!current) return;
-    var grid = $("grid");
-    if (!grid) {
-      paintResult();
-      return;
-    }
-    var tiles = grid.querySelectorAll(".tile");
-    for (var i = 0; i < tiles.length; i++) {
-      var idx = parseInt(tiles[i].getAttribute("data-idx"), 10);
-      var card = current.cards[idx];
-      if (!card) continue;
-      var priced = card.price && card.price.headline;
-      var head = tiles[i].querySelector(".headline");
-      var row = tiles[i].querySelector(".price-row");
-      if (head) {
-        head.textContent = priced ? card.price.headline : "tap for links";
-        head.className = priced ? "headline" : "headline is-links";
-      }
-      if (row) {
-        var side = row.querySelector(".side");
-        if (side) side.remove();
-        if (priced) {
-          var el = document.createElement("div");
-          el.className = "side";
-          if (card.price.headlineNote) {
-            var n = document.createElement("span");
-            n.className = "headline-note";
-            n.textContent = card.price.headlineNote;
-            el.appendChild(n);
-          }
-          if (card.price.try) {
-            var t = document.createElement("span");
-            t.className = "try";
-            t.textContent = card.price.try;
-            el.appendChild(t);
-          }
-          row.appendChild(el);
-        }
-      }
-      tiles[i].setAttribute("data-price", priced ? String(card.price.value) : "");
-    }
-    var sortEl = $("sort");
-    if (sortEl && (sortEl.value === "price-desc" || sortEl.value === "price-asc")) {
-      applySort();
-    }
+    $("result-dex").textContent = meta.number ? t("result.dex", { n: String(meta.number).padStart(3, "0") }) : t("result.master");
+    $("result-sub").textContent = countText("count.cards", meta.cards || cards.length) + " · " +
+      countText("count.printings", cards.length) + (langs.length ? " · " + langs.join(" · ") : "");
     updateCount();
-  }
-
-  var filterState = { lang: "", rarities: {}, hideReverse: false, variant: "", query: "" };
-
-  function visibleCount(tiles) {
-    return tiles.filter(function (t) { return !t.classList.contains("is-hidden"); }).length;
   }
 
   function updateCount() {
-    var countEl = $("count");
-    var grid = $("grid");
-    var emptyEl = $("empty");
-    if (!grid) return;
-    var tiles = Array.prototype.slice.call(grid.querySelectorAll(".tile"));
-    var n = visibleCount(tiles);
-    if (countEl) {
-      var label = n + (n === 1 ? " card" : " cards");
-      if (n !== tiles.length) label = n + " of " + tiles.length;
-      countEl.textContent = label;
-    }
-    if (emptyEl) emptyEl.classList.toggle("is-on", n === 0);
+    if (!current || !$("count")) return;
+    var total = current.cards.length;
+    var shown = current.shown == null ? total : current.shown;
+    $("count").textContent = shown === total ? countText("count.cards", total) : t("count.of", { n: num(shown), total: num(total) });
   }
 
-  function applyFilters() {
-    var grid = $("grid");
-    if (!grid) return;
-    var tiles = Array.prototype.slice.call(grid.querySelectorAll(".tile"));
-    var rarityOn = Object.keys(filterState.rarities).filter(function (k) { return filterState.rarities[k]; });
-    var q = (filterState.query || "").trim().toLowerCase();
-    tiles.forEach(function (tile) {
-      var okLang = !filterState.lang || tile.getAttribute("data-lang") === filterState.lang;
-      var r = tile.getAttribute("data-rarity") || "";
-      var okR = rarityOn.length === 0 || rarityOn.indexOf(r) !== -1;
-      var v = tile.getAttribute("data-variant") || r || "";
-      var vl = v.toLowerCase();
-      var okRev = !filterState.hideReverse || vl.indexOf("reverse") === -1 || vl.indexOf("holo") === -1;
-      var okVar = !filterState.variant || v === filterState.variant || r === filterState.variant;
-      var hay = tile.getAttribute("data-search") || "";
-      var okQ = !q || hay.indexOf(q) !== -1;
-      tile.classList.toggle("is-hidden", !(okLang && okR && okRev && okVar && okQ));
-    });
-    updateCount();
+  function renderFooter() {
+    var footer = $("result-footer");
+    if (!footer || !current) return;
+    var slug = current.meta.slug || (current.meta.key || "").replace(/^\d+-/, "");
+    footer.innerHTML = (current.priceTime ? escapeHtml(t("footer.prices", { time: current.priceTime })) + " " : "") +
+      escapeHtml(t("footer.list")) + ' <a href="https://pokecottage.com/pokemon-master-sets/' + encodeURIComponent(slug) +
+      '" target="_blank" rel="noopener noreferrer">PokéCottage</a>. ' + escapeHtml(t("footer.rest"));
   }
 
-  function applySort() {
-    var grid = $("grid");
-    var sortEl = $("sort");
-    if (!grid || !sortEl) return;
-    var tiles = Array.prototype.slice.call(grid.querySelectorAll(".tile"));
-    var mode = sortEl.value;
-    tiles.sort(function (a, b) {
-      if (mode === "name") {
-        return (a.getAttribute("data-name") || "").localeCompare(b.getAttribute("data-name") || "") ||
-          (a.getAttribute("data-set") || "").localeCompare(b.getAttribute("data-set") || "");
-      }
-      if (mode === "set") {
-        return (a.getAttribute("data-set") || "").localeCompare(b.getAttribute("data-set") || "") ||
-          (a.getAttribute("data-name") || "").localeCompare(b.getAttribute("data-name") || "");
-      }
+  function compareCards(mode) {
+    function text(card, key) { return String(card[key] || "").toLowerCase(); }
+    return function (a, b) {
+      if (mode === "name") return text(a, "name").localeCompare(text(b, "name")) || text(a, "set").localeCompare(text(b, "set"));
+      if (mode === "set") return text(a, "set").localeCompare(text(b, "set")) || text(a, "name").localeCompare(text(b, "name"));
       if (mode === "newest" || mode === "oldest") {
-        var da = a.getAttribute("data-released") || "";
-        var db = b.getAttribute("data-released") || "";
+        var da = a.released || "";
+        var db = b.released || "";
         if (!da && !db) return 0;
         if (!da) return 1;
         if (!db) return -1;
-        if (da === db) return (a.getAttribute("data-set") || "").localeCompare(b.getAttribute("data-set") || "");
+        if (da === db) return text(a, "set").localeCompare(text(b, "set"));
         return mode === "newest" ? (da < db ? 1 : -1) : (da < db ? -1 : 1);
       }
-      var pa = a.getAttribute("data-price");
-      var pb = b.getAttribute("data-price");
-      pa = pa === "" || pa == null ? null : parseFloat(pa);
-      pb = pb === "" || pb == null ? null : parseFloat(pb);
+      var pa = a.price ? a.price.value : null;
+      var pb = b.price ? b.price.value : null;
       if (pa == null && pb == null) return 0;
       if (pa == null) return 1;
       if (pb == null) return -1;
       return mode === "price-asc" ? pa - pb : pb - pa;
-    });
-    tiles.forEach(function (tile) { grid.appendChild(tile); });
+    };
   }
 
-  function fillSheet(card) {
+  function visibleCards() {
+    var rarityOn = Object.keys(filterState.rarities).filter(function (k) { return filterState.rarities[k]; });
+    var q = filterState.query.trim().toLowerCase();
+    var list = current.cards.filter(function (card) {
+      var rarity = (card.rarity || card.variant || "").trim();
+      var variant = card.variant || rarity;
+      var lower = variant.toLowerCase();
+      return (!filterState.lang || (card.lang || "").toUpperCase() === filterState.lang) &&
+        (!rarityOn.length || rarityOn.indexOf(rarity) !== -1) &&
+        (!filterState.hideReverse || lower.indexOf("reverse") === -1 || lower.indexOf("holo") === -1) &&
+        (!filterState.variant || variant === filterState.variant || rarity === filterState.variant) &&
+        (!q || searchBlob(card).indexOf(q) !== -1);
+    });
+    return list.sort(compareCards($("sort") ? $("sort").value : ""));
+  }
+
+  // Re-files the binder after a filter, sort or price change.
+  function showCards(fromStart) {
+    if (!binder || !current) return;
+    var list = visibleCards();
+    binder.setCards(list, { keepPage: !fromStart, deal: fromStart });
+    current.shown = list.length;
+    updateCount();
+    $("empty").classList.toggle("is-on", !list.length);
+  }
+
+  function updateTiles() {
+    if (!current) return;
+    if (!binder || !$("binder")) { paintResult(); return; }
+    var mode = $("sort") ? $("sort").value : "";
+    if (mode === "price-desc" || mode === "price-asc") showCards(false);
+    else binder.refresh();
+  }
+
+  function fillSheetText(card) {
     var lang = (card.lang || "").toUpperCase();
-    $("sheet-title").innerHTML = escapeHtml(card.name || "Card") +
+    $("sheet-title").innerHTML = escapeHtml(card.name || t("card.fallback")) +
       (lang ? ' <span class="lang">(' + escapeHtml(lang) + ")</span>" : "");
     var r = (card.rarity || card.variant || "").trim();
     var rarityEl = $("sheet-rarity");
@@ -630,16 +578,26 @@
     rarityEl.textContent = r;
     $("sheet-set").textContent = card.set || "";
     $("sheet-set").hidden = !card.set;
-    $("sheet-try").textContent = (card.price && card.price.try) || "";
-    $("sheet-try").hidden = !(card.price && card.price.try);
+    var lira = card.price ? formatTry(card.price.value, fxRate) : "";
+    $("sheet-try").textContent = lira;
+    $("sheet-try").hidden = !lira;
+  }
+
+  function fillSheet(card) {
+    fillSheetText(card);
     var art = $("sheet-art");
-    var src = card.imageLarge || card.image || "";
-    if (src) {
+    var small = card.image || card.imageLarge || "";
+    if (small) {
       art.classList.remove("is-empty");
-      art.innerHTML = '<img src="' + escapeHtml(src) + '" alt="">';
-      var img = art.querySelector("img");
-      if (img && card.image && card.imageLarge && card.imageLarge !== card.image) {
-        img.onerror = function () { img.onerror = null; img.src = card.image; };
+      art.innerHTML = '<img src="' + escapeHtml(small) + '" alt="">';
+      // Start with the image already in the binder, then sharpen to the large scan.
+      if (card.imageLarge && card.imageLarge !== small) {
+        var large = new Image();
+        large.onload = function () {
+          var img = art.querySelector("img");
+          if (activeCard === card && img) img.src = card.imageLarge;
+        };
+        large.src = card.imageLarge;
       }
     } else {
       art.classList.add("is-empty");
@@ -648,29 +606,30 @@
     fillMarkets(card);
   }
 
+  function linkNote(exactUrl, status) {
+    if (exactUrl) return t("link.exact");
+    return t({ loading: "link.loading", not_found: "link.notFound", unavailable: "link.unavailable" }[status] || "link.none");
+  }
+
   function fillMarkets(card) {
     var links = marketLinks(card);
     var rows = [];
     var tcgPrice = "—";
-    var tcgNote = links.tcgDirect ? "product page" : "search";
+    var tcgNote = t(links.tcgDirect ? "market.productPage" : "market.search");
     var tcgRange = "";
     if (card.price) {
       tcgPrice = card.price.headline;
-      tcgNote = card.price.kind + (card.price.subtype ? " · " + card.price.subtype : "");
+      tcgNote = t("kind." + card.price.kind) + (card.price.subtype ? " · " + card.price.subtype : "");
       tcgRange = card.price.range || "";
     }
     rows.push({ name: "TCGplayer", price: tcgPrice, note: tcgNote, range: tcgRange, url: links.tcg });
-    rows.push({ name: "eBay sold", price: "—", note: "sold listings for this printing", url: links.ebaySold });
-    rows.push({ name: "eBay listings", price: "—", note: "active listings for this printing", url: links.ebay });
+    rows.push({ name: t("market.ebaySold"), price: "—", note: t("market.ebaySoldNote"), url: links.ebaySold });
+    rows.push({ name: t("market.ebay"), price: "—", note: t("market.ebayNote"), url: links.ebay });
     var pcStatus = card.pcResolution && card.pcResolution.status;
-    var pcNote = links.pc ? "exact card page" : pcStatus === "loading" ? "Finding exact card page…" :
-      pcStatus === "not_found" ? "No exact match found" : pcStatus === "unavailable" ? "Card lookup unavailable" : "Exact card link unavailable";
-    rows.push({ name: "PriceCharting", price: "—", note: pcNote, url: links.pc });
+    rows.push({ name: "PriceCharting", price: "—", note: linkNote(links.pc, pcStatus), url: links.pc });
     var cmStatus = card.cmResolution && card.cmResolution.status;
-    var cmNote = links.cm ? "exact card page" : cmStatus === "loading" ? "Finding exact card page…" :
-      cmStatus === "not_found" ? "No exact match found" : cmStatus === "unavailable" ? "Card lookup unavailable" : "Exact card link unavailable";
-    rows.push({ name: "Cardmarket", price: "—", note: cmNote, url: links.cm });
-    rows.push({ name: "Collectr", price: "—", note: links.collectr ? "View price on Collectr" : "Exact card link unavailable", url: links.collectr });
+    rows.push({ name: "Cardmarket", price: "—", note: linkNote(links.cm, cmStatus), url: links.cm });
+    rows.push({ name: "Collectr", price: "—", note: t(links.collectr ? "link.collectr" : "link.none"), url: links.collectr });
     $("sheet-markets").innerHTML = rows.map(function (m) {
       var body = '<span class="market-name">' + escapeHtml(m.name) +
         (m.url ? '<span class="market-go">↗</span>' : "") + "</span>" +
@@ -683,12 +642,15 @@
       return '<div class="market">' + body + "</div>";
     }).join("");
     var out = [];
-    if (links.pc) out.push('<a href="' + escapeHtml(links.pc) + '" target="_blank" rel="noopener noreferrer">Open card on PriceCharting</a>');
-    else if (pcStatus !== "loading") out.push('<a href="' + escapeHtml(links.pcSearch) + '" target="_blank" rel="noopener noreferrer">Search PriceCharting</a>');
-    if (links.cm) out.push('<a href="' + escapeHtml(links.cm) + '" target="_blank" rel="noopener noreferrer">Open card on Cardmarket</a>');
-    else if (cmStatus !== "loading") out.push('<a href="' + escapeHtml(links.cmSearch) + '" target="_blank" rel="noopener noreferrer">Search Cardmarket</a>');
-    if (links.collectr) out.push('<a href="' + escapeHtml(links.collectr) + '" target="_blank" rel="noopener noreferrer">View price on Collectr</a>');
-    if (links.ebaySold) out.push('<a href="' + escapeHtml(links.ebaySold) + '" target="_blank" rel="noopener noreferrer">View eBay sold listings</a>');
+    function link(url, key) {
+      out.push('<a href="' + escapeHtml(url) + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(t(key)) + "</a>");
+    }
+    if (links.pc) link(links.pc, "link.pcOpen");
+    else if (pcStatus !== "loading") link(links.pcSearch, "link.pcSearch");
+    if (links.cm) link(links.cm, "link.cmOpen");
+    else if (cmStatus !== "loading") link(links.cmSearch, "link.cmSearch");
+    if (links.collectr) link(links.collectr, "link.collectr");
+    if (links.ebaySold) link(links.ebaySold, "link.ebaySold");
     $("sheet-links").innerHTML = out.join("");
   }
 
@@ -722,49 +684,76 @@
     });
   }
 
-  function openSheet(idx) {
-    if (!current || !current.cards[idx]) return;
-    activeCard = current.cards[idx];
-    fillSheet(activeCard);
+  // Pull the card out of its sleeve and lay it on the inspect stage.
+  function pullCard(card, pocket) {
+    if (!card || activeCard || animating) return;
+    activeCard = card;
+    fillSheet(card);
+    var art = $("sheet-art");
     var overlay = $("overlay");
+    var thumb = pocket && pocket.querySelector(".pk-card img");
+    art.classList.remove("is-landing");
+    art.classList.add("is-waiting");
     overlay.classList.add("is-on");
     overlay.setAttribute("aria-hidden", "false");
     document.body.classList.add("is-locked");
-    $("sheet-close").focus();
-    resolveCardLinks(activeCard);
-  }
-  function closeSheet() {
-    activeCard = null;
-    var overlay = $("overlay");
-    overlay.classList.remove("is-on");
-    overlay.setAttribute("aria-hidden", "true");
-    document.body.classList.remove("is-locked");
-  }
-
-  function bindGrid() {
-    filterState = { lang: "", rarities: {}, hideReverse: false, variant: "", query: "" };
-    var grid = $("grid");
-    if (!grid) return;
-    var tiles = Array.prototype.slice.call(grid.querySelectorAll(".tile"));
-    tiles.forEach(function (tile) {
-      tile.addEventListener("click", function (ev) {
-        if (ev.target.closest && ev.target.closest("a")) return;
-        openSheet(parseInt(tile.getAttribute("data-idx"), 10));
-      });
-      tile.addEventListener("keydown", function (ev) {
-        if (ev.key === "Enter" || ev.key === " ") {
-          ev.preventDefault();
-          openSheet(parseInt(tile.getAttribute("data-idx"), 10));
-        }
+    binder.markOut(String(card.ref));
+    $("sheet-close").focus({ preventScroll: true });
+    animating = true;
+    window.CardBinder.pullOut(pocket, art, thumb ? thumb.currentSrc || thumb.src : "").then(function (fly) {
+      var img = art.querySelector("img");
+      var ready = img && img.decode ? img.decode().catch(function () {}) : Promise.resolve();
+      return ready.then(function () {
+        animating = false;
+        if (fly) fly.remove();
+        if (activeCard !== card) return;
+        art.classList.remove("is-waiting");
+        if (fly) art.classList.add("is-landing");
       });
     });
-    document.querySelectorAll("#toolbar .chip").forEach(function (chip) {
+    resolveCardLinks(card);
+  }
+
+  // Fly the card back into its pocket. `instant` skips the animation.
+  function closeSheet(instant) {
+    if (!activeCard || (animating && !instant)) return;
+    var card = activeCard;
+    activeCard = null;
+    var overlay = $("overlay");
+    var art = $("sheet-art");
+    var img = art.querySelector("img");
+    var pocket = binder ? binder.pocketFor(String(card.ref)) : null;
+    var thumb = pocket && pocket.querySelector(".pk-card img");
+    function finish() {
+      animating = false;
+      overlay.classList.remove("is-on", "is-closing");
+      overlay.setAttribute("aria-hidden", "true");
+      document.body.classList.remove("is-locked");
+      art.classList.remove("is-waiting", "is-landing");
+      if (binder) binder.markOut(null);
+      if (pocket && pocket.isConnected && !instant) pocket.focus({ preventScroll: true });
+    }
+    if (instant || !pocket || !img || art.classList.contains("is-empty")) {
+      document.querySelectorAll(".card-fly").forEach(function (fly) { fly.remove(); });
+      finish();
+      return;
+    }
+    animating = true;
+    art.classList.remove("is-landing");
+    overlay.classList.add("is-closing");
+    window.CardBinder.putBack(pocket, art, thumb ? thumb.currentSrc || thumb.src : img.src).then(finish, finish);
+    art.classList.add("is-waiting");
+  }
+
+  function bindToolbar() {
+    filterState = { lang: "", rarities: {}, hideReverse: false, variant: "", query: "" };
+    document.querySelectorAll("#result .chip").forEach(function (chip) {
       chip.addEventListener("click", function () {
         var kind = chip.getAttribute("data-filter");
         var value = chip.getAttribute("data-value") || "";
         if (kind === "lang") {
           filterState.lang = value;
-          document.querySelectorAll('#toolbar .chip[data-filter="lang"]').forEach(function (c) {
+          document.querySelectorAll('#result .chip[data-filter="lang"]').forEach(function (c) {
             var on = c === chip;
             c.classList.toggle("is-on", on);
             c.setAttribute("aria-pressed", on ? "true" : "false");
@@ -779,42 +768,56 @@
           chip.classList.toggle("is-on", filterState.hideReverse);
           chip.setAttribute("aria-pressed", filterState.hideReverse ? "true" : "false");
         }
-        applyFilters();
+        showCards(true);
       });
     });
-    var sortEl = $("sort");
-    if (sortEl) sortEl.addEventListener("change", applySort);
+    $("sort").addEventListener("change", function () { showCards(true); });
     var variantEl = $("variant");
     if (variantEl) variantEl.addEventListener("change", function () {
       filterState.variant = variantEl.value || "";
-      applyFilters();
+      showCards(true);
     });
-    var filterEl = $("filter");
-    if (filterEl) filterEl.addEventListener("input", function () {
-      filterState.query = filterEl.value || "";
-      applyFilters();
+    $("filter").addEventListener("input", function () {
+      filterState.query = $("filter").value || "";
+      showCards(true);
     });
-    applySort();
-    applyFilters();
   }
 
   $("overlay").addEventListener("click", function (ev) {
-    if (ev.target === $("overlay")) closeSheet();
+    if (ev.target === $("overlay")) closeSheet(false);
   });
-  $("sheet-close").addEventListener("click", closeSheet);
+  $("sheet-close").addEventListener("click", function () { closeSheet(false); });
   document.addEventListener("keydown", function (ev) {
     if (ev.key === "Escape") {
-      if ($("overlay").classList.contains("is-on")) closeSheet();
+      if (activeCard) closeSheet(false);
       else hideSuggest();
+    } else if ((ev.key === "ArrowLeft" || ev.key === "ArrowRight") && binder && !activeCard && $("binder") &&
+        !(ev.target.closest && ev.target.closest("input, select, textarea"))) {
+      ev.preventDefault();
+      binder.turn(ev.key === "ArrowRight" ? 1 : -1);
     }
   });
 
   /* ---- search / load ---- */
 
-  function setStatus(text, isError) {
+  // The status line is kept as a key and values so a language switch can
+  // redraw it. Numbers follow the language's grouping; functions are called.
+  var lastStatus = null;
+
+  function setStatus(key, vars, isError) {
+    lastStatus = key ? { key: key, vars: vars || {}, isError: !!isError } : null;
+    renderStatus();
+  }
+
+  function renderStatus() {
     var el = $("status");
-    el.textContent = text || "";
-    el.classList.toggle("is-error", !!isError);
+    var vars = {};
+    if (lastStatus) Object.keys(lastStatus.vars).forEach(function (name) {
+      var value = lastStatus.vars[name];
+      vars[name] = typeof value === "function" ? value() : typeof value === "number" ? num(value) : value;
+    });
+    el.textContent = lastStatus ? t(lastStatus.key, vars) : "";
+    el.classList.toggle("is-error", !!(lastStatus && lastStatus.isError));
   }
 
   function hideSuggest() {
@@ -833,12 +836,15 @@
     suggestItems = ranked.map(function (r) { return r.item; });
     if (!suggestItems.length) { hideSuggest(); return; }
     box.innerHTML = suggestItems.map(function (item, i) {
-      var meta = (item.variants || item.cards || 0) + " cards";
+      var meta = countText("count.cards", item.variants || item.cards || 0);
       if (item.number) meta = "#" + item.number + " · " + meta;
+      var sprite = item.number ? '<img class="s-sprite" data-sprite="' + escapeHtml(item.number) +
+        '" alt="" width="32" height="32" onerror="this.style.visibility=\'hidden\'">' : "";
       return '<button type="button" role="option" data-i="' + i + '"' +
         (i === 0 ? ' aria-selected="true"' : ' aria-selected="false"') +
-        '><span class="s-name">' + escapeHtml(item.name) + '</span><span class="s-meta">' + escapeHtml(meta) + "</span></button>";
+        ">" + sprite + '<span class="s-name">' + escapeHtml(item.name) + '</span><span class="s-meta">' + escapeHtml(meta) + "</span></button>";
     }).join("");
+    fitSprites(box);
     box.hidden = false;
     $("q").setAttribute("aria-expanded", "true");
     box.classList.add("is-on");
@@ -878,7 +884,7 @@
     if (ranked.length && ranked[0].score >= 40) {
       pickSpecies(ranked[0].item);
     } else {
-      setStatus("No Pokémon named like that in the catalog.", true);
+      setStatus("status.noMatch", null, true);
     }
   }
 
@@ -896,33 +902,22 @@
     });
     var elapsed = started ? Math.max(0, Date.now() - started) : 0;
     var when = formatIstanbul(updatedAt || Date.now());
-    current.priceNote = "Prices live from TCGplayer · " + when + ".";
+    current.priceTime = when;
     current.priced = priced;
-    var footerLive = $("result").querySelector("footer");
-    paintOrPatch(priced, elapsed, when);
+    setStatus("status.priced", {
+      n: priced,
+      time: when,
+      elapsed: function () {
+        return elapsed >= 50 ? " (" + (elapsed / 1000).toLocaleString(i18n.locale(), { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + " s)" : "";
+      }
+    });
+    updateTiles();
+    renderFooter();
     return { priced: priced, elapsed: elapsed, when: when };
   }
 
-  function paintOrPatch(priced, elapsed, when) {
-    var status = (priced || 0) + " priced · prices live from TCGplayer · " + when;
-    if (elapsed) status += " (" + (elapsed / 1000).toFixed(1) + "s)";
-    setStatus(status);
-    if ($("grid")) updateTiles();
-    else paintResult();
-    var footer = $("result").querySelector("footer");
-    if (footer && current && current.priceNote) {
-      // rebuild footer text prefix
-    }
-    // Always refresh footer via a light paint of footer only
-    if (footer && current) {
-      var slug = current.meta.slug || (current.meta.key || "").replace(/^\d+-/, "");
-      footer.innerHTML = escapeHtml(current.priceNote + " ") +
-        'Card list: <a href="https://pokecottage.com/pokemon-master-sets/' + encodeURIComponent(slug) +
-        '" target="_blank" rel="noopener noreferrer">PokéCottage</a>. USD unless ₺. Prices only where shown.';
-    }
-  }
-
   var loadToken = 0;
+  var titleName = "";
 
   function loadSpecies(item) {
     var token = ++loadToken;
@@ -930,13 +925,18 @@
       button.classList.toggle('is-selected', button.getAttribute('data-species') === item.slug);
       button.setAttribute('aria-pressed', button.getAttribute('data-species') === item.slug ? 'true' : 'false');
     });
-    document.title = item.name + ' cards · CardDex';
-    closeSheet();
+    titleName = item.name;
+    document.title = t("title.species", { name: item.name });
+    closeSheet(true);
+    if (binder) binder.destroy();
+    binder = null;
     current = null;
-    setStatus("Loading " + item.name + "…");
-    $("result").innerHTML = '<p class="page-msg">Loading ' + escapeHtml(item.name) + "…</p>";
+    setStatus("status.loading", { name: item.name });
+    $("result").innerHTML = closedBinder(item.name, "binder.loading", "is-loading");
+    // Bring the binder into view so its cover is seen opening.
+    var top = $("result").getBoundingClientRect().top;
+    if (top < 0 || top > window.innerHeight * 0.5) $("result").scrollIntoView({ block: "start" });
     if (history.replaceState) history.replaceState(null, "", "#" + encodeURIComponent(item.slug || item.key));
-    var started = Date.now();
     Promise.all([
       fetch("data/" + encodeURIComponent(item.key) + ".json", { cache: "default" }).then(function (res) {
         if (!res.ok) throw new Error("data " + res.status);
@@ -951,13 +951,14 @@
       if (token !== loadToken) return;
       var data = parts[0];
       var savedLinks = parts[2] || {};
-      var cards = (data.cards || []).map(function (c) {
-        return Object.assign({}, c, savedLinks[c.id] || {});
+      var cards = (data.cards || []).map(function (c, i) {
+        return Object.assign({}, c, savedLinks[c.id] || {}, { ref: i });
       });
       current = {
         meta: {
           key: data.key || item.key,
           name: data.name || item.name,
+          number: data.number || item.number,
           slug: data.slug || item.slug || (item.key || "").replace(/^\d+-/, ""),
           cards: data.counts && data.counts.cards,
           variants: cards.length
@@ -965,10 +966,10 @@
         cards: cards,
         payloads: {},
         priced: 0,
-        priceNote: ""
+        priceTime: ""
       };
       paintResult();
-      setStatus("Fetching live prices…");
+      setStatus("status.fetching");
       var ids = cards.map(function (c) { return c.productId; }).filter(Boolean);
       var t0 = Date.now();
       return fetchPrices(ids, function (partial, updatedAt) {
@@ -978,14 +979,14 @@
         if (token !== loadToken) return;
         var summary = applyFetchedPrices(result.prices, result.updatedAt, t0);
         if (result.failed && summary) {
-          setStatus(summary.priced + " priced · some price requests failed · " + summary.when, true);
+          setStatus("status.partial", { n: summary.priced, time: summary.when }, true);
         }
         current.elapsedMs = Date.now() - t0;
       });
     }).catch(function (err) {
       if (token !== loadToken) return;
-      setStatus("Could not load " + item.name + ".", true);
-      $("result").innerHTML = '<p class="page-msg">Could not load that master set.</p>';
+      setStatus("status.loadFailed", { name: item.name }, true);
+      $("result").innerHTML = closedBinder(item.name, "binder.stuck", "is-stuck");
       console.error(err);
     });
   }
@@ -1044,23 +1045,115 @@
     });
   }
 
+  /* ---- sprites ---- */
+
+  // PokeAPI sprites sit in a 96px frame with uneven empty margins: Charizard
+  // fills it, Pikachu uses half. Crop each to its figure and scale that to a
+  // fixed square, so every sprite shows at the same size.
+  var SPRITE_BASE = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/";
+  var SPRITE_SIZE = 96;
+  var fittedSprites = {};
+
+  function cropSprite(raw) {
+    var w = raw.naturalWidth;
+    var h = raw.naturalHeight;
+    var source = document.createElement("canvas");
+    source.width = w;
+    source.height = h;
+    var ctx = source.getContext("2d");
+    ctx.drawImage(raw, 0, 0);
+    var alpha = ctx.getImageData(0, 0, w, h).data;
+    var minX = w, minY = h, maxX = -1, maxY = -1;
+    for (var y = 0; y < h; y++) {
+      for (var x = 0; x < w; x++) {
+        if (alpha[(y * w + x) * 4 + 3] > 8) {
+          if (x < minX) minX = x;
+          if (x > maxX) maxX = x;
+          if (y < minY) minY = y;
+          if (y > maxY) maxY = y;
+        }
+      }
+    }
+    if (maxX < 0) return raw.src;
+    var bw = maxX - minX + 1;
+    var bh = maxY - minY + 1;
+    var scale = (SPRITE_SIZE - 4) / Math.max(bw, bh);
+    var dw = Math.round(bw * scale);
+    var dh = Math.round(bh * scale);
+    var out = document.createElement("canvas");
+    out.width = out.height = SPRITE_SIZE;
+    var octx = out.getContext("2d");
+    octx.imageSmoothingEnabled = scale < 1; // keep pixel art crisp when enlarging
+    octx.drawImage(source, minX, minY, bw, bh, Math.round((SPRITE_SIZE - dw) / 2), Math.round((SPRITE_SIZE - dh) / 2), dw, dh);
+    return out.toDataURL("image/png");
+  }
+
+  function fitSprites(scope) {
+    (scope || document).querySelectorAll("img[data-sprite]").forEach(function (img) {
+      var src = SPRITE_BASE + encodeURIComponent(img.getAttribute("data-sprite")) + ".png";
+      img.removeAttribute("data-sprite");
+      if (!fittedSprites[src]) fittedSprites[src] = new Promise(function (resolve) {
+        var raw = new Image();
+        raw.crossOrigin = "anonymous";
+        raw.onload = function () {
+          try { resolve(cropSprite(raw)); } catch (e) { resolve(src); }
+        };
+        raw.onerror = function () { resolve(src); }; // let the <img> try, and hide itself if it fails
+        raw.src = src;
+      });
+      fittedSprites[src].then(function (url) { img.src = url; });
+    });
+  }
+
+  /* ---- language ---- */
+
+  var catalogTotals = null;
+
+  function renderCatalogCounts() {
+    if (!catalogTotals) return;
+    if ($("catalog-species")) $("catalog-species").textContent = num(catalogTotals.species);
+    if ($("catalog-printings")) $("catalog-printings").textContent = num(catalogTotals.printings);
+  }
+
+  // CardI18n has already swapped every data-i18n text; redraw the rest.
+  function relabel() {
+    document.title = titleName ? t("title.species", { name: titleName }) : t("title.home");
+    renderStatus();
+    renderCatalogCounts();
+    renderResultText();
+    renderFooter();
+    if (binder) {
+      binder.updateNav();
+      binder.refresh();
+    }
+    if (activeCard) {
+      fillSheetText(activeCard);
+      fillMarkets(activeCard);
+    }
+    if (suggestItems.length) showSuggest($("q").value.trim());
+  }
+
   function boot() {
     bindSearch();
-    setStatus("Loading catalog…");
+    fitSprites(document.querySelector(".quick-picks"));
+    i18n.onChange(relabel);
+    setStatus("status.catalog");
     fetch("data/index.json").then(function (res) {
       if (!res.ok) throw new Error("index " + res.status);
       return res.json();
     }).then(function (data) {
       speciesIndex = data.species || data || [];
-      if ($('catalog-species')) $('catalog-species').textContent = speciesIndex.length.toLocaleString('en-US');
-      var totalPrintings = (data.counts || {}).variants || speciesIndex.reduce(function (total, item) { return total + Number(item.variants || 0); }, 0);
-      if ($('catalog-printings')) $('catalog-printings').textContent = totalPrintings.toLocaleString('en-US');
+      catalogTotals = {
+        species: speciesIndex.length,
+        printings: (data.counts || {}).variants || speciesIndex.reduce(function (total, item) { return total + Number(item.variants || 0); }, 0)
+      };
+      renderCatalogCounts();
       document.querySelectorAll('[data-species]').forEach(function (button) { button.disabled = false; });
-      setStatus(speciesIndex.length + " Pokémon in the catalog. Type a name to start.");
+      setStatus("status.ready", { n: speciesIndex.length });
       var fromHash = findByHash(location.hash);
       if (fromHash) pickSpecies(fromHash);
     }).catch(function (err) {
-      setStatus("Could not load the catalog.", true);
+      setStatus("status.catalogFailed", null, true);
       console.error(err);
     });
     loadFx();

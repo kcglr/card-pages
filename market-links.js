@@ -32,12 +32,19 @@
     } catch (e) { return ""; }
   }
 
-  function pricechartingTerms(card) {
+  // PriceCharting shows "no results found" when any query word is missing from a
+  // product, so search with the name, the number as it prints it, and the language.
+  // Mirrors market_links.search_query in Python.
+  function pricechartingQuery(card) {
     var c = identity(card);
-    var number = c.number.trim().replace(/^([A-Za-z]+)\s+(\d+)/, "$1$2");
-    if (!/^[RGB]\/RGB$/i.test(number)) number = number.split("/")[0].replace(/\d+/g, function (n) { return String(Number(n)); });
-    var variant = /^(standard|normal|holo|holo rare)$/i.test(c.variant) ? "" : c.variant;
-    return [c.name, number, c.set, { JP: "Japanese", CN: "Chinese" }[c.lang] || "", variant].filter(Boolean).join(" ");
+    var number = String(c.number || "").trim();
+    if (!/^[RGB]\/RGB$/i.test(number)) {
+      var words = number.replace(/^([A-Za-z]+)\s+(\d+)/, "$1$2").split("/")[0].split(/\s+/).filter(Boolean);
+      number = words.length ? words[words.length - 1] : "";
+      if (c.lang === "ENG" && /^SVP\d+$/i.test(number)) number = number.slice(3);
+      if (/^\d+$/.test(number)) number = String(Number(number));
+    }
+    return [c.name, number, { JP: "Japanese", CN: "Chinese" }[c.lang] || ""].filter(Boolean).join(" ");
   }
 
   function build(card) {
@@ -62,12 +69,12 @@
       ebaySold: "https://www.ebay.com/sch/i.html?_nkw=" + q + "&LH_Sold=1&LH_Complete=1",
       ebay: "https://www.ebay.com/sch/i.html?_nkw=" + q,
       pc: pc,
-      pcSearch: "https://www.pricecharting.com/search-products?q=" + encodeURIComponent(pricechartingTerms(card)) + "&type=prices",
+      pcSearch: "https://www.pricecharting.com/search-products?q=" + encodeURIComponent(pricechartingQuery(card)) + "&type=prices",
       cm: cm,
       cmSearch: "https://www.cardmarket.com/en/Pokemon/Products/Search?searchString=" + encodeURIComponent(cmQuery),
       cmDirect: !!cm
     };
   }
 
-  return { build: build, identity: identity, searchTerms: searchTerms, pricechartingTerms: pricechartingTerms, productUrl: productUrl };
+  return { build: build, identity: identity, searchTerms: searchTerms, pricechartingQuery: pricechartingQuery, productUrl: productUrl };
 });

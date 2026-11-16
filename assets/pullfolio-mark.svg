@@ -1,0 +1,21 @@
+<svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" width="1024" height="1024">
+  <title>Pullfolio card and binder pocket icon</title>
+  <defs>
+    <clipPath id="card-clip">
+      <rect x="254" y="218" width="480" height="620" rx="48" transform="rotate(-7.5 494 528)" />
+    </clipPath>
+  </defs>
+  <g id="card">
+    <rect x="254" y="218" width="480" height="620" rx="48" transform="rotate(-7.5 494 528)" fill="#fbf7ef" />
+    <g clip-path="url(#card-clip)">
+      <path d="M235 558 716 205 749 306 301 635Z" fill="#ffd43b" />
+    </g>
+    <rect x="254" y="218" width="480" height="620" rx="48" transform="rotate(-7.5 494 528)" fill="none" stroke="#1f1a16" stroke-width="28" stroke-linejoin="round" />
+  </g>
+  <g id="pocket">
+    <path d="M236 548H302Q334 548 355 577C391 623 447 649 512 649S633 623 669 577Q690 548 722 548H787C821 548 849 576 849 610V899C849 933 821 961 787 961H236C202 961 174 933 174 899V610C174 576 202 548 236 548Z" fill="#b3302a" stroke="#1f1a16" stroke-width="28" stroke-linecap="round" stroke-linejoin="round" />
+  </g>
+  <g id="sparkle">
+    <path d="M733 77C748 130 762 149 816 166C762 184 748 204 733 253C718 204 703 184 649 167C703 149 718 130 733 77Z" fill="#ffd43b" stroke="#1f1a16" stroke-width="24" stroke-linejoin="round" />
+  </g>
+</svg>

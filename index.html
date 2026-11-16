@@ -3,60 +3,68 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="Discover every Pokémon TCG printing with CardDex. Explore cards, check live TCGplayer prices, and open exact marketplace pages.">
-<meta name="theme-color" content="#0b0e16">
-<title>CardDex — Your Pokémon card universe</title>
+<meta name="description" content="Pullfolio files every Pokémon TCG printing in a binder you can flip through. Pull out any card to check TCGplayer prices and open exact marketplace pages.">
+<meta name="theme-color" content="#eee5d3">
+<title data-i18n="title.home">Pullfolio — every Pokémon card in one binder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&display=swap">
 <link rel="stylesheet" href="styles.css">
-<link rel="stylesheet" href="card-tilt.css?v=1">
-<link rel="stylesheet" href="theme.css?v=1">
-<link rel="icon" href="assets/pokeball.svg" type="image/svg+xml">
+<link rel="stylesheet" href="card-tilt.css?v=2">
+<link rel="stylesheet" href="theme.css?v=4">
+<link rel="icon" href="assets/pullfolio-icon.svg" type="image/svg+xml">
+<link rel="preload" href="assets/binder-leather.webp" as="image" type="image/webp">
 </head>
 <body>
-  <a class="skip-link" href="#result">Skip to cards</a>
+  <a class="skip-link" href="#result" data-i18n="skip">Skip to the binder</a>
   <div class="page">
-    <nav class="topbar" aria-label="Main navigation">
-      <a class="brand" href="./" aria-label="CardDex home"><span class="brand-ball" aria-hidden="true"></span>CARD<span>DEX</span><span class="brand-tag">TCG</span></a>
-      <div class="nav-links"><a href="#explore" data-focus-search>Explore cards</a><a href="#market-guide" data-open-guide>Market guide</a></div>
-      <span class="nav-status"><i aria-hidden="true"></i>Made for collectors</span>
+    <nav class="topbar" aria-label="Main navigation" data-i18n-attr="aria-label:nav.label">
+      <a class="brand" href="./" aria-label="Pullfolio home" data-i18n-attr="aria-label:brand.home"><img class="brand-logo" src="assets/pullfolio-logo.webp" alt="Pullfolio" width="408" height="150"></a>
+      <div class="nav-links"><a href="#explore" data-focus-search data-i18n="nav.find">Find a Pokémon</a><a href="#market-guide" data-open-guide data-i18n="nav.guide">How prices work</a></div>
+      <div class="lang-switch" role="group" aria-label="Site language" data-i18n-attr="aria-label:lang.label">
+        <button type="button" data-set-lang="en" lang="en" aria-pressed="true">EN</button><button type="button" data-set-lang="tr" lang="tr" aria-pressed="false">TR</button>
+      </div>
     </nav>
-    <header class="search-hero">
-      <div class="hero-art" aria-hidden="true"><img src="assets/pokemon-hero.webp" alt="" fetchpriority="high" width="1536" height="1024"></div>
+    <header class="search-hero" id="explore">
       <div class="hero-copy">
-        <p class="eyebrow"><span aria-hidden="true">✦</span> YOUR POKÉMON CARD UNIVERSE</p>
-        <h1>Find your next<br><em>holy grail.</em></h1>
-        <p class="hero-description">Every Pokémon. Every printing. One place to explore<br class="desktop-break"> the artwork, check prices, and discover your next chase.</p>
-        <div class="hero-stats" aria-label="Catalog coverage">
-          <div><strong id="catalog-species">1,025</strong><span>Pokémon</span></div>
-          <div><strong id="catalog-printings">81,659</strong><span>card printings</span></div>
-          <div><strong>ENG · JP · CN</strong><span>one global collection</span></div>
+        <h1 data-i18n-html="hero.title">Every Pokémon card, filed in <mark>one binder</mark>.</h1>
+        <p class="hero-description"><strong id="catalog-species">1,025</strong> <span data-i18n="hero.and">Pokémon and</span> <strong id="catalog-printings">81,659</strong> <span data-i18n="hero.rest">printings in English, Japanese and Chinese. Look one up, flip through its pages, and pull out any card to see what it sells for.</span></p>
+      </div>
+      <div class="index-card">
+        <label class="index-card-title" for="q" data-i18n="search.title">Whose binder should we open?</label>
+        <div class="search-box-wrap">
+          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4.5 4.5"/></svg>
+          <input id="q" class="search-box" type="search" placeholder="Pikachu, Mew, Umbreon…" autocomplete="off" spellcheck="false" enterkeyhint="search" aria-controls="suggest" aria-expanded="false">
+          <button type="button" id="search-submit" class="search-submit" data-i18n="search.submit">Open binder</button>
+          <div class="suggest" id="suggest" role="listbox" hidden></div>
         </div>
+        <div class="quick-picks" role="group" aria-label="Popular binders" data-i18n-attr="aria-label:picks.label">
+          <button type="button" data-species="pikachu"><img data-sprite="25" alt="" width="32" height="32" onerror="this.style.visibility='hidden'">Pikachu</button>
+          <button type="button" data-species="charizard"><img data-sprite="6" alt="" width="32" height="32" onerror="this.style.visibility='hidden'">Charizard</button>
+          <button type="button" data-species="mew"><img data-sprite="151" alt="" width="32" height="32" onerror="this.style.visibility='hidden'">Mew</button>
+          <button type="button" data-species="umbreon"><img data-sprite="197" alt="" width="32" height="32" onerror="this.style.visibility='hidden'">Umbreon</button>
+          <button type="button" data-species="gengar"><img data-sprite="94" alt="" width="32" height="32" onerror="this.style.visibility='hidden'">Gengar</button>
+        </div>
+        <p class="status" id="status" role="status"></p>
       </div>
-      <span class="hero-caption" aria-hidden="true">THE CHASE NEVER ENDS <span>✧</span></span>
     </header>
-    <section class="explore-bar" id="explore" aria-label="Find Pokémon cards">
-      <div class="search-heading"><span class="section-label">START YOUR DISCOVERY</span><span class="search-hint">A whole world in one search.</span></div>
-      <div class="search-box-wrap">
-        <label class="sr-only" for="q">Search a Pokémon</label>
-        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4.5 4.5"/></svg>
-        <input id="q" class="search-box" type="search" placeholder="Search a Pokémon… Pikachu, Mew, Umbreon" autocomplete="off" spellcheck="false" enterkeyhint="search" aria-controls="suggest" aria-expanded="false">
-        <button type="button" id="search-submit" class="search-submit" aria-label="Explore Pokémon">Explore <span aria-hidden="true">↗</span></button>
-        <div class="suggest" id="suggest" role="listbox" hidden></div>
-      </div>
-      <div class="quick-picks"><span>Jump into</span><button type="button" data-species="pikachu">Pikachu <span>↗</span></button><button type="button" data-species="charizard">Charizard <span>↗</span></button><button type="button" data-species="mew">Mew <span>↗</span></button><button type="button" data-species="umbreon">Umbreon <span>↗</span></button><button type="button" data-species="gengar">Gengar <span>↗</span></button></div>
-      <p class="status" id="status"></p>
-    </section>
     <main id="result" tabindex="-1">
-      <div class="welcome-state" id="welcome"><span class="welcome-star" aria-hidden="true">✧</span><h2>Your next discovery starts here.</h2><p>Pick a Pokémon above to explore its complete card history.</p><div class="source-tags"><span>TCGplayer</span><span>PriceCharting</span><span>Cardmarket</span><span>Collectr</span><span>eBay</span></div></div>
+      <div class="welcome-state" id="welcome">
+        <div class="closed-binder"><span class="cover-tape" data-i18n="welcome.tape">Pokémon cards</span><span class="cover-note" data-i18n-html="welcome.note">Pick a Pokémon above<br>to open its binder.</span><img class="cover-badge" src="assets/pullfolio-mark.svg" alt="" width="56" height="56"></div>
+      </div>
     </main>
-    <details class="market-guide" id="market-guide"><summary><span>Know your cards. Know your prices.</span><span class="guide-toggle" aria-hidden="true">+</span></summary><div class="guide-content"><div><h3>Live prices, clearly sourced.</h3><p>Prices shown here come from TCGplayer and are in USD, with an approximate TRY conversion. Availability varies by language and printing.</p></div><div><h3>Follow the exact printing.</h3><p>Open a card to visit PriceCharting, Cardmarket or Collectr. Search options appear when an exact match is unavailable. eBay links separate sold and active listings.</p></div><div><h3>A little holo magic.</h3><p>Move your pointer across a card to tilt it. On your phone, press and slide across the artwork. Tap a card to see its details.</p></div></div></details>
-    <div class="site-footer"><a class="brand footer-brand" href="./"><span class="brand-ball" aria-hidden="true"></span>CARD<span>DEX</span></a><p>An independent explorer for the Pokémon TCG community.</p><span>Enjoy the chase. <span aria-hidden="true">✦</span></span></div>
+    <details class="market-guide" id="market-guide"><summary><span data-i18n="guide.summary">How prices and links work</span><span class="guide-toggle" aria-hidden="true">+</span></summary><div class="guide-content"><div><h3 data-i18n="guide.h1">Prices on the stickers</h3><p data-i18n="guide.p1">The sticker on a sleeve is the TCGplayer market price in USD. Pull the card out to see an approximate lira conversion. Availability varies by language and printing; a sleeve without a sticker has no price yet.</p></div><div><h3 data-i18n="guide.h2">The exact printing</h3><p data-i18n="guide.p2">Pull a card out to open its PriceCharting, Cardmarket or Collectr page. When no exact page is known you get a search instead. eBay links keep sold and active listings apart.</p></div><div><h3 data-i18n="guide.h3">Handling the binder</h3><p data-i18n="guide.p3">Turn pages with the arrows, the page corners, your arrow keys or a swipe. Click a card to pull it out, then move over it, or press and slide on a phone, to tilt it in the light.</p></div></div></details>
+    <div class="site-footer"><img class="brand-logo small" src="assets/pullfolio-logo.webp" alt="Pullfolio" width="408" height="150" loading="lazy"><p data-i18n="footer.note">An independent fan project for Pokémon TCG collectors. Not affiliated with Nintendo, The Pokémon Company or any marketplace.</p></div>
   </div>
   <div class="overlay" id="overlay" aria-hidden="true">
     <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
       <div class="sheet-handle" aria-hidden="true"></div>
-      <button type="button" class="sheet-close" id="sheet-close" aria-label="Close">×</button>
+      <button type="button" class="sheet-close" id="sheet-close" aria-label="Put the card back" data-i18n-attr="aria-label:sheet.close">&times;</button>
       <div class="sheet-body">
-        <div class="sheet-art" id="sheet-art"></div>
+        <div class="sheet-stage">
+          <div class="sheet-art" id="sheet-art"></div>
+          <p class="tilt-hint"><span class="hint-pointer" data-i18n="tilt.pointer">Move over the card to tilt it</span><span class="hint-touch" data-i18n="tilt.touch">Press and slide on the card to tilt it</span></p>
+        </div>
         <div class="sheet-info">
           <div class="sheet-kicker">
             <h2 id="sheet-title"></h2>
@@ -70,9 +78,11 @@
       </div>
     </div>
   </div>
+  <script src="i18n.js?v=2"></script>
   <script src="market-links.js?v=4"></script>
   <script src="cardmarket-resolver.js?v=3"></script>
   <script src="card-tilt.js?v=1"></script>
-  <script src="app.js?v=9"></script>
+  <script src="binder.js?v=3"></script>
+  <script src="app.js?v=12"></script>
 </body>
 </html>
