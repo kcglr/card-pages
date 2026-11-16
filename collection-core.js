@@ -376,6 +376,44 @@
     this.reindex();
   };
 
+  /* ---- collect mode: one tap per pocket ---- */
+
+  // Nothing typed in: ungraded Near Mint, with no price paid, date, own value
+  // or note. One of these with a quantity of 1 is what a tap adds.
+  function isBare(copy) {
+    return !!copy && copy.cond.kind === "raw" && copy.cond.grade === "NM" &&
+      !copy.paid && !copy.bought && !copy.value && !copy.note;
+  }
+
+  // What a tap does to a pocket holding these copies: add one, take back the
+  // single copy a tap could have made, or keep the rest. A copy with details
+  // ("details") or more than one copy ("many") is never lost to a tap.
+  function tapAction(copies) {
+    copies = copies || [];
+    if (!copies.length) return { action: "add" };
+    if (copies.length === 1 && copies[0].qty === 1 && isBare(copies[0])) return { action: "remove", uid: copies[0].uid };
+    var qty = copies.reduce(function (n, c) { return n + c.qty; }, 0);
+    return { action: "keep", why: copies.every(isBare) ? "many" : "details", qty: qty };
+  }
+
+  // The copy a tap adds: one ungraded Near Mint card, filed under the binder
+  // it was tapped in.
+  function quickCopy(card, species, counts) {
+    return { card: card.id, species: species, qty: 1, cond: { kind: "raw", grade: "NM" }, snap: snapOf(card, counts) };
+  }
+
+  // Master-set progress over these printings: how many you own, by id or as
+  // the same product saved from another Pokémon's binder. The percentage is
+  // 100 only when every one is there, and at least 1 once you own any.
+  function progress(cards, model) {
+    cards = cards || [];
+    var owned = 0;
+    cards.forEach(function (card) { if (model.qtyFor(card) > 0) owned++; });
+    var total = cards.length;
+    var pct = !total ? 0 : owned === total ? 100 : Math.max(owned ? 1 : 0, Math.floor(owned * 100 / total));
+    return { owned: owned, total: total, pct: pct };
+  }
+
   /* ---- staying matched when the catalog is rebuilt ---- */
 
   // The Pokémon a saved key points at now: the same key, else the same
@@ -628,6 +666,10 @@
     cleanDoc: cleanDoc,
     merge: merge,
     Model: Model,
+    isBare: isBare,
+    tapAction: tapAction,
+    quickCopy: quickCopy,
+    progress: progress,
     speciesFor: speciesFor,
     findCard: findCard,
     reconcile: reconcile,

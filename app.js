@@ -263,8 +263,14 @@
 
   var binder = null;
   var animating = false;
-  var filterState = { langs: {}, variants: {}, species: {}, set: "", hideReverse: false, query: "" };
+  var filterState = { langs: {}, variants: {}, species: {}, set: "", hideReverse: false, own: "", query: "" };
   var LANG_STORE = "pullfolio.langs";
+  // "Mark cards I own" (collect mode): taps mark pockets instead of pulling
+  // cards out. It stays on from one Pokémon's binder to the next until it is
+  // turned off or the page is reloaded.
+  var collecting = false;
+  var COLLECT_ICON = '<svg class="collect-tick" viewBox="0 0 7 6" shape-rendering="crispEdges" aria-hidden="true"><path fill="currentColor" ' +
+    'd="M6 0h1v1H6zM5 1h2v1H5zM0 2h1v1H0zM4 2h2v1H4zM0 3h2v1H0zM3 3h2v1H3zM1 4h3v1H1zM2 5h1v1H2z"/></svg>';
 
   // Markup for text that follows the site language: CardI18n.apply() re-reads
   // the data-i18n key when the language changes.
@@ -278,12 +284,18 @@
   // Sort, the variant button and the set field; the shelf for the last two
   // opens under them (see the pickers below).
   function renderToolbar(cards) {
-    var chips = hasReverse(cards) ? said("button", "toolbar.hideReverse", 'type="button" class="chip" data-filter="hide-reverse" data-value="1" aria-pressed="false"') : "";
+    var mine = current && current.meta.mine;
+    // In a Pokémon's binder: collect mode, then Owned and Missing (the
+    // master-set checklist). My binder holds only cards you own.
+    var chips = (mine ? "" :
+      '<button type="button" class="chip collect-chip" data-filter="collect" aria-pressed="false">' + COLLECT_ICON + said("span", "collect.mode") + "</button>" +
+      said("button", "filter.owned", 'type="button" class="chip" data-filter="own" data-value="owned" aria-pressed="false"') +
+      said("button", "filter.missing", 'type="button" class="chip" data-filter="own" data-value="missing" aria-pressed="false"')) +
+      (hasReverse(cards) ? said("button", "toolbar.hideReverse", 'type="button" class="chip" data-filter="hide-reverse" data-value="1" aria-pressed="false"') : "");
     var variantBtn = uniqueValues(cards, "variant").length > 1 ?
       '<button type="button" class="picker-btn" id="variant-btn" aria-haspopup="true" aria-expanded="false" aria-controls="picker">' +
         said("span", "toolbar.variant", 'class="sr-only"') + '<span class="picker-btn-label" id="variant-label" lang="en"></span>' + CARET + "</button>" : "";
     var dated = hasDates(cards);
-    var mine = current && current.meta.mine;
     var speciesBtn = mine && uniqueValues(cards, "species").length > 1 ?
       '<button type="button" class="picker-btn" id="species-btn" aria-haspopup="true" aria-expanded="false" aria-controls="picker">' +
         said("span", "toolbar.species", 'class="sr-only"') + '<span class="picker-btn-label" id="species-label"></span>' + CARET + "</button>" : "";
@@ -346,7 +358,9 @@
     // In My binder every card is yours: only more than one copy is marked.
     if (own && current && current.meta.mine && own.qty < 2 && !own.slab) own = null;
     else if (own && current && current.meta.mine && own.qty < 2) own = { qty: 0, slab: own.slab };
+    var marking = collecting && current && !current.meta.mine;
     return {
+      pressed: marking ? !!own : null,
       key: String(card.ref),
       name: name,
       image: card.image || "",
@@ -392,7 +406,8 @@
         '<div class="result-heading">' +
           '<button type="button" class="back-home" data-go-home><span aria-hidden="true">←</span> ' + said("span", "result.back") + "</button>" +
           '<p class="result-dex" id="result-dex"></p>' + title +
-          '<p class="subtitle" id="result-sub"></p><p class="status result-status" id="result-status"></p></div>' +
+          '<p class="subtitle" id="result-sub"></p>' + (mine ? "" : '<div class="own-progress" id="own-progress" hidden></div>') +
+          '<p class="status result-status" id="result-status"></p></div>' +
         (mine ? "" : said("p", "result.hint", 'class="result-hint"')) +
       "</header>" +
       (mine && cards.length ? '<section class="mine-summary" id="mine-summary"' + saidAttr("aria-label", "sum.value") + "></section>" : "") +
@@ -413,7 +428,7 @@
       if (fromCover) window.scrollTo({ top: 0, left: 0, behavior: "instant" });
       return;
     }
-    binder = new window.CardBinder($("binder"), { describe: describeCard, onPick: pullCard });
+    binder = new window.CardBinder($("binder"), { describe: describeCard, onPick: pickPocket });
     bindToolbar();
     showCards(false);
     // Coming from the cover, the hero has just been put away: start at the top so
@@ -441,6 +456,24 @@
     $("result-sub").textContent = countText("count.cards", meta.cards || cards.length) + " · " +
       countText("count.printings", cards.length) + (langs.length ? " · " + langs.join(" · ") : "");
     updateCount();
+    renderProgress();
+  }
+
+  // Master-set progress under the subtitle. It counts the printings shown
+  // under the current filters (all but Owned and Missing), so with ENG
+  // ticked it's the English set. It shows once you own one of them, or while
+  // marking cards.
+  function renderProgress() {
+    var el = $("own-progress");
+    if (!el || !current || current.meta.mine) return;
+    var list = current.cards.filter(function (card) { return passes(card, "own"); });
+    var p = Core.progress(list, Store.model());
+    var show = p.total > 0 && (p.owned > 0 || collecting);
+    el.hidden = !show;
+    if (!show) return;
+    el.innerHTML = '<span class="own-progress-text">' +
+      escapeHtml(t("progress", { n: num(p.total), owned: num(p.owned), pct: p.pct })) + "</span>" +
+      '<span class="own-progress-bar" aria-hidden="true"><span style="width:' + p.pct + '%"></span></span>';
   }
 
   function updateCount() {
@@ -545,6 +578,7 @@
       (skip === "species" || !speciesOn.length || speciesOn.indexOf(card.species) !== -1) &&
       (skip === "variant" || !variantsOn.length || variantsOn.indexOf(variant) !== -1) &&
       (!filterState.hideReverse || lower.indexOf("reverse") === -1 || lower.indexOf("holo") === -1) &&
+      (skip === "own" || !filterState.own || (filterState.own === "owned") === (Store.model().qtyFor(card) > 0)) &&
       (skip === "set" || !filterState.set || cardSetKey(card) === filterState.set) &&
       (!q || searchBlob(card).indexOf(q) !== -1);
   }
@@ -818,6 +852,7 @@
     current.shown = list.length;
     updateCount();
     syncPickers();
+    renderProgress();
     $("empty").classList.toggle("is-on", !list.length);
   }
 
@@ -1063,6 +1098,40 @@
     });
   }
 
+  // A tap on a pocket: in collect mode it marks the card, otherwise the card
+  // is pulled out.
+  function pickPocket(card, pocket) {
+    if (collecting && current && !current.meta.mine) collectTap(card);
+    else pullCard(card, pocket);
+  }
+
+  // "Vaporeon · Jungle 12/64 · Holo": which printing a tap marked.
+  function tapName(card) {
+    return [card.name || t("card.fallback"), [cardSetName(card), card.cardNumber].filter(Boolean).join(" "), cardVariant(card)]
+      .filter(Boolean).join(" · ");
+  }
+
+  // Collect mode: a tap adds one ungraded Near Mint copy, or takes back the
+  // copy a tap could have made. A card with details, or with more than one
+  // copy, is left alone; the strip offers to pull it out instead.
+  function collectTap(card) {
+    if (!card || activeCard || animating) return;
+    var step = Core.tapAction(Store.model().copiesFor(card));
+    var name = tapName(card);
+    if (step.action === "add") {
+      var added = Store.add(Core.quickCopy(card, card.species || current.meta.key, Core.pidCounts(current.cards)));
+      if (added) Mine.toast(t("undo.added", { name: name }), function () { Store.remove(added.uid); });
+    } else if (step.action === "remove") {
+      var gone = Store.remove(step.uid);
+      if (gone) Mine.toast(t("undo.removed", { name: name }), function () { Store.restore(gone); });
+    } else {
+      Mine.toast(step.why === "many" ? t("collect.many", { n: num(step.qty) }) : t("collect.details"), function () {
+        var pocket = binder && binder.pocketFor(String(card.ref));
+        if (pocket) pullCard(card, pocket);
+      }, t("collect.open"));
+    }
+  }
+
   // Pull the card out of its sleeve and lay it on the inspect stage.
   function pullCard(card, pocket) {
     if (!card || activeCard || animating) return;
@@ -1160,14 +1229,48 @@
     return picked;
   }
 
+  // The collect-mode chip and the binder's look while marking.
+  function syncCollect() {
+    var on = !!(collecting && current && !current.meta.mine);
+    document.querySelectorAll('#result .chip[data-filter="collect"]').forEach(function (chip) {
+      chip.classList.toggle("is-on", on);
+      chip.setAttribute("aria-pressed", on ? "true" : "false");
+    });
+    var wrap = document.querySelector("#result .binder-wrap");
+    if (wrap) wrap.classList.toggle("is-collecting", on);
+  }
+
+  // Owned and Missing: one at a time, and a second press clears it.
+  function syncOwnChips() {
+    document.querySelectorAll('#result .chip[data-filter="own"]').forEach(function (chip) {
+      var on = chip.getAttribute("data-value") === filterState.own;
+      chip.classList.toggle("is-on", on);
+      chip.setAttribute("aria-pressed", on ? "true" : "false");
+    });
+  }
+
   function bindToolbar() {
-    filterState = { langs: {}, variants: {}, species: {}, set: "", hideReverse: false, query: "" };
+    filterState = { langs: {}, variants: {}, species: {}, set: "", hideReverse: false, own: "", query: "" };
     setLangs(savedLangs());
+    syncCollect();
+    syncOwnChips();
     document.querySelectorAll("#result .chip").forEach(function (chip) {
       chip.addEventListener("click", function () {
         var kind = chip.getAttribute("data-filter");
         var value = chip.getAttribute("data-value") || "";
-        if (kind === "lang") {
+        if (kind === "collect") {
+          // Only how taps behave changes; the binder keeps its pages.
+          collecting = !collecting;
+          syncCollect();
+          if (binder) binder.refresh();
+          renderProgress();
+          if (collecting) Mine.toast(t("collect.hint"));
+          return;
+        }
+        if (kind === "own") {
+          filterState.own = filterState.own === value ? "" : value;
+          syncOwnChips();
+        } else if (kind === "lang") {
           var list = pickedLangs();
           if (!value) list = [];
           else if (filterState.langs[value]) list.splice(list.indexOf(value), 1);
@@ -1832,7 +1935,10 @@
       }
       refileMine();
     } else if (binder) {
+      // Marks change in place. A card marked under Missing stays in its
+      // pocket until the binder is next filtered, so pages don't jump.
       binder.refresh();
+      renderProgress();
     }
   });
 

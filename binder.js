@@ -103,7 +103,8 @@
       ? '<img src="' + escapeHtml(info.image) + '" alt="" decoding="async" draggable="false">'
       : '<span class="pk-blank">' + escapeHtml(info.name) + "</span>";
     return '<button type="button" class="pocket' + (info.key === this.out ? " is-out" : "") +
-      '" data-key="' + escapeHtml(info.key) + '" aria-label="' + escapeHtml(info.label) + '" style="--i:' + slot + '">' +
+      '" data-key="' + escapeHtml(info.key) + '" aria-label="' + escapeHtml(info.label) + '"' +
+      (info.pressed != null ? ' aria-pressed="' + (info.pressed ? "true" : "false") + '"' : "") + ' style="--i:' + slot + '">' +
       '<span class="pk-card' + (info.back ? " back-" + info.back : "") + '">' + art + "</span>" +
       '<span class="pk-sleeve" aria-hidden="true"></span>' +
       (info.lang ? '<span class="pk-lang" aria-hidden="true">' + escapeHtml(info.lang) + "</span>" : "") +
@@ -222,6 +223,9 @@
       syncBadge(pocket, "pk-own", info.owned ? ownInner(info) : "");
       syncBadge(pocket, "pk-slab", info.slab ? escapeHtml(info.slab) : "");
       pocket.setAttribute("aria-label", info.label);
+      // Collect mode: a pocket is a toggle (owned or not).
+      if (info.pressed != null) pocket.setAttribute("aria-pressed", info.pressed ? "true" : "false");
+      else pocket.removeAttribute("aria-pressed");
     });
   };
 

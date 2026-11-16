@@ -1558,6 +1558,33 @@ body.is-mine .mine-count { background: #fbf7ef; }
   .pk-slab { right: 4px; padding: 0 4px; font-size: 9px; }
 }
 
+/* Collect mode ("Mark cards I own"): the chip turns sticker yellow and the
+   pockets you don't own go grey, so the page reads as a checklist. Marks
+   change at once, with no animation. */
+.collect-chip { display: inline-flex; align-items: center; gap: 7px; }
+.collect-tick { width: 11px; height: 9.5px; image-rendering: pixelated; }
+.chip.collect-chip.is-on { background: var(--sticker); color: #1f1a16; border-color: #1f1a16; }
+.toolbar .chip:focus-visible { outline: 3px solid var(--sticker); outline-offset: 2px; }
+.is-collecting .pocket[aria-pressed="false"] .pk-card { filter: grayscale(1) brightness(.6); }
+.is-collecting .pocket[aria-pressed="false"]:hover .pk-card,
+.is-collecting .pocket[aria-pressed="false"]:focus-visible .pk-card { filter: grayscale(.35) brightness(.85); }
+
+/* Master-set progress under a Pokémon's subtitle, in its colour. */
+.own-progress { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin: 8px 0 0; }
+.own-progress[hidden] { display: none; }
+.own-progress-text { font-size: 13px; font-weight: 750; color: var(--text); font-variant-numeric: tabular-nums; }
+.own-progress-bar {
+  position: relative;
+  flex: 0 1 220px;
+  min-width: 120px;
+  height: 10px;
+  border: 2px solid var(--edge);
+  background: var(--line);
+  box-shadow: 2px 2px 0 var(--edge-shadow);
+  overflow: hidden;
+}
+.own-progress-bar > span { position: absolute; top: 0; bottom: 0; left: 0; background: rgb(var(--poke-rgb, 200 48 42)); }
+
 /* The Pokémon picker's sprites. */
 .pick-icon { flex: none; width: 40px; height: 30px; margin: -6px -2px; object-fit: contain; image-rendering: pixelated; }
 

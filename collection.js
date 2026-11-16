@@ -92,7 +92,8 @@
   /* ---- the undo strip ---- */
 
   var toastTimer = 0;
-  function toast(text, undo) {
+  // `undo` is the strip's button; `label` names it when it isn't an undo.
+  function toast(text, undo, label) {
     var el = $("mine-toast");
     if (!el) {
       el = document.createElement("div");
@@ -103,7 +104,7 @@
     }
     clearTimeout(toastTimer);
     el.innerHTML = '<span class="mine-toast-text">' + esc(text) + "</span>" +
-      (undo ? '<button type="button" class="mine-toast-undo">' + esc(t("undo")) + "</button>" : "");
+      (undo ? '<button type="button" class="mine-toast-undo">' + esc(label || t("undo")) + "</button>" : "");
     el.classList.add("is-on");
     if (undo) {
       el.querySelector("button").addEventListener("click", function () {
