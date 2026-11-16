@@ -11,50 +11,51 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&display=swap">
 <link rel="stylesheet" href="styles.css">
 <link rel="stylesheet" href="card-tilt.css?v=2">
-<link rel="stylesheet" href="theme.css?v=4">
-<link rel="icon" href="assets/pullfolio-icon.svg" type="image/svg+xml">
-<link rel="preload" href="assets/binder-leather.webp" as="image" type="image/webp">
+<link rel="stylesheet" href="theme.css?v=13">
+<link rel="icon" href="assets/pullfolio-icon.svg?v=2" type="image/svg+xml">
+<link rel="preload" href="assets/binder-charcoal.webp" as="image" type="image/webp">
 </head>
 <body>
-  <a class="skip-link" href="#result" data-i18n="skip">Skip to the binder</a>
+  <a class="skip-link" href="#main" data-i18n="skip">Skip to the binder</a>
   <div class="page">
     <nav class="topbar" aria-label="Main navigation" data-i18n-attr="aria-label:nav.label">
-      <a class="brand" href="./" aria-label="Pullfolio home" data-i18n-attr="aria-label:brand.home"><img class="brand-logo" src="assets/pullfolio-logo.webp" alt="Pullfolio" width="408" height="150"></a>
+      <a class="brand" href="./" aria-label="Pullfolio home" data-i18n-attr="aria-label:brand.home"><img class="brand-logo" src="assets/pullfolio-logo.svg" alt="Pullfolio" width="300" height="56"></a>
       <div class="nav-links"><a href="#explore" data-focus-search data-i18n="nav.find">Find a Pokémon</a><a href="#market-guide" data-open-guide data-i18n="nav.guide">How prices work</a></div>
       <div class="lang-switch" role="group" aria-label="Site language" data-i18n-attr="aria-label:lang.label">
         <button type="button" data-set-lang="en" lang="en" aria-pressed="true">EN</button><button type="button" data-set-lang="tr" lang="tr" aria-pressed="false">TR</button>
       </div>
     </nav>
+    <main id="main" tabindex="-1">
     <header class="search-hero" id="explore">
       <div class="hero-copy">
         <h1 data-i18n-html="hero.title">Every Pokémon card, filed in <mark>one binder</mark>.</h1>
         <p class="hero-description"><strong id="catalog-species">1,025</strong> <span data-i18n="hero.and">Pokémon and</span> <strong id="catalog-printings">81,659</strong> <span data-i18n="hero.rest">printings in English, Japanese and Chinese. Look one up, flip through its pages, and pull out any card to see what it sells for.</span></p>
-      </div>
-      <div class="index-card">
-        <label class="index-card-title" for="q" data-i18n="search.title">Whose binder should we open?</label>
-        <div class="search-box-wrap">
-          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4.5 4.5"/></svg>
-          <input id="q" class="search-box" type="search" placeholder="Pikachu, Mew, Umbreon…" autocomplete="off" spellcheck="false" enterkeyhint="search" aria-controls="suggest" aria-expanded="false">
-          <button type="button" id="search-submit" class="search-submit" data-i18n="search.submit">Open binder</button>
-          <div class="suggest" id="suggest" role="listbox" hidden></div>
-        </div>
-        <div class="quick-picks" role="group" aria-label="Popular binders" data-i18n-attr="aria-label:picks.label">
-          <button type="button" data-species="pikachu"><img data-sprite="25" alt="" width="32" height="32" onerror="this.style.visibility='hidden'">Pikachu</button>
-          <button type="button" data-species="charizard"><img data-sprite="6" alt="" width="32" height="32" onerror="this.style.visibility='hidden'">Charizard</button>
-          <button type="button" data-species="mew"><img data-sprite="151" alt="" width="32" height="32" onerror="this.style.visibility='hidden'">Mew</button>
-          <button type="button" data-species="umbreon"><img data-sprite="197" alt="" width="32" height="32" onerror="this.style.visibility='hidden'">Umbreon</button>
-          <button type="button" data-species="gengar"><img data-sprite="94" alt="" width="32" height="32" onerror="this.style.visibility='hidden'">Gengar</button>
-        </div>
         <p class="status" id="status" role="status"></p>
       </div>
-    </header>
-    <main id="result" tabindex="-1">
-      <div class="welcome-state" id="welcome">
-        <div class="closed-binder"><span class="cover-tape" data-i18n="welcome.tape">Pokémon cards</span><span class="cover-note" data-i18n-html="welcome.note">Pick a Pokémon above<br>to open its binder.</span><img class="cover-badge" src="assets/pullfolio-mark.svg" alt="" width="56" height="56"></div>
+      <!-- The search lives on the binder's cover: typing drops a list of matches
+           from the label and reprints the cover with the same Pokémon; picking one
+           turns every sprite into it. -->
+      <div class="cover-stage">
+        <div class="closed-binder search-cover" id="search-cover">
+          <div class="cover-sprites" id="cover-sprites" aria-hidden="true"></div>
+          <div class="cover-head">
+            <form class="cover-search" id="cover-search" role="search" action="#">
+              <label class="sr-only" for="q" data-i18n="search.title">Whose binder should we open?</label>
+              <svg class="cover-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4.5 4.5"/></svg>
+              <input id="q" class="cover-input" type="search" placeholder="Type a Pokémon…" data-i18n-attr="placeholder:search.placeholder" autocomplete="off" spellcheck="false" enterkeyhint="go" role="combobox" aria-autocomplete="list" aria-controls="suggest" aria-expanded="false">
+              <button type="submit" id="search-submit" class="cover-go" aria-label="Open binder" data-i18n-attr="aria-label:search.submit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M5 12h13m-5-6 6 6-6 6"/></svg></button>
+            </form>
+            <ul class="cover-list" id="suggest" role="listbox" aria-label="Matching Pokémon" data-i18n-attr="aria-label:search.matches" hidden></ul>
+            <p class="cover-match" id="cover-match" aria-hidden="true" hidden></p>
+          </div>
+        </div>
+        <p class="cover-info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.5M12 7.6v.1"/></svg><span data-i18n="welcome.note">Type a name or pick a Pokémon to open its binder.</span></p>
       </div>
+    </header>
+    <div id="result" tabindex="-1"></div>
     </main>
     <details class="market-guide" id="market-guide"><summary><span data-i18n="guide.summary">How prices and links work</span><span class="guide-toggle" aria-hidden="true">+</span></summary><div class="guide-content"><div><h3 data-i18n="guide.h1">Prices on the stickers</h3><p data-i18n="guide.p1">The sticker on a sleeve is the TCGplayer market price in USD. Pull the card out to see an approximate lira conversion. Availability varies by language and printing; a sleeve without a sticker has no price yet.</p></div><div><h3 data-i18n="guide.h2">The exact printing</h3><p data-i18n="guide.p2">Pull a card out to open its PriceCharting, Cardmarket or Collectr page. When no exact page is known you get a search instead. eBay links keep sold and active listings apart.</p></div><div><h3 data-i18n="guide.h3">Handling the binder</h3><p data-i18n="guide.p3">Turn pages with the arrows, the page corners, your arrow keys or a swipe. Click a card to pull it out, then move over it, or press and slide on a phone, to tilt it in the light.</p></div></div></details>
-    <div class="site-footer"><img class="brand-logo small" src="assets/pullfolio-logo.webp" alt="Pullfolio" width="408" height="150" loading="lazy"><p data-i18n="footer.note">An independent fan project for Pokémon TCG collectors. Not affiliated with Nintendo, The Pokémon Company or any marketplace.</p></div>
+    <div class="site-footer"><img class="brand-logo small" src="assets/pullfolio-logo.svg" alt="Pullfolio" width="150" height="28" loading="lazy"><p data-i18n="footer.note">An independent fan project for Pokémon TCG collectors. Not affiliated with Nintendo, The Pokémon Company or any marketplace.</p></div>
   </div>
   <div class="overlay" id="overlay" aria-hidden="true">
     <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
@@ -78,11 +79,11 @@
       </div>
     </div>
   </div>
-  <script src="i18n.js?v=2"></script>
+  <script src="i18n.js?v=4"></script>
   <script src="market-links.js?v=4"></script>
   <script src="cardmarket-resolver.js?v=3"></script>
   <script src="card-tilt.js?v=1"></script>
-  <script src="binder.js?v=3"></script>
-  <script src="app.js?v=12"></script>
+  <script src="binder.js?v=7"></script>
+  <script src="app.js?v=20"></script>
 </body>
 </html>

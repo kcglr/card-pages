@@ -301,14 +301,18 @@
     if (reducedMotion() || !this.spread.animate) return;
     var cover = node("div", "leaf cover-flap" + (this.perView === 2 ? "" : " solo"));
     cover.innerHTML = '<div class="leaf-face front cover-front"><span class="cover-tape">' + escapeHtml(title || "") +
-      '</span><img class="cover-badge" src="assets/pullfolio-mark.svg" alt="" width="56" height="56"></div>' +
+      "</span></div>" +
       '<div class="leaf-face back cover-inside"></div>';
     this.right.appendChild(cover);
+    var timing = { duration: 1100, delay: 150, easing: "cubic-bezier(.55,0,.25,1)", fill: "both" };
     var animation = cover.animate([
-      { transform: "rotateY(0deg)", opacity: 1 },
-      { transform: "rotateY(-125deg)", opacity: 1, offset: 0.6 },
-      { transform: "rotateY(-178deg)", opacity: 0 }
-    ], { duration: 1100, delay: 150, easing: "cubic-bezier(.55,0,.25,1)", fill: "both" });
+      { transform: "rotateY(0deg)" },
+      { transform: "rotateY(-125deg)", offset: 0.6 },
+      { transform: "rotateY(-178deg)" }
+    ], timing);
+    // Fade only the inside face: opacity on the 3D leaf itself would flatten it and
+    // show the front face mirrored from behind.
+    cover.lastChild.animate([{ opacity: 1 }, { opacity: 1, offset: 0.6 }, { opacity: 0 }], timing);
     animation.onfinish = function () { cover.remove(); };
   };
 

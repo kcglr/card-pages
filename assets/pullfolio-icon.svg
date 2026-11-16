@@ -1,23 +1,8 @@
-<svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" width="1024" height="1024">
-  <title>Pullfolio binder icon</title>
-  <defs>
-    <clipPath id="card-window">
-      <path d="M255 575 292 225Q296 184 340 178L704 122Q750 116 746 161L703 578Q482 605 255 575Z" />
-    </clipPath>
-  </defs>
-  <g id="binder">
-    <rect x="71" y="169" width="880" height="807" rx="164" fill="#b3302a" stroke="#1f1a16" stroke-width="24" />
-    <rect x="113" y="213" width="795" height="712" rx="122" fill="none" stroke="#fbf7ef" stroke-width="16" stroke-linecap="round" stroke-dasharray="30 38" />
-  </g>
-  <path id="slot" d="M152 584Q139 558 164 533Q178 520 207 520L811 520Q844 520 861 548Q878 577 862 602Q857 560 816 556L199 556Q160 553 152 584Z" fill="#1f1a16" stroke="#1f1a16" stroke-width="15" stroke-linejoin="round" />
-  <g id="trading-card" stroke="#1f1a16" stroke-linejoin="round">
-    <path d="M204 550 242 195Q249 130 310 118L726 57Q766 50 786 78Q801 97 797 129L755 570Q484 613 230 573Q202 568 204 550Z" fill="#fbf7ef" stroke-width="26" />
-    <path d="M255 575 292 225Q296 184 340 178L704 122Q750 116 746 161L703 578Q482 605 255 575Z" fill="#fbf7ef" stroke-width="18" />
-    <g clip-path="url(#card-window)" stroke="none">
-      <path d="m252 459 343-322 125-20-461 424Z" fill="#ffd43b" />
-    </g>
-    <path d="M255 575 292 225Q296 184 340 178L704 122Q750 116 746 161L703 578" fill="none" stroke-width="18" />
-    <path d="M659 211Q650 258 600 277Q641 286 650 332Q665 286 708 271Q666 266 659 211Z" fill="#ffd43b" stroke-width="16" stroke-linecap="round" />
-  </g>
-  <path id="slot-front-lip" d="M205 550Q215 577 365 586Q608 603 753 570Q795 561 811 535" fill="none" stroke="#1f1a16" stroke-width="22" stroke-linecap="round" />
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="32" height="32" shape-rendering="crispEdges" role="img">
+<title>Pullfolio</title>
+<g fill="#1f1a16"><rect x="2" y="1" width="11" height="1"/><rect x="2" y="2" width="1" height="11"/><rect x="12" y="2" width="2" height="1"/><rect x="13" y="3" width="1" height="11"/><rect x="2" y="13" width="2" height="1"/><rect x="3" y="14" width="11" height="1"/></g>
+<g fill="#ffd43b"><rect x="3" y="2" width="9" height="1"/><rect x="3" y="3" width="1" height="7"/><rect x="11" y="3" width="1" height="7"/><rect x="3" y="10" width="9" height="1"/><rect x="3" y="11" width="1" height="1"/><rect x="9" y="11" width="3" height="1"/><rect x="3" y="12" width="9" height="1"/></g>
+<g fill="#c8302a"><rect x="4" y="3" width="7" height="1"/><rect x="12" y="3" width="1" height="10"/><rect x="4" y="4" width="3" height="1"/><rect x="8" y="4" width="3" height="1"/><rect x="4" y="5" width="2" height="1"/><rect x="9" y="5" width="2" height="1"/><rect x="4" y="6" width="1" height="1"/><rect x="10" y="6" width="1" height="1"/><rect x="4" y="7" width="2" height="1"/><rect x="9" y="7" width="2" height="1"/><rect x="4" y="8" width="3" height="1"/><rect x="8" y="8" width="3" height="1"/><rect x="4" y="9" width="7" height="1"/><rect x="4" y="13" width="9" height="1"/></g>
+<g fill="#fbf7ef"><rect x="7" y="4" width="1" height="1"/><rect x="6" y="5" width="3" height="1"/><rect x="5" y="6" width="5" height="1"/><rect x="6" y="7" width="3" height="1"/><rect x="7" y="8" width="1" height="1"/></g>
+<g fill="#e9a91c"><rect x="4" y="11" width="5" height="1"/></g>
 </svg>

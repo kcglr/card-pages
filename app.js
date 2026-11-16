@@ -60,7 +60,7 @@
     var n = fold(name);
     if (!q || !n) return 0;
     if (n === q) return 100;
-    if (n.startsWith(q)) return 90 - Math.min(20, n.length - q.length);
+    if (n.startsWith(q)) return 85; // completions are ordered by how many cards they have
     if (q.length >= 3 && n.indexOf(q) !== -1) return 70;
     if (q.length >= 3) {
       var d = levenshtein(q, n);
@@ -83,7 +83,7 @@
       if (best > 0) scored.push({ item: item, score: best });
     }
     scored.sort(function (a, b) {
-      return b.score - a.score || (a.item.number || 0) - (b.item.number || 0);
+      return b.score - a.score || (b.item.cards || 0) - (a.item.cards || 0) || (a.item.number || 0) - (b.item.number || 0);
     });
     return scored.slice(0, limit || 8);
   }
@@ -451,10 +451,13 @@
       encodeURIComponent(number) + ".png" : "";
   }
 
+  var INFO_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">' +
+    '<circle cx="12" cy="12" r="9"/><path d="M12 11v5.5M12 7.6v.1"/></svg>';
+
+  // A closed binder (loading, or failed to open) with a line of help under it.
   function closedBinder(title, noteKey, extra) {
     return '<div class="welcome-state' + (extra ? " " + extra : "") + '"><div class="closed-binder"><span class="cover-tape">' +
-      escapeHtml(title) + "</span>" + said("span", noteKey, 'class="cover-note"') +
-      '<img class="cover-badge" src="assets/pullfolio-mark.svg" alt="" width="56" height="56"></div></div>';
+      escapeHtml(title) + '</span></div><p class="cover-info">' + INFO_ICON + said("span", noteKey) + "</p></div>";
   }
 
   function paintResult() {
@@ -462,11 +465,16 @@
     var cards = current.cards;
     var meta = current.meta;
     var art = speciesArt(meta.number);
+    var fromCover = !document.body.classList.contains("is-viewing");
+    document.body.classList.add("is-viewing");
+    $("search-cover").classList.remove("is-loading", "is-picked");
     $("result").innerHTML =
       '<header class="result-header">' +
         (art ? '<img class="result-art" src="' + escapeHtml(art) + '" alt="" width="112" height="112" onerror="this.remove()">' : "") +
-        '<div class="result-heading"><p class="result-dex" id="result-dex"></p><h2 class="result-title">' + escapeHtml(meta.name) +
-        '</h2><p class="subtitle" id="result-sub"></p></div>' +
+        '<div class="result-heading">' +
+          '<button type="button" class="back-home" data-go-home><span aria-hidden="true">←</span> ' + said("span", "result.back") + "</button>" +
+          '<p class="result-dex" id="result-dex"></p><h2 class="result-title">' + escapeHtml(meta.name) +
+          '</h2><p class="subtitle" id="result-sub"></p><p class="status result-status" id="result-status"></p></div>' +
         said("p", "result.hint", 'class="result-hint"') +
       "</header>" +
       renderToolbar(cards) +
@@ -475,10 +483,15 @@
       '<footer id="result-footer"></footer>';
     renderResultText();
     renderFooter();
+    renderStatus();
+    $("result").querySelector("[data-go-home]").addEventListener("click", function () { goHome(true); });
     if (binder) binder.destroy();
     binder = new window.CardBinder($("binder"), { describe: describeCard, onPick: pullCard });
     bindToolbar();
     showCards(false);
+    // Coming from the cover, the hero has just been put away: start at the top so
+    // the binder is seen opening.
+    if (fromCover) window.scrollTo(0, 0);
     binder.openCover(meta.name);
   }
 
@@ -789,8 +802,7 @@
   $("sheet-close").addEventListener("click", function () { closeSheet(false); });
   document.addEventListener("keydown", function (ev) {
     if (ev.key === "Escape") {
-      if (activeCard) closeSheet(false);
-      else hideSuggest();
+      if (activeCard) closeSheet(false); // the search field handles its own Escape
     } else if ((ev.key === "ArrowLeft" || ev.key === "ArrowRight") && binder && !activeCard && $("binder") &&
         !(ev.target.closest && ev.target.closest("input, select, textarea"))) {
       ev.preventDefault();
@@ -809,83 +821,222 @@
     renderStatus();
   }
 
+  // The status shows under the hero on the cover, and under the title once a
+  // binder is open.
   function renderStatus() {
-    var el = $("status");
     var vars = {};
     if (lastStatus) Object.keys(lastStatus.vars).forEach(function (name) {
       var value = lastStatus.vars[name];
       vars[name] = typeof value === "function" ? value() : typeof value === "number" ? num(value) : value;
     });
-    el.textContent = lastStatus ? t(lastStatus.key, vars) : "";
-    el.classList.toggle("is-error", !!(lastStatus && lastStatus.isError));
+    ["status", "result-status"].forEach(function (id) {
+      var el = $(id);
+      if (!el) return;
+      el.textContent = lastStatus ? t(lastStatus.key, vars) : "";
+      el.classList.toggle("is-error", !!(lastStatus && lastStatus.isError));
+    });
+  }
+
+  /* ---- the search on the cover ---- */
+
+  // The matches drop down from the label as a list (#suggest, an ARIA listbox
+  // the input points into), and the same Pokémon are printed on the cover:
+  // the highlighted row's sprites bob, and pointing at a sprite highlights its
+  // row. Kept short, with no scrollbar: 6 rows, or 5 on a phone.
+  var speciesByNumber = {};
+  var hoverItem = null;
+  var coverMessage = null; // { key, vars, isError } while the cover says something other than a match
+  var listOpen = false;
+  var exactItem = null; // a full name typed: the cover shows only this Pokémon
+
+  function isHome() { return !document.body.classList.contains("is-viewing"); }
+
+  function listLimit() {
+    return window.matchMedia && window.matchMedia("(max-width: 700px)").matches ? 5 : 6;
+  }
+
+  // The part of a name the user typed stays regular; the rest, the suggested
+  // part, is bold, so the eye goes to what differs between the rows.
+  function markMatch(name, query) {
+    var plain = function (s) { return s.normalize ? s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase() : s.toLowerCase(); };
+    var norm = "";
+    var map = [];
+    for (var i = 0; i < name.length; i++) {
+      var c = plain(name[i]);
+      for (var k = 0; k < c.length; k++) { norm += c[k]; map.push(i); }
+    }
+    var q = plain(query.trim());
+    var at = q ? norm.indexOf(q) : -1;
+    if (at < 0) return "<b>" + escapeHtml(name) + "</b>";
+    var start = map[at];
+    var end = map[at + q.length - 1] + 1;
+    return (start ? "<b>" + escapeHtml(name.slice(0, start)) + "</b>" : "") + escapeHtml(name.slice(start, end)) +
+      (end < name.length ? "<b>" + escapeHtml(name.slice(end)) + "</b>" : "");
   }
 
   function hideSuggest() {
-    var box = $("suggest");
-    $("q").setAttribute("aria-expanded", "false");
-    box.hidden = true;
-    box.classList.remove("is-on");
-    box.innerHTML = "";
-    activeSuggest = -1;
     suggestItems = [];
+    activeSuggest = -1;
+    exactItem = null;
+    $("suggest").innerHTML = "";
+    closeList();
   }
 
-  function showSuggest(query) {
+  function openList() {
+    if (!suggestItems.length) { closeList(); return; }
+    listOpen = true;
+    $("suggest").hidden = false;
+    $("q").setAttribute("aria-expanded", "true");
+    if (activeSuggest >= 0) $("q").setAttribute("aria-activedescendant", "suggest-" + activeSuggest);
+    showActive();
+  }
+
+  function closeList() {
+    listOpen = false;
+    $("suggest").hidden = true;
+    $("q").setAttribute("aria-expanded", "false");
+    $("q").removeAttribute("aria-activedescendant");
+    showActive();
+  }
+
+  function showSuggest(query, keepActive) {
     var box = $("suggest");
-    var ranked = rankedSpecies(query, 8);
-    suggestItems = ranked.map(function (r) { return r.item; });
+    var previous = suggestItems[activeSuggest];
+    suggestItems = rankedSpecies(query, listLimit()).map(function (r) { return r.item; });
     if (!suggestItems.length) { hideSuggest(); return; }
     box.innerHTML = suggestItems.map(function (item, i) {
-      var meta = countText("count.cards", item.variants || item.cards || 0);
-      if (item.number) meta = "#" + item.number + " · " + meta;
-      var sprite = item.number ? '<img class="s-sprite" data-sprite="' + escapeHtml(item.number) +
-        '" alt="" width="32" height="32" onerror="this.style.visibility=\'hidden\'">' : "";
-      return '<button type="button" role="option" data-i="' + i + '"' +
-        (i === 0 ? ' aria-selected="true"' : ' aria-selected="false"') +
-        ">" + sprite + '<span class="s-name">' + escapeHtml(item.name) + '</span><span class="s-meta">' + escapeHtml(meta) + "</span></button>";
+      var n = Number(item.number) || 0;
+      var meta = countText("count.cards", item.cards || item.variants || 0);
+      if (n) meta = "#" + String(n).padStart(3, "0") + " · " + meta;
+      var icon = n ? '<img src="' + iconSrc(n) + '" alt="" width="40" height="30" draggable="false" crossorigin="anonymous"' +
+        (n > ICON_LAST ? ' class="is-big"' : "") + " onerror=\"this.style.visibility='hidden'\">" : '<span class="match-blank"></span>';
+      return '<li role="option" id="suggest-' + i + '" data-i="' + i + '" aria-selected="false">' + icon +
+        '<span class="match-name">' + markMatch(item.name, query) + '</span><span class="match-meta">' + escapeHtml(meta) + "</span></li>";
     }).join("");
-    fitSprites(box);
-    box.hidden = false;
-    $("q").setAttribute("aria-expanded", "true");
-    box.classList.add("is-on");
-    activeSuggest = 0;
-    box.querySelectorAll("button").forEach(function (btn) {
-      btn.addEventListener("mousedown", function (ev) { ev.preventDefault(); });
-      btn.addEventListener("click", function () {
-        pickSpecies(suggestItems[parseInt(btn.getAttribute("data-i"), 10)]);
-      });
+    var keep = keepActive && previous ? suggestItems.indexOf(previous) : -1;
+    setActiveSuggest(keep >= 0 ? keep : 0);
+    if (document.activeElement === $("q")) openList();
+  }
+
+  function setActiveSuggest(index) {
+    activeSuggest = index;
+    $("suggest").querySelectorAll("[role=option]").forEach(function (option, i) {
+      option.setAttribute("aria-selected", i === index ? "true" : "false");
     });
+    if (listOpen) $("q").setAttribute("aria-activedescendant", "suggest-" + index);
+    // Moving off a fully typed name brings all the matches back onto the cover.
+    if (exactItem && suggestItems[index] !== exactItem) {
+      exactItem = null;
+      fillCover(listNumbers(), { ripple: true });
+    }
+    showActive();
+  }
+
+  function listNumbers() {
+    return suggestItems.map(function (item) { return Number(item.number) || 0; }).filter(Boolean);
   }
 
   function moveSuggest(dir) {
     if (!suggestItems.length) return;
-    activeSuggest = (activeSuggest + dir + suggestItems.length) % suggestItems.length;
-    $("suggest").querySelectorAll("button").forEach(function (btn, i) {
-      btn.setAttribute("aria-selected", i === activeSuggest ? "true" : "false");
-      if (i === activeSuggest) btn.scrollIntoView({ block: "nearest" });
-    });
+    if (!listOpen) { openList(); return; }
+    setActiveSuggest((activeSuggest + dir + suggestItems.length) % suggestItems.length);
   }
 
-  function pickSpecies(item) {
+  // The yellow tag under the cover's search, when the list is closed: the match
+  // Enter would open (or the sprite under the pointer), a "no match" note, or
+  // the binder opening.
+  function showActive() {
+    var item = hoverItem || suggestItems[activeSuggest] || null;
+    markActiveSprites(item && item.number);
+    var tag = $("cover-match");
+    tag.classList.remove("is-error", "is-busy");
+    if (coverMessage) {
+      tag.textContent = t(coverMessage.key, coverMessage.vars);
+      tag.classList.toggle("is-error", !!coverMessage.isError);
+      tag.classList.toggle("is-busy", !coverMessage.isError);
+      tag.hidden = false;
+      return;
+    }
+    if (listOpen) { tag.hidden = true; return; } // the highlighted row says it
+    var q = $("q").value.trim();
+    if (!item && q && speciesIndex.length) {
+      tag.textContent = t("search.none", { q: q });
+      tag.classList.add("is-error");
+      tag.hidden = false;
+      return;
+    }
+    if (!item) { tag.hidden = true; return; }
+    tag.innerHTML = '<strong>' + escapeHtml(item.name) + "</strong> " +
+      escapeHtml((item.number ? "#" + String(item.number).padStart(3, "0") + " · " : "") +
+        countText("count.cards", item.cards || item.variants || 0)) +
+      (hoverItem ? "" : ' <kbd aria-hidden="true">↵</kbd>');
+    tag.hidden = false;
+  }
+
+  function setCoverMessage(key, vars, isError) {
+    coverMessage = key ? { key: key, vars: vars || {}, isError: !!isError } : null;
+    showActive();
+  }
+
+  // Typing reprints the cover with the matches; a full name prints only that
+  // Pokémon. Nothing typed brings the usual print back.
+  function updateFromQuery() {
+    var q = $("q").value.trim();
+    cancelPendingOpen();
+    setCoverMessage(null);
+    if (!q) { hideSuggest(); fillCover(PRINT_CREW, { ripple: true }); showActive(); return; }
+    exactItem = null;
+    showSuggest(q);
+    $("search-cover").classList.toggle("is-empty", !suggestItems.length && speciesIndex.length > 0);
+    if (!suggestItems.length) { showActive(); return; }
+    exactItem = fold(suggestItems[0].name) === fold(q) && suggestItems[0].number ? suggestItems[0] : null;
+    var numbers = exactItem ? [Number(exactItem.number)] : listNumbers();
+    if (numbers.length) fillCover(numbers, { ripple: true });
+  }
+
+  function pickSpecies(item, opts) {
     if (!item) return;
     $("q").value = item.name;
+    hoverItem = null;
     hideSuggest();
-    loadSpecies(item);
+    var fromCover = isHome();
+    var ready = fromCover ? turnCoverInto(item, !(opts && opts.instant)) : null;
+    loadSpecies(item, ready);
   }
 
   function submitQuery() {
     var q = $("q").value.trim();
-    if (!q) return;
+    if (!q || !speciesIndex.length) return;
     if (activeSuggest >= 0 && suggestItems[activeSuggest]) {
       pickSpecies(suggestItems[activeSuggest]);
       return;
     }
     var ranked = rankedSpecies(q, 1);
-    if (ranked.length && ranked[0].score >= 40) {
-      pickSpecies(ranked[0].item);
-    } else {
-      setStatus("status.noMatch", null, true);
-    }
+    if (ranked.length && ranked[0].score >= 40) pickSpecies(ranked[0].item);
+    else showActive();
+  }
+
+  // Close the open binder and go back to the cover.
+  function goHome(focus) {
+    loadToken++;
+    closeSheet(true);
+    if (binder) binder.destroy();
+    binder = null;
+    current = null;
+    titleName = "";
+    document.title = t("title.home");
+    document.body.classList.remove("is-viewing");
+    $("result").innerHTML = "";
+    if (history.replaceState) history.replaceState(null, "", location.pathname + location.search);
+    if (speciesIndex.length) setStatus(null);
+    $("q").value = "";
+    hoverItem = null;
+    hideSuggest();
+    setCoverMessage(null);
+    $("search-cover").classList.remove("is-loading", "is-picked", "is-empty");
+    fillCover(PRINT_CREW, { ripple: false });
+    window.scrollTo(0, 0);
+    if (focus) $("q").focus({ preventScroll: true });
   }
 
   function applyFetchedPrices(payloads, updatedAt, started) {
@@ -918,24 +1069,39 @@
 
   var loadToken = 0;
   var titleName = "";
+  var pendingOpen = 0; // the load token of a binder opening from the cover
 
-  function loadSpecies(item) {
+  // Typing again while the cover is opening a binder puts it back.
+  function cancelPendingOpen() {
+    if (!pendingOpen || pendingOpen !== loadToken) return;
+    loadToken++;
+    pendingOpen = 0;
+    titleName = "";
+    document.title = t("title.home");
+    $("search-cover").classList.remove("is-loading", "is-picked");
+    if (history.replaceState) history.replaceState(null, "", location.pathname + location.search);
+    if (speciesIndex.length) setStatus(null);
+  }
+
+  // coverReady: a promise for the cover's change into this Pokémon, when the
+  // binder is opened from the cover; otherwise a closed binder stands in.
+  function loadSpecies(item, coverReady) {
     var token = ++loadToken;
-    document.querySelectorAll('[data-species]').forEach(function (button) {
-      button.classList.toggle('is-selected', button.getAttribute('data-species') === item.slug);
-      button.setAttribute('aria-pressed', button.getAttribute('data-species') === item.slug ? 'true' : 'false');
-    });
+    pendingOpen = coverReady ? token : 0;
     titleName = item.name;
+    paintSpritePrint(Number(item.number) || 0);
     document.title = t("title.species", { name: item.name });
     closeSheet(true);
     if (binder) binder.destroy();
     binder = null;
     current = null;
     setStatus("status.loading", { name: item.name });
-    $("result").innerHTML = closedBinder(item.name, "binder.loading", "is-loading");
-    // Bring the binder into view so its cover is seen opening.
-    var top = $("result").getBoundingClientRect().top;
-    if (top < 0 || top > window.innerHeight * 0.5) $("result").scrollIntoView({ block: "start" });
+    if (!coverReady) {
+      $("result").innerHTML = closedBinder(item.name, "binder.loading", "is-loading");
+      // Bring the binder into view so its cover is seen opening.
+      var top = $("result").getBoundingClientRect().top;
+      if (top < 0 || top > window.innerHeight * 0.5) $("result").scrollIntoView({ block: "start" });
+    }
     if (history.replaceState) history.replaceState(null, "", "#" + encodeURIComponent(item.slug || item.key));
     Promise.all([
       fetch("data/" + encodeURIComponent(item.key) + ".json", { cache: "default" }).then(function (res) {
@@ -946,9 +1112,11 @@
       fetch("links/" + encodeURIComponent(item.key) + ".json?v=20261116r3").then(function (res) {
         if (!res.ok) return {};
         return res.json();
-      }).catch(function () { return {}; })
+      }).catch(function () { return {}; }),
+      coverReady
     ]).then(function (parts) {
       if (token !== loadToken) return;
+      pendingOpen = 0;
       var data = parts[0];
       var savedLinks = parts[2] || {};
       var cards = (data.cards || []).map(function (c, i) {
@@ -985,8 +1153,14 @@
       });
     }).catch(function (err) {
       if (token !== loadToken) return;
+      pendingOpen = 0;
       setStatus("status.loadFailed", { name: item.name }, true);
-      $("result").innerHTML = closedBinder(item.name, "binder.stuck", "is-stuck");
+      if (coverReady) {
+        $("search-cover").classList.remove("is-loading", "is-picked");
+        setCoverMessage("binder.stuck", null, true);
+      } else {
+        $("result").innerHTML = closedBinder(item.name, "binder.stuck", "is-stuck");
+      }
       console.error(err);
     });
   }
@@ -1003,20 +1177,21 @@
     return ranked.length && ranked[0].score >= 50 ? ranked[0].item : null;
   }
 
+  var typingTimer = 0;
+
   function bindSearch() {
     var input = $("q");
-    if ($("search-submit")) $("search-submit").addEventListener("click", submitQuery);
-    document.querySelectorAll('[data-species]').forEach(function (button) {
-      button.disabled = true;
-      button.addEventListener('click', function () {
-        var item = findByHash('#' + button.getAttribute('data-species'));
-        if (item) pickSpecies(item);
-      });
+    $("cover-search").addEventListener("submit", function (event) {
+      event.preventDefault();
+      // Enter straight after a keystroke: catch up with the matches first.
+      if (typingTimer) { clearTimeout(typingTimer); typingTimer = 0; updateFromQuery(); }
+      submitQuery();
     });
     document.querySelectorAll('[data-focus-search]').forEach(function (link) {
       link.addEventListener('click', function (event) {
         event.preventDefault();
-        input.scrollIntoView({ block: 'center' });
+        if (!isHome()) { goHome(true); return; }
+        $("search-cover").scrollIntoView({ block: 'center' });
         input.focus({ preventScroll: true });
       });
     });
@@ -1030,79 +1205,352 @@
       });
     });
     input.addEventListener("input", function () {
-      var q = input.value.trim();
-      if (q.length < 1) { hideSuggest(); return; }
-      showSuggest(q);
+      clearTimeout(typingTimer);
+      typingTimer = setTimeout(function () { typingTimer = 0; updateFromQuery(); }, 70);
     });
     input.addEventListener("keydown", function (ev) {
       if (ev.key === "ArrowDown") { ev.preventDefault(); moveSuggest(1); }
       else if (ev.key === "ArrowUp") { ev.preventDefault(); moveSuggest(-1); }
-      else if (ev.key === "Enter") { ev.preventDefault(); submitQuery(); }
-      else if (ev.key === "Escape") { hideSuggest(); }
+      else if (ev.key === "Escape") {
+        // First Escape closes the list, the next one clears the field.
+        if (listOpen) { ev.preventDefault(); closeList(); }
+        else if (input.value) { ev.preventDefault(); input.value = ""; updateFromQuery(); }
+      }
+    });
+    var head = input.closest(".cover-head");
+    input.addEventListener("focus", function () {
+      if (suggestItems.length) openList();
+      // On a phone the keyboard takes the lower half of the screen: bring the
+      // label and its list up to the top.
+      if (window.matchMedia && window.matchMedia("(max-width: 700px)").matches) {
+        setTimeout(function () {
+          var top = $("search-cover").getBoundingClientRect().top;
+          if (Math.abs(top - 10) > 4) window.scrollTo({ top: window.scrollY + top - 10, behavior: motionOff() ? "auto" : "smooth" });
+        }, 280);
+      }
     });
     input.addEventListener("blur", function () {
-      setTimeout(hideSuggest, 150);
+      setTimeout(function () { if (!head.contains(document.activeElement)) closeList(); }, 150);
+    });
+    // The list: point at a row to highlight it (and its sprites), click or tap to open.
+    var list = $("suggest");
+    list.addEventListener("mousedown", function (event) { event.preventDefault(); }); // keep focus in the field
+    list.addEventListener("click", function (event) {
+      var row = event.target.closest("[role=option]");
+      if (row) pickSpecies(suggestItems[Number(row.getAttribute("data-i"))]);
+    });
+    list.addEventListener("pointermove", function (event) {
+      if (event.pointerType === "touch") return;
+      var row = event.target.closest("[role=option]");
+      var i = row ? Number(row.getAttribute("data-i")) : -1;
+      if (i >= 0 && i !== activeSuggest) setActiveSuggest(i);
+    });
+    // Every sprite on the cover is a way in: point at one to read its name (or
+    // highlight its row), click or tap it to open its binder.
+    var sprites = $("cover-sprites");
+    sprites.addEventListener("click", function (event) {
+      var cell = event.target.closest(".cover-sprite");
+      var item = cell && speciesByNumber[cell.getAttribute("data-n")];
+      if (item) pickSpecies(item);
+    });
+    sprites.addEventListener("pointerover", function (event) {
+      if (event.pointerType === "touch") return;
+      var cell = event.target.closest(".cover-sprite");
+      var item = (cell && speciesByNumber[cell.getAttribute("data-n")]) || null;
+      var row = item && listOpen ? suggestItems.indexOf(item) : -1;
+      if (row >= 0) {
+        hoverItem = null;
+        if (row !== activeSuggest) setActiveSuggest(row);
+        return;
+      }
+      if (item !== hoverItem) { hoverItem = item; showActive(); }
+    });
+    sprites.addEventListener("pointerleave", function () {
+      if (hoverItem) { hoverItem = null; showActive(); }
     });
   }
 
   /* ---- sprites ---- */
 
-  // PokeAPI sprites sit in a 96px frame with uneven empty margins: Charizard
-  // fills it, Pikachu uses half. Crop each to its figure and scale that to a
-  // fixed square, so every sprite shows at the same size.
   var SPRITE_BASE = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/";
-  var SPRITE_SIZE = 96;
-  var fittedSprites = {};
 
-  function cropSprite(raw) {
-    var w = raw.naturalWidth;
-    var h = raw.naturalHeight;
-    var source = document.createElement("canvas");
-    source.width = w;
-    source.height = h;
-    var ctx = source.getContext("2d");
-    ctx.drawImage(raw, 0, 0);
-    var alpha = ctx.getImageData(0, 0, w, h).data;
-    var minX = w, minY = h, maxX = -1, maxY = -1;
-    for (var y = 0; y < h; y++) {
-      for (var x = 0; x < w; x++) {
-        if (alpha[(y * w + x) * 4 + 3] > 8) {
-          if (x < minX) minX = x;
-          if (x > maxX) maxX = x;
-          if (y < minY) minY = y;
-          if (y > maxY) maxY = y;
-        }
-      }
-    }
-    if (maxX < 0) return raw.src;
-    var bw = maxX - minX + 1;
-    var bh = maxY - minY + 1;
-    var scale = (SPRITE_SIZE - 4) / Math.max(bw, bh);
-    var dw = Math.round(bw * scale);
-    var dh = Math.round(bh * scale);
-    var out = document.createElement("canvas");
-    out.width = out.height = SPRITE_SIZE;
-    var octx = out.getContext("2d");
-    octx.imageSmoothingEnabled = scale < 1; // keep pixel art crisp when enlarging
-    octx.drawImage(source, minX, minY, bw, bh, Math.round((SPRITE_SIZE - dw) / 2), Math.round((SPRITE_SIZE - dh) / 2), dw, dh);
-    return out.toDataURL("image/png");
+  /* ---- the binder's sprite print ---- */
+
+  // The binder fabric is printed with PokeAPI's pixel box icons in staggered
+  // rows, like a pixel-pattern zip binder. One tile is drawn on a canvas and
+  // set as --sprite-print for the open binder; a Pokémon's own binder is
+  // printed with that Pokémon only.
+  var ICON_BASE = SPRITE_BASE + "versions/generation-vii/icons/";
+  var ICON_LAST = 807; // the icon set ends here; later Pokémon use their front sprite
+  var PRINT_CREW = [1, 2, 3, 4, 5, 6, 7, 8, 9, 25, 35, 37, 38, 39, 52, 54, 58, 63, 79, 94, 129, 130, 131, 132,
+    133, 134, 135, 136, 143, 144, 145, 146, 147, 148, 149, 150, 151];
+  var PRINT_COLS = 8;
+  var PRINT_ROWS = 8;
+  var PRINT_CELL_W = 48;
+  var PRINT_CELL_H = 42;
+  var printIcons = {};
+  var printToken = 0;
+  var printUrl = "";
+
+  function iconSrc(number) {
+    return number <= ICON_LAST ? ICON_BASE + number + ".png" : SPRITE_BASE + number + ".png";
   }
 
-  function fitSprites(scope) {
-    (scope || document).querySelectorAll("img[data-sprite]").forEach(function (img) {
-      var src = SPRITE_BASE + encodeURIComponent(img.getAttribute("data-sprite")) + ".png";
-      img.removeAttribute("data-sprite");
-      if (!fittedSprites[src]) fittedSprites[src] = new Promise(function (resolve) {
-        var raw = new Image();
-        raw.crossOrigin = "anonymous";
-        raw.onload = function () {
-          try { resolve(cropSprite(raw)); } catch (e) { resolve(src); }
-        };
-        raw.onerror = function () { resolve(src); }; // let the <img> try, and hide itself if it fails
-        raw.src = src;
-      });
-      fittedSprites[src].then(function (url) { img.src = url; });
+  function loadIcon(number) {
+    var src = iconSrc(number);
+    if (!printIcons[src]) printIcons[src] = new Promise(function (resolve) {
+      var img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = function () { resolve(img); };
+      img.onerror = function () { resolve(null); };
+      img.src = src;
     });
+    return printIcons[src];
+  }
+
+  // A repeatable random sequence, so each binder keeps the same print.
+  function seededRandom(seed) {
+    var s = (seed >>> 0) || 1;
+    return function () {
+      s = (Math.imul(s, 1664525) + 1013904223) >>> 0;
+      return s / 4294967296;
+    };
+  }
+
+  function drawIcon(ctx, img, cx, cy, flip, scale) {
+    var w = img.naturalWidth * scale;
+    var h = img.naturalHeight * scale;
+    ctx.save();
+    ctx.translate(cx, cy);
+    if (flip) ctx.scale(-1, 1);
+    ctx.drawImage(img, -w / 2, -h / 2, w, h);
+    ctx.restore();
+  }
+
+  function paintSpritePrint(featured) {
+    var token = ++printToken;
+    var numbers = featured ? [featured] : PRINT_CREW;
+    Promise.all(numbers.map(loadIcon)).then(function (icons) {
+      if (token !== printToken) return;
+      var icon = {};
+      numbers.forEach(function (n, i) { if (icons[i]) icon[n] = icons[i]; });
+      var crew = numbers.filter(function (n) { return icon[n]; });
+      if (!crew.length) { if (featured) paintSpritePrint(0); return; }
+      var dpr = 2;
+      var tileW = PRINT_COLS * PRINT_CELL_W;
+      var tileH = PRINT_ROWS * PRINT_CELL_H;
+      var canvas = document.createElement("canvas");
+      canvas.width = tileW * dpr;
+      canvas.height = tileH * dpr;
+      var ctx = canvas.getContext("2d");
+      var rand = seededRandom(featured || 151);
+      var last = 0;
+      for (var row = 0; row < PRINT_ROWS; row++) {
+        for (var col = 0; col < PRINT_COLS; col++) {
+          var pick = 0;
+          while (!pick || (pick === last && crew.length > 1)) pick = crew[Math.floor(rand() * crew.length)];
+          last = pick;
+          var img = icon[pick];
+          // Box icons are 40×30 pixel art: draw them 1:1 and crisp. A front sprite
+          // (96 px) is reduced to about the same size instead.
+          var big = img.naturalWidth > 48;
+          ctx.imageSmoothingEnabled = big;
+          var scale = dpr * (big ? 0.42 : 1);
+          var cx = (col + 0.5 + (row % 2) * 0.5) * PRINT_CELL_W * dpr;
+          var cy = (row + 0.5) * PRINT_CELL_H * dpr;
+          var flip = rand() < 0.5;
+          drawIcon(ctx, img, cx, cy, flip, scale);
+          if (cx + img.naturalWidth * scale / 2 > canvas.width) drawIcon(ctx, img, cx - canvas.width, cy, flip, scale);
+        }
+      }
+      canvas.toBlob(function (blob) {
+        if (!blob || token !== printToken) return;
+        var old = printUrl;
+        printUrl = URL.createObjectURL(blob);
+        var root = document.documentElement.style;
+        root.setProperty("--sprite-print", 'url("' + printUrl + '")');
+        root.setProperty("--sprite-print-size", tileW + "px " + tileH + "px");
+        if (old) setTimeout(function () { URL.revokeObjectURL(old); }, 3000);
+      });
+    });
+  }
+
+  /* ---- the search cover's sprites ---- */
+
+  // The search cover is printed with real <img> sprites rather than the canvas
+  // tile, so each one can change, hop and be picked on its own.
+  var COVER_CELL_W = 54;
+  var COVER_CELL_H = 46;
+  var COVER_LABEL = { x: 0.535, y: 0.14 }; // where the search label sits; changes ripple out from here
+  var coverCells = [];
+  var coverShape = "";
+  var coverNumbers = [];
+  var coverFill = 0;
+  var activeNumber = 0;
+
+  function motionOff() {
+    return !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+  }
+
+  function wait(ms) {
+    return new Promise(function (resolve) { setTimeout(resolve, ms); });
+  }
+
+  // Staggered rows across the whole cover. Odd rows carry a sprite cut in half
+  // at each edge, as on printed fabric. Returns true when the cells were rebuilt.
+  function layoutCover() {
+    var host = $("cover-sprites");
+    var w = host.clientWidth;
+    var h = host.clientHeight;
+    if (!w || !h) return false;
+    var cols = Math.max(5, Math.round(w / COVER_CELL_W));
+    var rows = Math.max(6, Math.round(h / COVER_CELL_H));
+    var shape = cols + "x" + rows;
+    if (shape === coverShape) return false;
+    coverShape = shape;
+    var rand = seededRandom(7);
+    var cells = [];
+    for (var r = 0; r < rows; r++) {
+      var shift = r % 2 ? 0.5 : 0;
+      for (var c = shift ? -1 : 0; c < cols; c++) {
+        cells.push({ x: (c + 0.5 + shift) / cols, y: (r + 0.5) / rows, row: r, flip: rand() < 0.5, number: 0, want: 0 });
+      }
+    }
+    var far = 0;
+    cells.forEach(function (cell) {
+      cell.dist = Math.sqrt(Math.pow(cell.x - COVER_LABEL.x, 2) + Math.pow((cell.y - COVER_LABEL.y) * h / w, 2));
+      far = Math.max(far, cell.dist);
+    });
+    host.innerHTML = cells.map(function (cell) {
+      return '<span class="cover-sprite' + (cell.flip ? " is-flip" : "") + '" style="left:' + (cell.x * 100).toFixed(3) +
+        "%;top:" + (cell.y * 100).toFixed(3) + "%;--wave:" + (cell.dist / far).toFixed(3) +
+        '"><img alt="" width="40" height="30" draggable="false" crossorigin="anonymous"></span>';
+    }).join("");
+    var els = host.children;
+    cells.forEach(function (cell, i) {
+      cell.el = els[i];
+      cell.img = els[i].firstChild;
+      cell.reach = cell.dist / far;
+      // The sprites touching this one from the row above, so the print never
+      // stacks a Pokémon on itself.
+      cell.up = [];
+      for (var j = i - 1; j >= 0 && cells[j].row >= cell.row - 1; j--) {
+        if (cells[j].row === cell.row - 1 && Math.abs(cells[j].x - cell.x) < 0.6 / cols) cell.up.push(j);
+      }
+    });
+    coverCells = cells;
+    return true;
+  }
+
+  function planCover(numbers) {
+    var rand = seededRandom(numbers.reduce(function (s, n) { return (Math.imul(s, 31) + n) >>> 0; }, 17));
+    var plan = [];
+    coverCells.forEach(function (cell, i) {
+      var avoid = cell.up.map(function (j) { return plan[j]; });
+      if (i > 0 && coverCells[i - 1].row === cell.row) avoid.push(plan[i - 1]);
+      var pick;
+      var tries = 0;
+      do { pick = numbers[Math.floor(rand() * numbers.length)]; } while (avoid.indexOf(pick) >= 0 && ++tries < 8);
+      plan.push(pick);
+    });
+    return plan;
+  }
+
+  function setSprite(cell, number) {
+    cell.number = cell.want = number;
+    cell.el.setAttribute("data-n", number);
+    cell.el.classList.toggle("is-active", !!activeNumber && number === activeNumber);
+    cell.img.classList.toggle("is-big", number > ICON_LAST);
+    cell.img.src = iconSrc(number);
+  }
+
+  // Shrink the old sprite away and pop the new one in, after `delay` ms.
+  function swapSprite(cell, number, animate, delay) {
+    if (cell.want === number) return;
+    if (cell.anim) { cell.anim.cancel(); cell.anim = null; }
+    var img = cell.img;
+    if (!animate || !img.animate) { setSprite(cell, number); return; }
+    var popIn = function (wait) {
+      setSprite(cell, number);
+      cell.anim = img.animate([
+        { transform: "scale(0)" },
+        { transform: "scale(1.3)", offset: 0.6 },
+        { transform: "scale(1)" }
+      ], { duration: 260, delay: wait || 0, easing: "ease-out", fill: "backwards" });
+    };
+    // An empty cell takes its sprite at once and pops in on its turn.
+    if (!cell.number) { popIn(delay); return; }
+    cell.want = number;
+    var out = cell.anim = img.animate([{ transform: "scale(1)" }, { transform: "scale(0)" }],
+      { duration: 120, delay: delay, easing: "ease-in", fill: "forwards" });
+    out.onfinish = function () {
+      if (cell.want !== number) return;
+      popIn();
+      out.cancel();
+    };
+  }
+
+  // Print the cover with these Pokémon. Each sprite changes as soon as its icon
+  // has loaded (so none pops in blank), keeping its place in the ripple.
+  // Resolves once every icon is in and the change has played.
+  function fillCover(numbers, opts) {
+    var token = ++coverFill;
+    coverNumbers = numbers.slice();
+    layoutCover();
+    $("search-cover").classList.remove("is-empty");
+    var animate = !!(opts && opts.ripple) && !motionOff();
+    var started = Date.now();
+    var plan = planCover(numbers);
+    coverCells.forEach(function (cell, i) {
+      var n = plan[i];
+      loadIcon(n).then(function (img) {
+        if (token !== coverFill || !img) return;
+        var delay = Math.max(0, started + Math.round(cell.reach * 260) - Date.now());
+        swapSprite(cell, n, animate, delay);
+      });
+    });
+    return Promise.all(numbers.map(loadIcon)).then(function () {
+      return animate && token === coverFill ? wait(Math.max(0, started + 640 - Date.now()) + 120) : null;
+    });
+  }
+
+  function markActiveSprites(number) {
+    activeNumber = Number(number) || 0;
+    coverCells.forEach(function (cell) {
+      cell.el.classList.toggle("is-active", !!activeNumber && cell.number === activeNumber);
+    });
+  }
+
+  // The pick: every sprite turns into the chosen Pokémon, they all jump, and the
+  // cover waits (peeking) for the binder's cards.
+  function turnCoverInto(item, animate) {
+    var cover = $("search-cover");
+    animate = animate && !motionOff();
+    cover.classList.remove("is-empty", "is-loading", "is-picked");
+    setCoverMessage("binder.loading");
+    var n = Number(item.number) || 0;
+    var swap = n ? fillCover([n], { ripple: animate }) : Promise.resolve();
+    return swap.then(function () {
+      if (!animate) { cover.classList.add("is-loading"); return; }
+      cover.classList.add("is-picked");
+      return wait(460).then(function () { cover.classList.add("is-loading"); });
+    });
+  }
+
+  // Re-lay the cover when its size changes; and now and then let one sprite hop.
+  function watchCover() {
+    if (window.ResizeObserver) {
+      new ResizeObserver(function () {
+        if (layoutCover() && coverNumbers.length) fillCover(coverNumbers, { ripple: false });
+      }).observe($("cover-sprites"));
+    }
+    setInterval(function () {
+      if (!isHome() || document.hidden || motionOff() || activeNumber || !coverCells.length) return;
+      var cell = coverCells[Math.floor(Math.random() * coverCells.length)];
+      if (cell.el.animate) cell.el.animate([
+        { translate: "0 0" }, { translate: "0 -7px", offset: 0.4 }, { translate: "0 0" }
+      ], { duration: 450, easing: "ease-out" });
+    }, 650);
   }
 
   /* ---- language ---- */
@@ -1130,12 +1578,14 @@
       fillSheetText(activeCard);
       fillMarkets(activeCard);
     }
-    if (suggestItems.length) showSuggest($("q").value.trim());
+    if (suggestItems.length) showSuggest($("q").value.trim(), true);
+    else showActive();
   }
 
   function boot() {
     bindSearch();
-    fitSprites(document.querySelector(".quick-picks"));
+    fillCover(PRINT_CREW, { ripple: true });
+    watchCover();
     i18n.onChange(relabel);
     setStatus("status.catalog");
     fetch("data/index.json").then(function (res) {
@@ -1147,19 +1597,23 @@
         species: speciesIndex.length,
         printings: (data.counts || {}).variants || speciesIndex.reduce(function (total, item) { return total + Number(item.variants || 0); }, 0)
       };
+      speciesIndex.forEach(function (item) {
+        if (item.number && !speciesByNumber[item.number]) speciesByNumber[item.number] = item;
+      });
       renderCatalogCounts();
-      document.querySelectorAll('[data-species]').forEach(function (button) { button.disabled = false; });
-      setStatus("status.ready", { n: speciesIndex.length });
+      setStatus(null);
       var fromHash = findByHash(location.hash);
-      if (fromHash) pickSpecies(fromHash);
+      if (fromHash) pickSpecies(fromHash, { instant: true });
+      else if ($("q").value.trim()) updateFromQuery(); // typed before the catalog arrived
     }).catch(function (err) {
       setStatus("status.catalogFailed", null, true);
       console.error(err);
     });
     loadFx();
     window.addEventListener("hashchange", function () {
+      if (!location.hash.replace(/^#/, "")) { if (!isHome()) goHome(false); return; }
       var item = findByHash(location.hash);
-      if (item && (!current || current.meta.key !== item.key)) pickSpecies(item);
+      if (item && (!current || current.meta.key !== item.key)) pickSpecies(item, { instant: true });
     });
   }
 
