@@ -72,6 +72,20 @@
     return out;
   }
 
+  // The same text always gives the same numbers: a copy that comes without a
+  // usable uid (a hand-edited file) gets the same one each time it's read,
+  // so syncing that file twice doesn't add it twice.
+  function seeded(text) {
+    var h = 2166136261;
+    for (var i = 0; i < text.length; i++) { h ^= text.charCodeAt(i); h = Math.imul(h, 16777619); }
+    return function () {
+      h = (h + 0x6D2B79F5) | 0;
+      var t = Math.imul(h ^ (h >>> 15), 1 | h);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
   function speciesNumber(key) {
     var m = /^(\d+)-/.exec(String(key || ""));
     return m ? Number(m[1]) : 0;
@@ -209,8 +223,9 @@
     if (!raw || typeof raw !== "object") return doc;
     raw = migrate(raw);
     var seen = {};
-    (Array.isArray(raw.copies) ? raw.copies.slice(0, MAX_COPIES) : []).forEach(function (c) {
-      var copy = cleanCopy(c, now);
+    (Array.isArray(raw.copies) ? raw.copies.slice(0, MAX_COPIES) : []).forEach(function (c, i) {
+      var named = c && /^c_[a-z0-9]{6,24}$/.test(String(c.uid || ""));
+      var copy = cleanCopy(c, now, named ? null : seeded(i + ":" + JSON.stringify(c)));
       if (copy && !seen[copy.uid]) { seen[copy.uid] = true; doc.copies.push(copy); }
     });
     var gone = {};
@@ -360,11 +375,23 @@
     return back;
   };
 
+  // The cards that were here and aren't in the new file count as removed
+  // now, so a sync (or a later merge) doesn't bring them back.
   Model.prototype.replace = function (doc, now) {
+    var stamp = now || new Date().toISOString();
     var keep = this.doc.local;
+    var before = this.doc.copies;
     this.doc = cleanDoc(doc);
+    var still = {};
+    this.doc.copies.forEach(function (c) { still[c.uid] = true; });
+    var removed = this.doc.removed;
+    before.forEach(function (c) {
+      if (still[c.uid]) return;
+      for (var i = 0; i < removed.length; i++) if (removed[i].uid === c.uid) { removed[i].at = stamp; return; }
+      removed.push({ uid: c.uid, at: stamp });
+    });
     this.doc.local = keep;
-    this.touch(now || new Date().toISOString());
+    this.touch(stamp);
     this.reindex();
   };
 

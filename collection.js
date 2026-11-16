@@ -530,15 +530,254 @@
     if (r.history) {
       history = core.mergeHistory(history, r.history);
       Store.writeHistory(history);
+      scheduleSync();
     }
     toast(t("backup.loaded", { n: num(Store.model().count()) }));
     ensureRates();
   }
 
+  /* ---- sync with a private GitHub repo (plan §2, Phase 5) ---- */
+
+  // { repo: "owner/name", token, remember, at } where `at` is the last good
+  // sync. Kept in localStorage, or only for this tab's session when
+  // "Remember on this device" is off.
+  var Sync = root.PullfolioSync;
+  var SYNC_STORE = "pullfolio.sync";
+  var SYNC_DELAY = 5000; // after the last change
+  var RETRY_DELAY = 120000;
+  var syncCfg = loadSync();
+  var syncState = ""; // "", "busy", "ok" or a SyncError kind
+  var syncDraft = { repo: "", token: "", remember: true, error: "" };
+  var syncTimer = 0;
+  var syncing = null;
+  var syncAgain = false;
+  var syncApplying = false; // merging the repo's file in: not a change to send back
+  var syncFirst = false; // the first sync after connecting says what came in
+
+  function loadSync() {
+    var raw = null;
+    var remember = true;
+    try {
+      raw = root.localStorage.getItem(SYNC_STORE);
+      if (!raw) { raw = root.sessionStorage.getItem(SYNC_STORE); remember = false; }
+    } catch (e) { return null; }
+    try { raw = raw ? JSON.parse(raw) : null; } catch (e) { raw = null; }
+    var repo = raw && Sync.parseRepo(raw.repo);
+    var token = raw && Sync.cleanToken(raw.token);
+    if (!repo || !token) return null;
+    return { repo: repo.full, token: token, remember: remember, at: typeof raw.at === "string" ? raw.at : "" };
+  }
+
+  function saveSync() {
+    try {
+      root.localStorage.removeItem(SYNC_STORE);
+      root.sessionStorage.removeItem(SYNC_STORE);
+      if (syncCfg) {
+        (syncCfg.remember ? root.localStorage : root.sessionStorage).setItem(SYNC_STORE,
+          JSON.stringify({ repo: syncCfg.repo, token: syncCfg.token, at: syncCfg.at }));
+      }
+    } catch (e) { /* kept for this page only */ }
+  }
+
+  function client(cfg) {
+    return new Sync.Client(Sync.parseRepo(cfg.repo), cfg.token);
+  }
+
+  function scheduleSync(delay) {
+    if (!syncCfg) return;
+    clearTimeout(syncTimer);
+    syncTimer = setTimeout(syncNow, delay == null ? SYNC_DELAY : delay);
+  }
+
+  // The repo's file is merged in (Sync.run calls this), and saved prices with it.
+  function takeRemote(doc, hist) {
+    var before = Store.model().count();
+    if (Sync.changes(Store.model().doc, doc)) {
+      syncApplying = true;
+      try { Store.mergeIn(doc); } finally { syncApplying = false; }
+    }
+    if (hist) {
+      var merged = core.mergeHistory(history, hist);
+      if (JSON.stringify(merged) !== JSON.stringify(history)) {
+        history = merged;
+        Store.writeHistory(history);
+      }
+    }
+    var added = Store.model().count() - before;
+    if (syncFirst && added > 0) toast(t("sync.pulled", { n: num(added), repo: syncCfg.repo }));
+  }
+
+  function syncNow() {
+    clearTimeout(syncTimer);
+    syncTimer = 0;
+    if (!syncCfg) return Promise.resolve();
+    if (syncing) { syncAgain = true; return syncing; }
+    var cfg = syncCfg;
+    setSyncState("busy");
+    syncing = Store.ready.then(function () {
+      return Sync.run(client(cfg), function () { return { doc: Store.model().doc, history: history }; }, takeRemote);
+    }).then(function () {
+      if (syncCfg !== cfg) return;
+      cfg.at = new Date().toISOString();
+      saveSync();
+      setSyncState("ok");
+    }, function (err) {
+      if (syncCfg !== cfg) return;
+      var kind = err && err.kind && err.kind !== "conflict" ? err.kind : "server";
+      if (!err || !err.kind) console.error(err);
+      setSyncState(kind);
+      // A network or GitHub hiccup is tried again; anything else needs you.
+      if (kind === "offline" || kind === "rate" || kind === "server") scheduleSync(RETRY_DELAY);
+    }).then(function () {
+      syncing = null;
+      syncFirst = false;
+      if (syncAgain) { syncAgain = false; scheduleSync(1000); }
+    });
+    return syncing;
+  }
+
+  function setSyncState(state) {
+    syncState = state;
+    drawSync();
+  }
+
+  function connectSync(form) {
+    var repo = Sync.parseRepo(form.repo.value);
+    var token = Sync.cleanToken(form.token.value);
+    syncDraft = { repo: form.repo.value, token: form.token.value, remember: form.remember.checked, error: "" };
+    if (!repo) syncDraft.error = t("sync.err.repoShape");
+    else if (!token) syncDraft.error = t("sync.err.tokenShape");
+    if (syncDraft.error) { drawSync('[name="' + (repo ? "token" : "repo") + '"]'); return; }
+    var cfg = { repo: repo.full, token: token, remember: form.remember.checked, at: "" };
+    setSyncState("busy");
+    Promise.resolve().then(function () { return client(cfg).check(); }).then(function () {
+      syncCfg = cfg;
+      syncDraft = { repo: "", token: "", remember: true, error: "" };
+      saveSync();
+      syncFirst = true;
+      return syncNow().then(function () { drawSync("[data-sync-status]"); });
+    }, function (err) {
+      syncState = "";
+      syncDraft.error = t("sync.err." + (err && err.kind && err.kind !== "conflict" ? err.kind : "server"));
+      drawSync('[name="' + (err && err.kind === "token" ? "token" : "repo") + '"]');
+    });
+  }
+
+  function disconnectSync() {
+    clearTimeout(syncTimer);
+    syncCfg = null;
+    syncState = "";
+    saveSync();
+    toast(t("sync.offDone"));
+    drawSync('[data-sum="shelf"][data-val="sync"]');
+  }
+
+  // "14:05" today, else the date.
+  function syncWhen(iso) {
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return "";
+    var date = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Istanbul" }).format(d);
+    return date === today() ? d.toLocaleTimeString(i18n.locale(), { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "Europe/Istanbul" }) : day(iso);
+  }
+
+  function syncStatusText() {
+    if (!syncCfg) return "";
+    if (syncState === "busy") return t("sync.busy");
+    if (syncState && syncState !== "ok") return t("sync.err." + syncState);
+    return syncCfg.at ? t("sync.ok", { time: syncWhen(syncCfg.at) }) : "";
+  }
+  function syncTrouble() { return !!syncCfg && !!syncState && syncState !== "ok" && syncState !== "busy"; }
+
+  function repoUrl(full) {
+    var r = Sync.parseRepo(full);
+    return r ? "https://github.com/" + encodeURIComponent(r.owner) + "/" + encodeURIComponent(r.name) : "";
+  }
+
+  function link(href, text) {
+    return '<a href="' + esc(href) + '" target="_blank" rel="noopener noreferrer">' + esc(text) + "</a>";
+  }
+
+  function syncHtml() {
+    if (syncCfg) {
+      var url = repoUrl(syncCfg.repo);
+      return '<div class="mine-sync">' +
+        '<p class="mine-sync-on">' + esc(t("sync.on")) + " " + link(url, syncCfg.repo) + "</p>" +
+        '<p class="mine-sync-status' + (syncTrouble() ? " is-warn" : "") + '" data-sync-status tabindex="-1" role="status">' + esc(syncStatusText()) + "</p>" +
+        '<div class="mine-more"><button type="button" class="mine-chip" data-sum="sync-now"' + (syncState === "busy" ? " disabled" : "") + ">" + esc(t("sync.now")) + "</button>" +
+        '<button type="button" class="mine-textbtn" data-sum="sync-off">' + esc(t("sync.off")) + "</button></div>" +
+        '<p class="mine-note">' + esc(t("sync.history")) + " " + link(url + "/commits", t("sync.versions")) + "</p></div>";
+    }
+    var id = "sync-" + Math.random().toString(36).slice(2, 7);
+    var busy = syncState === "busy";
+    return '<div class="mine-sync">' +
+      '<p class="mine-sync-intro">' + esc(t("sync.intro")) + "</p>" +
+      '<ol class="mine-sync-steps">' +
+        "<li>" + esc(t("sync.step1")) + " " + link("https://github.com/new", t("sync.step1link")) + "</li>" +
+        "<li>" + esc(t("sync.step2")) + " " + link("https://github.com/settings/personal-access-tokens/new", t("sync.step2link")) + "</li>" +
+        "<li>" + esc(t("sync.step3")) + "</li>" +
+      "</ol>" +
+      '<form class="mine-slip mine-sync-form" data-sync-form novalidate>' +
+        '<div class="mine-slip-grid">' +
+          '<label class="mine-field" for="' + id + '-repo"><span class="mine-field-label">' + esc(t("sync.repoLabel")) + "</span>" +
+            '<input id="' + id + '-repo" name="repo" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="' + esc(t("sync.repoHint")) + '" value="' + esc(syncDraft.repo) + '"></label>' +
+          '<label class="mine-field" for="' + id + '-token"><span class="mine-field-label">' + esc(t("sync.tokenLabel")) + "</span>" +
+            '<input id="' + id + '-token" name="token" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" value="' + esc(syncDraft.token) + '"></label>' +
+          '<div class="mine-field is-wide"><label class="mine-check"><input type="checkbox" name="remember"' + (syncDraft.remember ? " checked" : "") + "><span>" + esc(t("sync.remember")) + "</span></label>" +
+            '<span class="mine-field-help">' + esc(t("sync.rememberHelp")) + "</span></div>" +
+        "</div>" +
+        '<p class="mine-error" role="alert"' + (syncDraft.error ? "" : " hidden") + ">" + esc(syncDraft.error) + "</p>" +
+        '<div class="mine-slip-acts"><button type="submit" class="mine-save"' + (busy ? " disabled" : "") + ">" + esc(t(busy ? "sync.checking" : "sync.connect")) + "</button></div>" +
+      "</form>" +
+      '<p class="mine-note">' + esc(t("sync.privacy")) + "</p></div>";
+  }
+
+  // The panel is in the summary card, or under the empty binder's help.
+  function drawSync(focus) {
+    renderSummary();
+    var empty = document.querySelector("[data-mine-sync-empty]");
+    if (empty) {
+      var open = shelf.open === "sync";
+      empty.innerHTML = open ? syncHtml() : "";
+      empty.hidden = !open;
+      var chip = document.querySelector('.mine-empty [data-sum="shelf"][data-val="sync"]');
+      if (chip) chip.setAttribute("aria-expanded", open ? "true" : "false");
+    }
+    if (focus) {
+      var el = document.querySelector("[data-mine-sync-empty] " + focus + ", #mine-summary " + focus);
+      if (el) el.focus({ preventScroll: true });
+    }
+  }
+
+  document.addEventListener("submit", function (ev) {
+    if (!ev.target.matches || !ev.target.matches("[data-sync-form]")) return;
+    ev.preventDefault();
+    connectSync(ev.target);
+  });
+  // What's typed survives the summary card being redrawn (prices arriving).
+  document.addEventListener("input", function (ev) {
+    var form = ev.target.form;
+    if (!form || !form.matches("[data-sync-form]")) return;
+    syncDraft.repo = form.repo.value;
+    syncDraft.token = form.token.value;
+    syncDraft.remember = form.remember.checked;
+  });
+  document.addEventListener("change", function (ev) {
+    var form = ev.target.form;
+    if (form && form.matches("[data-sync-form]") && ev.target.name === "remember") syncDraft.remember = ev.target.checked;
+  });
+  // A save waiting to go out goes now if the page is put away.
+  document.addEventListener("visibilitychange", function () {
+    if (document.visibilityState === "hidden" && syncTimer) syncNow();
+  });
+  root.addEventListener("online", function () {
+    if (syncCfg && syncState === "offline") scheduleSync(0);
+  });
+
   /* ---- My binder's summary card ---- */
 
   function backupDue(local) {
     if (!Store.model().count()) return false;
+    if (syncCfg && syncCfg.at && Date.now() - new Date(syncCfg.at).getTime() < 14 * 864e5) return false;
     if (!local || !local.backupAt) return true;
     var age = Date.now() - new Date(local.backupAt).getTime();
     return local.changes >= 20 || age > 14 * 864e5;
@@ -581,18 +820,24 @@
     if (cover.length) html += '<div class="mine-sum-notes"><p>' + cover.map(function (c) {
       return c[1] ? '<button type="button" class="mine-note-link" data-sum="filter" data-kind="' + c[1] + '">' + esc(c[0]) + "</button>" : esc(c[0]);
     }).join(" · ") + "</p></div>";
-    if (s.cards) html += shelfTabsHtml() + (shelf.open ? '<div class="mine-shelf" id="mine-shelf" role="region" aria-label="' +
+    if (s.cards) html += shelfTabsHtml() + (shelf.open && shelf.open !== "sync" ? '<div class="mine-shelf" id="mine-shelf" role="region" aria-label="' +
       esc(t(shelfLabel(shelf.open))) + '">' + shelfHtml(s) + "</div>" : "");
     var local = Store.model().doc.local;
     var due = backupDue(local);
+    var syncOpen = shelf.open === "sync";
+    // The open panel says how sync is doing; the row then shows the last backup.
+    var synced = syncOpen ? "" : syncStatusText();
     html += '<div class="mine-sum-tools">' +
       (rate ? '<button type="button" class="mine-chip' + (inLira ? " is-on" : "") + '" data-sum="lira" aria-pressed="' + inLira + '">' + esc(t("sum.inLira")) + "</button>" : "") +
-      '<span class="mine-backup' + (due ? " is-due" : "") + '">' +
-        esc(local && local.backupAt ? t("backup.last", { date: day(local.backupAt) }) : t("backup.never")) + "</span>" +
+      '<span class="mine-backup' + (due || (synced && syncTrouble()) ? " is-due" : "") + '">' +
+        esc(synced || (local && local.backupAt ? t("backup.last", { date: day(local.backupAt) }) : t("backup.never"))) + "</span>" +
       '<button type="button" class="mine-chip' + (due ? " is-due" : "") + '" data-sum="backup">' + esc(t("backup.download")) + "</button>" +
       '<button type="button" class="mine-chip" data-sum="import">' + esc(t("backup.load")) + "</button>" +
       '<button type="button" class="mine-chip" data-sum="csv">' + esc(t("backup.csv")) + "</button>" +
+      '<button type="button" class="mine-chip' + (syncOpen ? " is-on" : "") + '" data-sum="shelf" data-val="sync" aria-expanded="' + syncOpen + '"' +
+        (syncOpen ? ' aria-controls="mine-sync-panel"' : "") + ">" + esc(t(syncCfg ? "sync.chipOn" : "sync.chip")) + "</button>" +
       "</div>" +
+      (syncOpen ? '<div class="mine-shelf" id="mine-sync-panel" role="region" aria-label="' + esc(t("sync.chip")) + '">' + syncHtml() + "</div>" : "") +
       (Store.volatile ? '<p class="mine-note is-warn">' + esc(t("store.volatile")) + "</p>" : "") +
       '<div data-mine-import aria-live="polite">' + importHtml() + "</div>";
     return html;
@@ -791,6 +1036,7 @@
       history = core.recordDay(h, today(), prices, usdTry);
       Store.writeHistory(history);
       if (shelf.open) renderSummary();
+      scheduleSync();
     });
   }
 
@@ -801,19 +1047,41 @@
     if (el) el.focus({ preventScroll: true });
   }
 
+  // Where focus was in the summary card, so a redraw (prices arriving, a
+  // sync) can put it back: a sync form field, the sync status or a button.
+  function focusKey(el, box) {
+    if (!el || !box.contains(el)) return "";
+    if (el.name && el.form && el.form.matches("[data-sync-form]")) return '[data-sync-form] [name="' + el.name + '"]';
+    if (el.hasAttribute("data-sync-status")) return "[data-sync-status]";
+    var act = el.getAttribute("data-sum");
+    if (!act) return "";
+    var val = el.getAttribute("data-val");
+    var kind = el.getAttribute("data-kind");
+    var q = function (v) { return root.CSS && root.CSS.escape ? root.CSS.escape(v) : v.replace(/["\\]/g, "\\$&"); };
+    return '[data-sum="' + q(act) + '"]' + (val ? '[data-val="' + q(val) + '"]' : "") + (kind ? '[data-kind="' + q(kind) + '"]' : "");
+  }
+
   var lastSummary = null;
   function renderSummary(stats) {
     if (stats) lastSummary = stats;
     var box = $("mine-summary");
     if (!box || !lastSummary) return;
+    var focus = focusKey(document.activeElement, box);
     box.innerHTML = summaryHtml(lastSummary);
+    if (focus) {
+      var again = box.querySelector(focus);
+      if (again) again.focus({ preventScroll: true });
+    }
   }
 
   // The empty binder's help, with a way to bring a backup back.
   function emptyHtml() {
     return '<div class="mine-empty"><p>' + esc(t("mine.empty")) + "</p>" +
-      '<div class="mine-sum-tools"><button type="button" class="mine-chip" data-sum="import">' + esc(t("backup.load")) + "</button></div>" +
+      '<div class="mine-sum-tools"><button type="button" class="mine-chip" data-sum="import">' + esc(t("backup.load")) + "</button>" +
+      '<button type="button" class="mine-chip" data-sum="shelf" data-val="sync" aria-expanded="' + (shelf.open === "sync") + '">' +
+        esc(t(syncCfg ? "sync.chipOn" : "sync.chip")) + "</button></div>" +
       (Store.volatile ? '<p class="mine-note is-warn">' + esc(t("store.volatile")) + "</p>" : "") +
+      '<div class="mine-shelf" data-mine-sync-empty' + (shelf.open === "sync" ? ">" + syncHtml() : " hidden>") + "</div>" +
       '<div data-mine-import aria-live="polite">' + importHtml() + "</div></div>";
   }
 
@@ -836,8 +1104,9 @@
     else if (act === "shelf") {
       var name = btn.getAttribute("data-val");
       shelf.open = shelf.open === name ? "" : name;
-      rerender('[data-sum="shelf"][data-val="' + name + '"]');
-    } else if (act === "by" || act === "range" || act === "days") {
+      drawSync('[data-sum="shelf"][data-val="' + name + '"]');
+    } else if (act === "sync-now") syncNow();
+    else if (act === "sync-off") disconnectSync(); else if (act === "by" || act === "range" || act === "days") {
       shelf[act] = btn.getAttribute("data-val");
       rerender('[data-sum="' + act + '"][data-val="' + shelf[act] + '"]');
     } else if (act === "filter") {
@@ -867,6 +1136,9 @@
     if (shown && !slip) render();
     if (reason !== "rates") renderSummary();
     if (reason === "load") ensureRates();
+    // Opening the site syncs; another tab's save is that tab's to send.
+    if (reason === "load") scheduleSync(1500);
+    else if (!syncApplying && reason !== "reload" && reason !== "backup") scheduleSync();
   });
 
   root.PullfolioMine = {
@@ -880,9 +1152,10 @@
     emptyHtml: emptyHtml,
     toast: toast,
     recordPrices: recordPrices,
+    syncNow: syncNow,
     relabel: function () {
       if (shown && !slip) render();
-      renderSummary();
+      drawSync();
       if (pendingImport) showImport(pendingImport);
     },
     ensureRates: ensureRates
