@@ -84,7 +84,7 @@
       : '<span class="pk-blank">' + escapeHtml(info.name) + "</span>";
     return '<button type="button" class="pocket' + (info.key === this.out ? " is-out" : "") +
       '" data-key="' + escapeHtml(info.key) + '" aria-label="' + escapeHtml(info.label) + '" style="--i:' + slot + '">' +
-      '<span class="pk-card">' + art + "</span>" +
+      '<span class="pk-card' + (info.back ? " back-" + info.back : "") + '">' + art + "</span>" +
       '<span class="pk-sleeve" aria-hidden="true"></span>' +
       (info.lang ? '<span class="pk-lang" aria-hidden="true">' + escapeHtml(info.lang) + "</span>" : "") +
       (info.price ? '<span class="pk-price" aria-hidden="true">' + escapeHtml(info.price) + "</span>" : "") +

@@ -951,8 +951,11 @@ body.is-viewing .search-hero { display: none; }
   inset: 4px;
   overflow: hidden;
   border-radius: 4.6% / 3.3%;
-  /* A plain card back shows while the scan loads. */
+  /* The card's own printed back shows while the scan loads (--back-art, set
+     per language below); the drawn back stands in until that image is in. */
+  --back-art: none;
   background:
+    var(--back-art) center / cover no-repeat,
     radial-gradient(ellipse 34% 26% at 50% 50%, #e6b93a 0 30%, #b8862a 31% 42%, transparent 44%),
     radial-gradient(ellipse 60% 48% at 50% 50%, #3b62b5 0 60%, transparent 62%),
     linear-gradient(135deg, #22376e, #182752);
@@ -960,6 +963,12 @@ body.is-viewing .search-hero { display: none; }
   transition: transform .28s cubic-bezier(.3, .7, .4, 1), box-shadow .28s ease;
 }
 .pk-card img { display: block; width: 100%; height: 100%; object-fit: cover; -webkit-user-drag: none; }
+/* English, Japanese (1996 to 2001, and since) backs; Chinese cards use the
+   current Japanese one. The images are in assets/backs/ (see the docs). */
+.pk-card.back-en { --back-art: url("assets/backs/en.webp"); }
+.pk-card.back-jp { --back-art: url("assets/backs/jp.webp"); }
+.pk-card.back-jp-old { --back-art: url("assets/backs/jp-old.webp"); }
+.pk-card[class*="back-"] { box-shadow: 0 1px 2px rgba(0, 0, 0, .5); }
 .pk-blank {
   display: flex;
   align-items: center;
@@ -1166,8 +1175,8 @@ body.is-viewing .search-hero { display: none; }
   transition: opacity .3s ease;
 }
 .sheet-art::after { z-index: 2; }
-.sheet-art.is-tilting::before { opacity: .5; }
-.sheet-art.is-tilting::after { background: radial-gradient(circle at var(--tilt-light-x, 50%) var(--tilt-light-y, 50%), rgba(255, 255, 255, .42), transparent 55%); }
+.sheet-art.is-tilting::before { opacity: .32; }
+.sheet-art.is-tilting::after { background: radial-gradient(circle at var(--tilt-light-x, 50%) var(--tilt-light-y, 50%), rgba(255, 255, 255, .2), transparent 42%); }
 .sheet-art.is-waiting { background: none; box-shadow: none; }
 .sheet-art.is-waiting img, .sheet-art.is-waiting::before, .sheet-art.is-waiting::after { opacity: 0; }
 .sheet-art.is-landing { animation: card-land .95s cubic-bezier(.3, .7, .3, 1); }
