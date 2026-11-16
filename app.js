@@ -17,7 +17,6 @@
   var fxReady = null;
   var activeSuggest = -1;
   var suggestItems = [];
-  var activeCard = null;
 
   var $ = function (id) { return document.getElementById(id); };
 
@@ -168,8 +167,34 @@
 
   function quote(q) { return encodeURIComponent(q); }
 
+  function searchTerms(card) {
+    var bits = [card.name, (card.set || "").replace(" · ", " ")];
+    var variant = card.variant || "";
+    if (variant && variant.toLowerCase() !== "standard") bits.push(variant);
+    if (card.lang === "JP") bits.push("japanese");
+    if (card.lang === "CN") bits.push("chinese");
+    return bits.filter(Boolean).join(" ");
+  }
+
+  function pcTerms(card) {
+    // PriceCharting search works best with just the card name and number.
+    var parts = (card.set || "").split(" · ");
+    var raw = (parts[1] || "").split("/")[0].trim().split(/\s+/).pop() || "";
+    var num = raw.replace(/^0+(?=\d)/, "");
+    return [card.name, num].filter(Boolean).join(" ");
+  }
+
   function marketLinks(card) {
-    return window.CardMarketLinks.build(card);
+    var q = searchTerms(card);
+    var tcg = card.tcgUrl || (card.productId ? "https://www.tcgplayer.com/product/" + card.productId : "");
+    if (!tcg) tcg = "https://www.tcgplayer.com/search/pokemon/product?q=" + quote(q);
+    return {
+      tcg: tcg,
+      ebaySold: "https://www.ebay.com/sch/i.html?_nkw=" + quote(q) + "&LH_Sold=1&LH_Complete=1",
+      ebay: "https://www.ebay.com/sch/i.html?_nkw=" + quote(q),
+      pc: "https://www.pricecharting.com/search-products?q=" + quote(pcTerms(card)) + "&type=prices",
+      cm: "https://www.cardmarket.com/en/Pokemon/Products/Search?searchString=" + quote(q)
+    };
   }
 
   function parsePrice(value) {
@@ -421,7 +446,7 @@
         '<div class="toolbar-row">' +
           '<label class="sort-wrap"><span class="sr-only">Sort</span><select id="sort" aria-label="Sort">' + sortOptions + "</select></label>" +
           variantHtml +
-          '<label class="search-wrap"><span class="sr-only">Filter</span><input id="filter" type="search" placeholder="Filter by set, number or rarity…" autocomplete="off" spellcheck="false"></label>' +
+          '<label class="search-wrap"><span class="sr-only">Filter</span><input id="filter" type="search" placeholder="Search" autocomplete="off" spellcheck="false"></label>' +
           '<div class="count" id="count">' + escapeHtml(count) + "</div>" +
         "</div>" +
         '<div class="toolbar-row wraps"><div class="chips" role="group" aria-label="Language">' + langChips + "</div>" + rarityHtml + "</div>" +
@@ -477,9 +502,8 @@
       " · " + cards.length + " variant" + (cards.length === 1 ? "" : "s");
     var langs = uniqueValues(cards, "lang");
     if (langs.length) subtitle += " · " + langs.join("+");
-    var html = '<header class="result-header"><div><p class="result-eyebrow">THE COMPLETE COLLECTION</p><h2 class="result-title">' +
-      escapeHtml(meta.name) + ' <span>/ Master Set</span></h2><p class="subtitle">' + escapeHtml(subtitle) +
-      '</p></div><span class="result-badge">Explore every printing</span></header>';
+    var html = '<header><h2 class="result-title" style="font-size:22px;letter-spacing:-0.03em;margin:0 0 4px">' +
+      escapeHtml(meta.name) + " · Master Set</h2><p class=\"subtitle\">" + escapeHtml(subtitle) + "</p></header>";
     html += renderToolbar(cards);
     html += '<div class="grid" id="grid">';
     for (var i = 0; i < cards.length; i++) html += tileHtml(cards[i], i);
@@ -645,14 +669,10 @@
       art.classList.add("is-empty");
       art.innerHTML = "";
     }
-    fillMarkets(card);
-  }
-
-  function fillMarkets(card) {
     var links = marketLinks(card);
     var rows = [];
     var tcgPrice = "—";
-    var tcgNote = links.tcgDirect ? "product page" : "search";
+    var tcgNote = card.productId ? "product page" : "search";
     var tcgRange = "";
     if (card.price) {
       tcgPrice = card.price.headline;
@@ -660,17 +680,9 @@
       tcgRange = card.price.range || "";
     }
     rows.push({ name: "TCGplayer", price: tcgPrice, note: tcgNote, range: tcgRange, url: links.tcg });
-    rows.push({ name: "eBay sold", price: "—", note: "sold listings for this printing", url: links.ebaySold });
-    rows.push({ name: "eBay listings", price: "—", note: "active listings for this printing", url: links.ebay });
-    var pcStatus = card.pcResolution && card.pcResolution.status;
-    var pcNote = links.pc ? "exact card page" : pcStatus === "loading" ? "Finding exact card page…" :
-      pcStatus === "not_found" ? "No exact match found" : pcStatus === "unavailable" ? "Card lookup unavailable" : "Exact card link unavailable";
-    rows.push({ name: "PriceCharting", price: "—", note: pcNote, url: links.pc });
-    var cmStatus = card.cmResolution && card.cmResolution.status;
-    var cmNote = links.cm ? "exact card page" : cmStatus === "loading" ? "Finding exact card page…" :
-      cmStatus === "not_found" ? "No exact match found" : cmStatus === "unavailable" ? "Card lookup unavailable" : "Exact card link unavailable";
-    rows.push({ name: "Cardmarket", price: "—", note: cmNote, url: links.cm });
-    rows.push({ name: "Collectr", price: "—", note: links.collectr ? "View price on Collectr" : "Exact card link unavailable", url: links.collectr });
+    rows.push({ name: "eBay sold", price: "—", note: "search", url: links.ebaySold });
+    rows.push({ name: "PriceCharting", price: "—", note: "search", url: links.pc });
+    rows.push({ name: "Cardmarket", price: "—", note: "search", url: links.cm });
     $("sheet-markets").innerHTML = rows.map(function (m) {
       var body = '<span class="market-name">' + escapeHtml(m.name) +
         (m.url ? '<span class="market-go">↗</span>' : "") + "</span>" +
@@ -683,58 +695,21 @@
       return '<div class="market">' + body + "</div>";
     }).join("");
     var out = [];
-    if (links.pc) out.push('<a href="' + escapeHtml(links.pc) + '" target="_blank" rel="noopener noreferrer">Open card on PriceCharting</a>');
-    else if (pcStatus !== "loading") out.push('<a href="' + escapeHtml(links.pcSearch) + '" target="_blank" rel="noopener noreferrer">Search PriceCharting</a>');
-    if (links.cm) out.push('<a href="' + escapeHtml(links.cm) + '" target="_blank" rel="noopener noreferrer">Open card on Cardmarket</a>');
-    else if (cmStatus !== "loading") out.push('<a href="' + escapeHtml(links.cmSearch) + '" target="_blank" rel="noopener noreferrer">Search Cardmarket</a>');
-    if (links.collectr) out.push('<a href="' + escapeHtml(links.collectr) + '" target="_blank" rel="noopener noreferrer">View price on Collectr</a>');
-    if (links.ebaySold) out.push('<a href="' + escapeHtml(links.ebaySold) + '" target="_blank" rel="noopener noreferrer">View eBay sold listings</a>');
+    if (links.pc) out.push('<a href="' + escapeHtml(links.pc) + '" target="_blank" rel="noopener noreferrer">Open on PriceCharting</a>');
+    if (links.ebaySold) out.push('<a href="' + escapeHtml(links.ebaySold) + '" target="_blank" rel="noopener noreferrer">Open on eBay</a>');
     $("sheet-links").innerHTML = out.join("");
-  }
-
-  function resolveCardLinks(card) {
-    resolveMarketLink(card, "pc", "pricecharting");
-    resolveMarketLink(card, "cm", "cardmarket");
-  }
-
-  function resolveMarketLink(card, market, endpoint) {
-    var stateKey = market + "Resolution";
-    if (!current || marketLinks(card)[market] || (card[stateKey] && card[stateKey].status !== "unavailable")) return;
-    var local = ["127.0.0.1", "localhost", "[::1]"].indexOf(location.hostname) !== -1;
-    // Pages uses the saved PriceCharting catalog and TCGdex's public Cardmarket IDs.
-    if (!local && (market !== "cm" || !window.CardmarketResolver)) return;
-    card[stateKey] = { status: "loading" };
-    fillMarkets(card);
-    var controller = new AbortController();
-    var timeout = setTimeout(function () { controller.abort(); }, 30000);
-    var url = "api/" + endpoint + "?species=" + encodeURIComponent(current.meta.key) + "&card=" + encodeURIComponent(card.id);
-    var request = local ? fetch(url, { signal: controller.signal }).then(function (res) {
-      if (!res.ok) throw new Error("Card lookup " + res.status);
-      return res.json();
-    }) : window.CardmarketResolver.resolve(card);
-    request.then(function (result) {
-      card[stateKey] = result;
-    }).catch(function () {
-      card[stateKey] = { status: "unavailable" };
-    }).then(function () {
-      clearTimeout(timeout);
-      if (activeCard === card) fillMarkets(card);
-    });
   }
 
   function openSheet(idx) {
     if (!current || !current.cards[idx]) return;
-    activeCard = current.cards[idx];
-    fillSheet(activeCard);
+    fillSheet(current.cards[idx]);
     var overlay = $("overlay");
     overlay.classList.add("is-on");
     overlay.setAttribute("aria-hidden", "false");
     document.body.classList.add("is-locked");
     $("sheet-close").focus();
-    resolveCardLinks(activeCard);
   }
   function closeSheet() {
-    activeCard = null;
     var overlay = $("overlay");
     overlay.classList.remove("is-on");
     overlay.setAttribute("aria-hidden", "true");
@@ -819,7 +794,6 @@
 
   function hideSuggest() {
     var box = $("suggest");
-    $("q").setAttribute("aria-expanded", "false");
     box.hidden = true;
     box.classList.remove("is-on");
     box.innerHTML = "";
@@ -840,7 +814,6 @@
         '><span class="s-name">' + escapeHtml(item.name) + '</span><span class="s-meta">' + escapeHtml(meta) + "</span></button>";
     }).join("");
     box.hidden = false;
-    $("q").setAttribute("aria-expanded", "true");
     box.classList.add("is-on");
     activeSuggest = 0;
     box.querySelectorAll("button").forEach(function (btn) {
@@ -926,11 +899,6 @@
 
   function loadSpecies(item) {
     var token = ++loadToken;
-    document.querySelectorAll('[data-species]').forEach(function (button) {
-      button.classList.toggle('is-selected', button.getAttribute('data-species') === item.slug);
-      button.setAttribute('aria-pressed', button.getAttribute('data-species') === item.slug ? 'true' : 'false');
-    });
-    document.title = item.name + ' cards · CardDex';
     closeSheet();
     current = null;
     setStatus("Loading " + item.name + "…");
@@ -942,18 +910,11 @@
         if (!res.ok) throw new Error("data " + res.status);
         return res.json();
       }),
-      loadFx(),
-      fetch("links/" + encodeURIComponent(item.key) + ".json?v=20261116r3").then(function (res) {
-        if (!res.ok) return {};
-        return res.json();
-      }).catch(function () { return {}; })
+      loadFx()
     ]).then(function (parts) {
       if (token !== loadToken) return;
       var data = parts[0];
-      var savedLinks = parts[2] || {};
-      var cards = (data.cards || []).map(function (c) {
-        return Object.assign({}, c, savedLinks[c.id] || {});
-      });
+      var cards = (data.cards || []).map(function (c) { return Object.assign({}, c); });
       current = {
         meta: {
           key: data.key || item.key,
@@ -1004,30 +965,6 @@
 
   function bindSearch() {
     var input = $("q");
-    if ($("search-submit")) $("search-submit").addEventListener("click", submitQuery);
-    document.querySelectorAll('[data-species]').forEach(function (button) {
-      button.disabled = true;
-      button.addEventListener('click', function () {
-        var item = findByHash('#' + button.getAttribute('data-species'));
-        if (item) pickSpecies(item);
-      });
-    });
-    document.querySelectorAll('[data-focus-search]').forEach(function (link) {
-      link.addEventListener('click', function (event) {
-        event.preventDefault();
-        input.scrollIntoView({ block: 'center' });
-        input.focus({ preventScroll: true });
-      });
-    });
-    document.querySelectorAll('[data-open-guide]').forEach(function (link) {
-      link.addEventListener('click', function (event) {
-        event.preventDefault();
-        var guide = $('market-guide');
-        guide.open = true;
-        guide.scrollIntoView({ block: 'start' });
-        guide.querySelector('summary').focus({ preventScroll: true });
-      });
-    });
     input.addEventListener("input", function () {
       var q = input.value.trim();
       if (q.length < 1) { hideSuggest(); return; }
@@ -1052,10 +989,6 @@
       return res.json();
     }).then(function (data) {
       speciesIndex = data.species || data || [];
-      if ($('catalog-species')) $('catalog-species').textContent = speciesIndex.length.toLocaleString('en-US');
-      var totalPrintings = (data.counts || {}).variants || speciesIndex.reduce(function (total, item) { return total + Number(item.variants || 0); }, 0);
-      if ($('catalog-printings')) $('catalog-printings').textContent = totalPrintings.toLocaleString('en-US');
-      document.querySelectorAll('[data-species]').forEach(function (button) { button.disabled = false; });
       setStatus(speciesIndex.length + " Pokémon in the catalog. Type a name to start.");
       var fromHash = findByHash(location.hash);
       if (fromHash) pickSpecies(fromHash);
