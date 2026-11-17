@@ -1,13 +1,12 @@
 (function () {
   "use strict";
 
-  var PRICE_URL = "https://pokecottage-prices.hello-cfb.workers.dev/prices";
-  var PRICE_VER = "20260808-price-history";
+  // Our own daily TCGplayer prices, one file a Pokémon (search/build_prices.py).
+  var PRICE_DIR = "prices/";
   var FX_URLS = [
     "https://open.er-api.com/v6/latest/USD",
     "https://api.frankfurter.dev/v1/latest?from=USD&to=TRY"
   ];
-  var CHUNK = 80;
   var LANG_ORDER = { ENG: 0, JP: 1, CN: 2 };
 
   var speciesIndex = [];
@@ -203,56 +202,82 @@
     return fxReady;
   }
 
-  function chunks(ids, size) {
-    var out = [];
-    for (var i = 0; i < ids.length; i += size) out.push(ids.slice(i, i + size));
-    return out;
+  // prices/<key>.json, once a page load. A file that fails is asked again
+  // next time.
+  var priceFiles = {};
+  function priceFile(key) {
+    if (!priceFiles[key]) {
+      priceFiles[key] = fetch(PRICE_DIR + encodeURIComponent(key) + ".json").then(function (res) {
+        if (!res.ok) throw new Error("prices " + res.status);
+        return res.json();
+      });
+      priceFiles[key].catch(function () { delete priceFiles[key]; });
+    }
+    return priceFiles[key];
   }
 
-  function fetchPriceChunk(ids) {
-    var url = PRICE_URL + "?v=" + encodeURIComponent(PRICE_VER) + "&ids=" + encodeURIComponent(ids.join(","));
-    return fetch(url, { mode: "cors" }).then(function (res) {
-      if (!res.ok) throw new Error("prices " + res.status);
-      return res.json();
-    });
+  // A product's prices from a file ({ subtype: [market cents, Direct cents] })
+  // in the shape PricePick reads: { productId, prices: [rows] }.
+  function payloadOf(pid, subs) {
+    return {
+      productId: Number(pid),
+      prices: Object.keys(subs || {}).map(function (sub) {
+        var pair = subs[sub] || [];
+        return {
+          productId: Number(pid), subTypeName: sub, lowPrice: 0, midPrice: 0, highPrice: 0,
+          marketPrice: pair[0] > 0 ? pair[0] / 100 : 0, directLowPrice: pair[1] > 0 ? pair[1] / 100 : 0
+        };
+      })
+    };
   }
 
-  function fetchPrices(ids, onChunk) {
-    var unique = [];
-    var seen = {};
-    ids.forEach(function (id) {
-      if (id && !seen[id]) { seen[id] = true; unique.push(String(id)); }
+  // Prices for these product ids, from the files of the Pokémon whose cards
+  // they are (cards: [{ productId, species }]). Resolves { prices: { pid:
+  // payload }, updatedAt: the files' day ("2026-11-16"), failed: ids whose
+  // file didn't load }. A product the file doesn't list has no price today.
+  function fetchPrices(ids, cards, onChunk) {
+    var wanted = {};
+    (ids || []).forEach(function (id) { if (id) wanted[String(id)] = true; });
+    var byKey = {};
+    var keys = [];
+    (cards || []).forEach(function (c) {
+      var pid = String((c && c.productId) || "");
+      var key = c && c.species;
+      if (!wanted[pid] || !key) return;
+      if (!byKey[key]) { byKey[key] = {}; keys.push(key); }
+      byKey[key][pid] = true;
     });
-    var groups = chunks(unique, CHUNK);
-    var cursor = 0;
-    var running = 0;
-    var limit = 2;
     var merged = {};
     var updatedAt = "";
-    var failed = 0;
-
+    var lost = {};
+    var cursor = 0;
+    var running = 0;
+    var limit = 4;
     return new Promise(function (resolve) {
-      if (!groups.length) { resolve({ prices: merged, updatedAt: updatedAt, failed: 0 }); return; }
+      function finish() {
+        var failed = Object.keys(lost).filter(function (pid) { return !merged[pid]; }).length;
+        resolve({ prices: merged, updatedAt: updatedAt, failed: failed });
+      }
+      if (!keys.length) { finish(); return; }
       function kick() {
-        while (running < limit && cursor < groups.length) {
-          (function (group) {
+        while (running < limit && cursor < keys.length) {
+          (function (key) {
             running++;
-            fetchPriceChunk(group).then(function (payload) {
-              var prices = (payload && payload.prices) || {};
-              Object.keys(prices).forEach(function (k) { merged[k] = prices[k]; });
-              if (payload && payload.updatedAt) updatedAt = payload.updatedAt;
+            priceFile(key).then(function (file) {
+              var rows = (file && file.p) || {};
+              Object.keys(byKey[key]).forEach(function (pid) {
+                if (rows[pid]) merged[pid] = payloadOf(pid, rows[pid]);
+              });
+              if (file && file.day > updatedAt) updatedAt = file.day;
               if (onChunk) onChunk(merged, updatedAt);
             }).catch(function () {
-              failed += group.length;
+              Object.keys(byKey[key]).forEach(function (pid) { lost[pid] = true; });
             }).then(function () {
               running--;
-              if (cursor >= groups.length && running === 0) {
-                resolve({ prices: merged, updatedAt: updatedAt, failed: failed });
-              } else {
-                kick();
-              }
+              if (cursor >= keys.length && running === 0) finish();
+              else kick();
             });
-          })(groups[cursor++]);
+          })(keys[cursor++]);
         }
       }
       kick();
@@ -260,11 +285,10 @@
   }
 
   // fetchPrices, with our own weekly market prices (history/<key>.json)
-  // standing in for whatever the service couldn't answer, because it's down
-  // or stops answering this site (price-fallback.js, docs/SITE-PLAN.md §4).
-  // cards: the cards asked for, for their Pokémon's history files.
+  // standing in for a day's file that didn't load (price-fallback.js).
+  // cards: the cards asked for, for their Pokémon's files.
   function fetchPricesSafe(ids, cards, onChunk) {
-    return fetchPrices(ids, onChunk).then(function (result) {
+    return fetchPrices(ids, cards, onChunk).then(function (result) {
       if (!result.failed || !window.PriceFallback) return result;
       return window.PriceFallback.fill(result, ids, (cards || []).map(function (c) { return c.species; }));
     });
@@ -274,6 +298,14 @@
   // get their own line from applyFetchedPrices.)
   function priceStatus(result, summary) {
     if (summary && result.failed && !result.fallback) setStatus("status.partial", { n: summary.priced, time: summary.when }, true);
+  }
+
+  // When prices are from: the daily files and stand-ins have a day ("16 Nov",
+  // written in the page's language when shown, so a language switch redraws
+  // it); a time (prices saved before the switch to daily files) shows as one.
+  function priceWhen(updatedAt) {
+    var day = /^\d{4}-\d{2}-\d{2}$/.test(String(updatedAt || "")) ? String(updatedAt) : "";
+    return day ? function () { return dayLabel(day); } : formatIstanbul(updatedAt || Date.now());
   }
 
   // "16 Nov": stand-in prices are a week's, so they're dated by day.
@@ -545,7 +577,7 @@
       t("count.of", { n: num(shown), total: num(total) });
   }
 
-  // When prices were fetched: a clock time, or (stand-in prices) a day.
+  // When the prices are from (priceWhen).
   function priceTimeText() {
     var time = current && current.priceTime;
     return typeof time === "function" ? time() : time || "";
@@ -561,10 +593,10 @@
       footer.textContent = time ? t(fallback ? "mine.footer.fallback" : "mine.footer", { time: time }) : "";
       return;
     }
-    var slug = current.meta.slug || (current.meta.key || "").replace(/^\d+-/, "");
     footer.innerHTML = (time ? escapeHtml(t(fallback ? "footer.fallback" : "footer.prices", { time: time })) + " " : "") +
-      escapeHtml(t("footer.list")) + ' <a href="https://pokecottage.com/pokemon-master-sets/' + encodeURIComponent(slug) +
-      '" target="_blank" rel="noopener noreferrer">PokéCottage</a>. ' + escapeHtml(t("footer.rest"));
+      escapeHtml(t("footer.list")) + ' <a href="https://tcgdex.dev" target="_blank" rel="noopener noreferrer">TCGdex</a>' +
+      escapeHtml(t("footer.and")) + '<a href="https://tcgcsv.com" target="_blank" rel="noopener noreferrer">TCGCSV</a>. ' +
+      escapeHtml(t("footer.rest"));
   }
 
   // A null last, the rest high to low.
@@ -940,9 +972,9 @@
 
   /* ---- the inspect sheet ---- */
 
-  // Card details from build_details.py: the illustrator, the set's series, the
-  // product a promo was first found in, a collector's note and better promo
-  // dates. One small file per Pokémon, fetched when its binder opens.
+  // Card details from build_catalog.py: the illustrator and the set's series
+  // (older files also carry where a promo was found, a note and better promo
+  // dates). One small file per Pokémon, fetched when its binder opens.
   var DETAILS_V = "20261116r4";
   var detailsCache = {};
 
@@ -1115,7 +1147,7 @@
           var img = art.querySelector("img");
           if (activeCard === card && img) img.src = largeSrc;
         };
-        // PokéCottage's scan didn't load: try TCGplayer's (image-fallback.js).
+        // TCGdex's scan didn't load: try TCGplayer's (image-fallback.js).
         large.onerror = function () {
           var alt = fallback && fallback.fallbackFor(card.imageLarge);
           if (alt && alt !== largeSrc) { largeSrc = alt; large.src = alt; }
@@ -1763,7 +1795,7 @@
     var elapsed = started ? Math.max(0, Date.now() - started) : 0;
     // A day is written in the page's language when it's shown, so a language
     // switch redraws it ("Nov 16" / "16 Kas").
-    var when = standIn ? function () { return dayLabel(standIn); } : formatIstanbul(updatedAt || Date.now());
+    var when = priceWhen(standIn || updatedAt);
     current.priceTime = when;
     current.priceFallback = !!standIn;
     current.priced = priced;
@@ -1992,7 +2024,7 @@
     if (history.replaceState) history.replaceState(null, "", "#" + MINE_KEY);
     loadFx().then(function () { if (token === loadToken) renderMineSummary(); });
     // The prices saved last time go on at once, so the binder opens sorted
-    // by value; live ones follow.
+    // by value; the day's follow.
     Promise.all([Store.ready, Store.readPrices()]).then(function (parts) {
       if (token !== loadToken) return;
       var numbers = mineSpeciesNumbers();
@@ -2006,7 +2038,7 @@
         payloads: (saved && saved.payloads) || {},
         savedAt: (saved && saved.updatedAt) || "",
         priced: 0,
-        priceTime: saved && saved.updatedAt ? formatIstanbul(saved.updatedAt) : ""
+        priceTime: saved && saved.updatedAt ? priceWhen(saved.updatedAt) : ""
       };
       current.cards.forEach(function (c) {
         c.price = applyPriceToCard(c, current.payloads, {});
@@ -2020,7 +2052,7 @@
     });
   }
 
-  // Live prices for every card in My binder, kept for the next visit.
+  // The day's prices for every card in My binder, kept for the next visit.
   function priceMine(token) {
     if (!current || !current.meta.mine) return;
     var ids = current.cards.map(function (c) { return c.productId; }).filter(Boolean);
@@ -2827,7 +2859,7 @@
         if (!res.ok) throw new Error("data " + res.status);
         return res.json();
       }).then(function (data) {
-        // So a picture PokéCottage stops serving can fall back to TCGplayer's.
+        // So a TCGdex picture that fails can fall back to TCGplayer's.
         if (window.ImageFallback && data) window.ImageFallback.remember(data.cards);
         return data;
       });

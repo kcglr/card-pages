@@ -1,6 +1,8 @@
-/* ImageFallback: when a card picture from PokéCottage's image server fails
-   to load (the server is down, or it stops serving other sites), show
-   TCGplayer's picture of the same product instead. docs/SITE-PLAN.md §4.
+/* ImageFallback: when a card picture from TCGdex's image server fails to
+   load (TCGdex has no picture of that card, or the server is down), show
+   TCGplayer's picture of the same product instead. A TCGplayer picture that
+   fails, or a TCGdex one with no product to fall back to, is hidden, so the
+   card back under it shows. docs/CARD-LIST-OPTIONS.md §6.4.
 
    One listener on the whole page catches the failures, so the binders, card
    files, search results and My binder all get it. The page tells it each
@@ -19,20 +21,21 @@
 })(typeof window !== "undefined" ? window : this, function () {
   "use strict";
 
-  var SOURCE = /^https:\/\/pokecottagecdn\.com\//;
+  var SOURCE = /^https:\/\/assets\.tcgdex\.net\//;
   var TCGPLAYER = "https://tcgplayer-cdn.tcgplayer.com/product/";
+  var KNOWN = /^https:\/\/(assets\.tcgdex\.net|tcgplayer-cdn\.tcgplayer\.com)\//;
   var PID = /^\d{1,12}$/;
-  // After this many PokéCottage pictures fail in a row, src() skips it.
+  // After this many TCGdex pictures fail in a row, src() skips it.
   var DOWN_AFTER = 3;
 
   function isSource(url) { return SOURCE.test(String(url || "")); }
-  function isLarge(url) { return /__large\.[a-z]+$/i.test(String(url || "")); }
+  function isLarge(url) { return /\/high\.[a-z]+$/i.test(String(url || "")); }
 
-  // TCGplayer's picture of a product: 717×1000 for a large scan, 400 wide for
-  // a binder thumbnail (PokéCottage's are 733×1024 and 360 wide).
+  // TCGplayer's picture of a product: 1000 for the card page, 400 for a
+  // binder pocket (TCGdex's are 600×825 and 245×337).
   function tcgplayer(pid, large) {
     pid = String(pid || "");
-    return PID.test(pid) ? TCGPLAYER + pid + (large ? "_in_1000x1000.jpg" : "_400w.jpg") : "";
+    return PID.test(pid) ? TCGPLAYER + pid + (large ? "_in_1000x1000.jpg" : "_in_400x400.jpg") : "";
   }
 
   var pids = {};
@@ -47,7 +50,7 @@
     });
   }
 
-  // The stand-in for a PokéCottage picture, "" when there's none.
+  // The stand-in for a TCGdex picture, "" when there's none.
   function fallbackFor(url) {
     return isSource(url) ? tcgplayer(pids[url], isLarge(url)) : "";
   }
@@ -56,7 +59,7 @@
   function down() { return streak >= DOWN_AFTER; }
 
   // For pictures the page loads itself (preloads, the large scan): the
-  // stand-in once PokéCottage keeps failing, else the URL as it is.
+  // stand-in once TCGdex keeps failing, else the URL as it is.
   function src(url) { return (down() && fallbackFor(url)) || url; }
 
   function urlOf(img) { return img.getAttribute("src") || img.currentSrc || img.src || ""; }
@@ -65,9 +68,9 @@
     var img = event && event.target;
     if (!img || img.tagName !== "IMG") return;
     var url = urlOf(img);
-    if (!isSource(url) || img.getAttribute("data-fallback")) return;
-    streak++;
-    var alt = fallbackFor(url);
+    if (!KNOWN.test(url)) return;
+    if (isSource(url)) streak++;
+    var alt = img.getAttribute("data-fallback") ? "" : fallbackFor(url);
     // Without a stand-in the page's own handler runs, as before. The picture
     // is hidden first: a binder pocket has no handler, and Chrome and Safari
     // would draw a broken-image icon over the card back. A later load that

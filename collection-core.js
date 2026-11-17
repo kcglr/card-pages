@@ -24,7 +24,10 @@
   var MAX_MONEY = 10000000;
   var MAX_COPIES = 20000;
   var MAX_FILE = 20 * 1024 * 1024;
-  var IMAGE_HOST = /^https:\/\/pokecottagecdn\.com\/[^\s"'<>]*$/;
+  // Saved pictures are kept only from the hosts the catalog uses: TCGdex and
+  // TCGplayer. An older copy's PokéCottage picture is dropped, and the card
+  // back shows until its printing is found in the catalog again.
+  var IMAGE_HOST = /^https:\/\/(assets\.tcgdex\.net|tcgplayer-cdn\.tcgplayer\.com)\/[^\s"'<>]*$/;
 
   /* ---- small helpers ---- */
 

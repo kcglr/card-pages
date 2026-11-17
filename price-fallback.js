@@ -1,13 +1,13 @@
-/* PriceFallback: when the price service can't be reached, each printing's
-   latest weekly market price from our own history files (history/<key>.json,
-   built from TCGCSV by search/build_history.py) stands in.
-   docs/SITE-PLAN.md §4.
+/* PriceFallback: when a Pokémon's daily price file (prices/<key>.json,
+   search/build_prices.py) doesn't load, each printing's latest weekly market
+   price from our own history files (history/<key>.json, built from TCGCSV by
+   search/build_history.py) stands in.
 
-   The stand-ins have the service's shape ({ productId, prices: [rows] }),
+   The stand-ins have the daily prices' shape ({ productId, prices: [rows] }),
    so PricePick and the rest of the page work as they are. They're up to a
    week old, so the result's `updatedAt` becomes that week's date when
-   nothing came from the service, and `fallback` counts them. A price older
-   than four weeks before the file's last week isn't used. */
+   nothing came from the daily files, and `fallback` counts them. A price
+   older than four weeks before the file's last week isn't used. */
 (function (root, factory) {
   // The module path also resolves from tests/ (tests/test_js_modules.py).
   if (typeof module === "object" && module.exports) module.exports = factory(require("../search/price-history.js"));
