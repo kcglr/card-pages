@@ -1029,7 +1029,8 @@
     Hist.load(key).then(function (file) {
       if (activeCard !== card) return;
       var points = file ? Hist.cardPoints(card, file, unique) : [];
-      var now = card.price && card.price.value > 0 ? card.price.value : 0;
+      // Only a market price joins the market prices (not a lone listing).
+      var now = card.price && card.price.kind === "market" && card.price.value > 0 ? card.price.value : 0;
       var today = Mine.today();
       if (now) {
         if (points.length && points[points.length - 1].date >= today) points = points.slice(0, -1);
