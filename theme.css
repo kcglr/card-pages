@@ -2014,7 +2014,115 @@ body.is-mine .mine-count { background: #fbf7ef; }
   .mine-link { margin-left: auto; width: 40px; padding: 0; justify-content: center; }
   .mine-link-text { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   .mine-link .mine-count { position: absolute; top: -9px; right: -10px; min-width: 18px; height: 18px; padding: 0 3px; font-size: 10px; line-height: 14px; }
-  .mine-link + .lang-switch { margin-left: 0; }
+  .mine-link ~ .lang-switch { margin-left: 0; }
+}
+
+/* An account (supabase/README.md), once accounts are on (body.has-accounts):
+   the top bar's "Sign in", or your initial on a sticker with a dot for how
+   saving is going. It opens My binder at the account card. */
+.acct-link {
+  position: relative;
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 38px;
+  padding: 0 13px 0 10px;
+  border: 2px solid var(--ink-btn);
+  border-radius: 999px;
+  background: var(--ink-btn);
+  color: var(--on-ink);
+  font: 800 13px/1 var(--font);
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: 2px 2px 0 var(--edge-shadow);
+}
+.acct-link[hidden] { display: none; }
+.acct-link:hover { background: color-mix(in srgb, var(--ink-btn) 84%, var(--bg)); }
+.acct-link:focus-visible { outline: none; box-shadow: 2px 2px 0 var(--edge-shadow), 0 0 0 4px var(--sticker); }
+.acct-link-icon { flex: none; width: 16px; height: 16px; fill: currentColor; }
+.acct-link.is-in { width: 38px; padding: 0; border-color: #1f1a16; background: var(--sticker); color: #1f1a16; font-size: 16px; }
+.acct-link.is-in:hover { background: #ffe27a; }
+.acct-dot { position: absolute; right: -5px; bottom: -5px; width: 15px; height: 15px; border: 3px solid var(--bg); border-radius: 50%; background: #1d6b35; }
+.acct-dot.is-busy { background: #d08f00; }
+.acct-dot.is-warn { background: #c8302a; }
+/* The row keeps one line. Under 1000 px the "Find a Pokémon" link goes (the
+   search is on the page), under 860 px the logo is the middle size; up to
+   760 px My binder is its icon (as on phones), "Sign in" drops its icon and
+   EN/TR close up; then the price guide link goes (it is at the foot of the
+   page too), the logo gets smaller and "Sign in" becomes an icon. Below
+   352 px EN/TR take a second line. */
+@media (max-width: 1000px) {
+  body.has-accounts .nav-links a:first-child { display: none; }
+}
+@media (min-width: 701px) and (max-width: 860px) {
+  body.has-accounts .topbar { gap: 16px; }
+  body.has-accounts .brand-logo { height: 42px; }
+}
+@media (max-width: 760px) {
+  body.has-accounts .mine-link { width: 40px; padding: 0; justify-content: center; }
+  body.has-accounts .mine-link-text { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  body.has-accounts .mine-link .mine-count { position: absolute; top: -9px; right: -10px; min-width: 18px; height: 18px; padding: 0 3px; font-size: 10px; line-height: 14px; }
+  body.has-accounts .acct-link { padding: 0 12px; }
+  body.has-accounts .acct-link-icon { display: none; }
+  body.has-accounts .acct-link.is-in { padding: 0; }
+  body.has-accounts .lang-switch button { min-width: 34px; padding: 0 7px; }
+}
+@media (max-width: 600px) {
+  body.has-accounts .nav-links { display: none; }
+  body.has-accounts .mine-link { margin-left: auto; }
+}
+@media (max-width: 450px) {
+  body.has-accounts .brand-logo { height: 28px; }
+}
+@media (max-width: 383px) {
+  body.has-accounts .acct-link { width: 40px; padding: 0; }
+  body.has-accounts .acct-link-icon { display: block; }
+  body.has-accounts .acct-link-text { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+}
+@media (max-width: 351px) {
+  body.has-accounts .topbar { flex-wrap: wrap; row-gap: 10px; }
+  body.has-accounts .lang-switch { margin-left: auto; }
+}
+
+/* The account card, right under My binder's title: the summary card's cream
+   and pixel frame, slimmer. Signed out: a line, the Google button, the
+   privacy note; signed in: one row, with the rest under "More". */
+.mine-summary.mine-acct { gap: 0; margin: 0 0 22px; padding: calc(var(--px) + 14px) calc(var(--px) + 18px); filter: drop-shadow(4px 4px 0 rgba(0, 0, 0, .5)); }
+.mine-acct:focus { outline: none; }
+.acct-card { display: grid; gap: 10px; text-align: left; }
+.acct-card p { margin: 0; }
+.acct-main { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; }
+.acct-line { flex: 1 1 240px; font-size: 15.5px; font-weight: 750; line-height: 1.35; }
+.acct-google { flex: none; }
+.acct-privacy { color: #66584b; font-size: 12px; font-weight: 600; line-height: 1.45; }
+.acct-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.acct-avatar { display: grid; flex: none; place-items: center; width: 36px; height: 36px; border: 2px solid #1f1a16; border-radius: 50%; background: var(--sticker); font-size: 16px; font-weight: 800; }
+.acct-who { display: grid; flex: 1 1 160px; gap: 2px; min-width: 0; border-radius: 4px; }
+.acct-who:focus { outline: none; }
+.acct-who:focus-visible, .mine-acct:focus-visible { box-shadow: 0 0 0 3px var(--sticker); }
+.acct-name { overflow: hidden; font-size: 14.5px; font-weight: 750; white-space: nowrap; text-overflow: ellipsis; }
+.acct-state { color: #66584b; font-size: 12.5px; font-weight: 650; font-variant-numeric: tabular-nums; }
+.acct-state.is-warn { color: #7c1d16; font-weight: 750; }
+.acct-state:empty { display: none; }
+.acct-acts { display: flex; flex: none; flex-wrap: wrap; gap: 6px; }
+.acct-caret { display: inline-block; margin-left: 6px; border: 4px solid transparent; border-top: 5px solid currentColor; border-bottom: 0; vertical-align: 1px; }
+.acct-more[aria-expanded="true"] { background: #1f1a16; color: #fbf7ef; }
+.acct-more[aria-expanded="true"] .acct-caret { border-top: 0; border-bottom: 5px solid currentColor; }
+.acct-menu { display: grid; gap: 10px; padding-top: 12px; border-top: 2px dashed #d3c4aa; }
+.acct-menu[hidden] { display: none; }
+.acct-menu .mine-more { margin: 0; align-items: center; }
+.acct-card .mine-sync-status.is-warn { font-size: 13px; }
+.acct-card .mine-extra { padding-top: 10px; }
+.acct-github { margin-top: 12px; }
+.mine-save[aria-disabled="true"], .mine-chip[aria-disabled="true"], .mine-textbtn[aria-disabled="true"] { opacity: .55; cursor: default; }
+@media (max-width: 700px) {
+  .mine-summary.mine-acct { margin-bottom: 18px; padding: calc(var(--px) + 12px) calc(var(--px) + 14px); }
+  .acct-line { font-size: 15px; }
+  /* An empty binder on a phone: the cover at most about 45% of the screen's
+     height, so the help and "Load a backup" show without much scrolling. */
+  body.has-accounts .mine-empty-state .closed-binder { width: min(380px, 84vw, 33.75vh); width: min(380px, 84vw, 33.75svh); }
 }
 
 @media (prefers-reduced-motion: reduce) {

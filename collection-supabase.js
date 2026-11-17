@@ -251,10 +251,74 @@
     });
   };
 
+  /* ---- signing out empties this device (collection.js) ---- */
+
+  // A short fingerprint of what the account holds of a binder: its cards,
+  // removals, settings and catalog stamp (sync.body), not when it was
+  // written. A device keeps the one it last saved, so it can tell later
+  // whether it has changes the account hasn't seen.
+  function docSig(doc) {
+    var s = sync.body(doc, null);
+    var h = 0x811c9dc5;
+    for (var i = 0; i < s.length; i++) {
+      h ^= s.charCodeAt(i);
+      h = Math.imul(h, 0x01000193) >>> 0;
+    }
+    return s.length.toString(36) + "." + h.toString(36);
+  }
+
+  // True while the binder here has changes the account hasn't seen. Never
+  // saved from this device (savedSig ""): any card here counts.
+  function unsaved(doc, savedSig) {
+    if (savedSig) return docSig(doc) !== savedSig;
+    return !!(doc && doc.copies && doc.copies.length);
+  }
+
+  // What signing out does to this device's binder, by why it happened:
+  //   "signout"   the Sign out button: clear (signOutFlow saved first, or
+  //               the person chose to sign out anyway);
+  //   "expired"   Supabase refused the sign-in (it ran out, or the person
+  //               was signed out everywhere): clear, unless something isn't
+  //               in the account yet: then keep it and say so;
+  //   "other-tab" another tab signed out and did the clearing: read the
+  //               binder again;
+  //   "deleted", "deleted-elsewhere": "Delete my data" already cleared.
+  function afterSignOut(reason, isUnsaved) {
+    if (reason === "signout") return "clear";
+    if (reason === "expired") return isUnsaved ? "keep" : "clear";
+    if (reason === "other-tab") return "reload";
+    return "none";
+  }
+
+  // The Sign out button. What isn't in the account yet is saved first; only
+  // then is this device cleared and signed out. A save that can't finish
+  // clears nothing: it resolves "ask", and the person chooses.
+  //   o.unsaved(): true while there are changes the account hasn't seen
+  //   o.save(): one save to the account (resolves either way)
+  //   o.leave(): clears this device and signs out
+  //   o.force: "Sign out anyway"
+  // Resolves "out" or "ask". Two saves at most: the first may only finish
+  // one that was already under way.
+  function signOutFlow(o) {
+    var saves = 0;
+    function leave() { return Promise.resolve(o.leave()).then(function () { return "out"; }); }
+    function attempt() {
+      if (o.force || !o.unsaved()) return leave();
+      if (saves >= 2) return Promise.resolve("ask");
+      saves++;
+      return Promise.resolve().then(o.save).then(attempt, function () { return o.unsaved() ? "ask" : leave(); });
+    }
+    return attempt();
+  }
+
   return {
     cleanUrl: cleanUrl,
     cleanKey: cleanKey,
     cleanAccess: cleanAccess,
+    docSig: docSig,
+    unsaved: unsaved,
+    afterSignOut: afterSignOut,
+    signOutFlow: signOutFlow,
     SyncError: SyncError,
     Client: Client
   };

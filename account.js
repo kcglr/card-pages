@@ -401,7 +401,8 @@
 
   // Signs out. scope "global" ends the sign-in on every device ("Delete my
   // data"), "local" only here (Sign out). This device forgets the session
-  // whatever Supabase answers; the binder on this device stays.
+  // whatever Supabase answers. What happens to the binder here is the page's
+  // to decide on the "out" event (collection.js afterOut()).
   Account.prototype.signOut = function (scope, reason) {
     var self = this;
     if (!this.session) return Promise.resolve(false);
@@ -420,8 +421,10 @@
   /* ---- what this device last synced, per account ---- */
 
   // The version of the account's binder this device last synced at, 0 if it
-  // never did. It outlives signing out: a device that synced before a
+  // never did. It outlives signing out while cards from the account stay
+  // here (signed out with unsaved changes): a device that synced before a
   // "Delete my data" must still know, the next time anyone signs in here.
+  // When signing out clears the binder here, the page forgets it.
   Account.prototype.seen = function (uid) {
     var all = this.store.get(SEEN_STORE);
     var v = all && typeof all === "object" ? Number(all[uid]) : 0;

@@ -673,7 +673,7 @@
     syncState = "";
     saveSync();
     toast(t("sync.offDone"));
-    drawSync('[data-sum="shelf"][data-val="sync"]');
+    drawSync(accountsOn ? "[data-acct-advanced] > summary" : '[data-sum="shelf"][data-val="sync"]');
   }
 
   // "14:05" today, else the date.
@@ -701,11 +701,13 @@
     return '<a href="' + esc(href) + '" target="_blank" rel="noopener noreferrer">' + esc(text) + "</a>";
   }
 
-  // The panel behind the sync chip: the account's, with GitHub sync under
-  // "Advanced", once accounts are on; else GitHub sync as before.
-  function syncHtml() { return accountsOn ? accountHtml() : githubHtml(); }
+  // The panel behind the "Sync with GitHub" chip. Once accounts are on there
+  // is no chip: GitHub sync is under "Advanced" in the account card.
+  function syncHtml() { return githubHtml(); }
 
-  function githubHtml() {
+  // fixedId: the form's field ids where the panel is redrawn only when its
+  // HTML changes (the account card); else a new one each time, as before.
+  function githubHtml(fixedId) {
     if (syncCfg) {
       var url = repoUrl(syncCfg.repo);
       return '<div class="mine-sync">' +
@@ -715,7 +717,7 @@
         '<button type="button" class="mine-textbtn" data-sum="sync-off">' + esc(t("sync.off")) + "</button></div>" +
         '<p class="mine-note">' + esc(t("sync.history")) + " " + link(url + "/commits", t("sync.versions")) + "</p></div>";
     }
-    var id = "sync-" + Math.random().toString(36).slice(2, 7);
+    var id = fixedId || "sync-" + Math.random().toString(36).slice(2, 7);
     var busy = syncState === "busy";
     return '<div class="mine-sync">' +
       '<p class="mine-sync-intro">' + esc(t("sync.intro")) + "</p>" +
@@ -739,8 +741,11 @@
       '<p class="mine-note">' + esc(t("sync.privacy")) + "</p></div>";
   }
 
-  // The panel is in the summary card, or under the empty binder's help.
+  // The panel is in the summary card, or under the empty binder's help;
+  // once accounts are on, in the account card at the top instead.
   function drawSync(focus) {
+    if (accountsOn && shelf.open === "sync") shelf.open = "";
+    drawTopButton();
     renderSummary();
     var empty = document.querySelector("[data-mine-sync-empty]");
     if (empty) {
@@ -751,7 +756,7 @@
       if (chip) chip.setAttribute("aria-expanded", open ? "true" : "false");
     }
     if (focus) {
-      var el = document.querySelector("[data-mine-sync-empty] " + focus + ", #mine-summary " + focus);
+      var el = document.querySelector("#mine-account " + focus + ", [data-mine-sync-empty] " + focus + ", #mine-summary " + focus);
       if (el) el.focus({ preventScroll: true });
     }
   }
@@ -792,7 +797,9 @@
   var Account = root.PullfolioAccount;
   var account = Account && Supa ? Account.create() : null;
   var accountsOn = !!account && account.enabled();
-  var ACCT_AT = "pullfolio.account.at"; // { uid, at }: this device's last good sync with the account
+  // { uid, at, sig }: this device's last good sync with the account, and the
+  // fingerprint of the binder it saved (Supa.docSig), to tell unsaved changes.
+  var ACCT_AT = "pullfolio.account.at";
   var acct = {
     state: "", // "", "busy", "ok" or a SyncError kind, as syncState
     at: "",
@@ -806,26 +813,37 @@
     deleting: false,
     stopped: false, // while deleting: nothing more goes up
     advanced: false, // the GitHub panel is open
-    note: "", // why this device was signed out
+    menu: false, // the account card's "More" is open
+    focusPending: false, // the top bar's account button was used: focus the card once drawn
+    leaving: false, // Sign out: saving first
+    leaveAsk: false, // the save before signing out couldn't finish: asking
+    uid: "", // who is (or was last) signed in here
+    outDone: null, // what a sign-out does to this device, once done
+    note: "", // why this device was signed out (an i18n key)
+    noteMore: "", // and a second line to it (an i18n key)
     error: ""
   };
 
   function acctUser() { return account ? account.user() : null; }
   function sameUser(user) { var u = acctUser(); return !!u && !!user && u.id === user.id; }
 
-  function readAcctAt() {
-    var user = acctUser();
+  function readSaved(uid) {
     var v = null;
     try { v = JSON.parse(root.localStorage.getItem(ACCT_AT) || "null"); } catch (e) { v = null; }
-    return user && v && v.uid === user.id && typeof v.at === "string" ? v.at : "";
+    if (!uid || !v || v.uid !== uid) return { at: "", sig: "" };
+    return { at: typeof v.at === "string" ? v.at : "", sig: typeof v.sig === "string" ? v.sig : "" };
   }
-  function writeAcctAt(uid, at) {
+  function readAcctAt() { var user = acctUser(); return user ? readSaved(user.id).at : ""; }
+  function writeAcctAt(uid, at, sig) {
     try {
-      if (uid) root.localStorage.setItem(ACCT_AT, JSON.stringify({ uid: uid, at: at }));
+      if (uid) root.localStorage.setItem(ACCT_AT, JSON.stringify({ uid: uid, at: at, sig: sig || "" }));
       else root.localStorage.removeItem(ACCT_AT);
     } catch (e) { /* shown for this page only */ }
   }
+  // Changes here the account hasn't seen (any tab's: they share the binder).
+  function hasUnsaved(uid) { return Supa.unsaved(Store.model().doc, readSaved(uid).sig); }
   acct.at = readAcctAt();
+  acct.uid = acctUser() ? acctUser().id : "";
 
   function acctClient(uid) {
     var c = new Supa.Client(Account.PROJECT, function (refused) { return account.accessToken(refused); });
@@ -842,6 +860,8 @@
   // The account's binder is merged in (Sync.run calls this). Saved daily
   // prices don't travel with an account (collection-supabase.js).
   function takeAccount(doc) {
+    // Signed out meanwhile (another tab): nothing comes in any more.
+    if (!acctUser()) throw new Sync.SyncError("token");
     var before = Store.model().count();
     if (Sync.changes(Store.model().doc, doc)) {
       acct.applying = true;
@@ -858,13 +878,18 @@
     if (!user || acct.stopped) return Promise.resolve();
     if (acct.syncing) { acct.again = true; return acct.syncing; }
     setAcctState("busy");
+    var sent = ""; // the fingerprint of what this save sends
     acct.syncing = Store.ready.then(function () {
-      return Sync.run(acctClient(user.id), function () { return { doc: Store.model().doc, history: null }; }, takeAccount);
+      return Sync.run(acctClient(user.id), function () {
+        var doc = Store.model().doc;
+        sent = Supa.docSig(doc);
+        return { doc: doc, history: null };
+      }, takeAccount);
     }).then(function (r) {
       if (!sameUser(user)) return;
       account.markSeen(user.id, r.sha);
       acct.at = new Date().toISOString();
-      writeAcctAt(user.id, acct.at);
+      writeAcctAt(user.id, acct.at, sent);
       setAcctState("ok");
     }, function (err) {
       var kind = err && err.kind && err.kind !== "conflict" ? err.kind : "server";
@@ -914,7 +939,7 @@
     clearHere(user.id);
     acct.state = "";
     if (mark) {
-      acct.note = t("account.deletedElsewhere");
+      acct.note = "account.deletedElsewhere";
       account.signOut("local", "deleted-elsewhere");
       toast(t("account.deletedElsewhere"));
     } else {
@@ -939,13 +964,67 @@
     });
   }
 
-  function signOutHere() {
+  // Sign out: what isn't in the account yet is saved first; then the sign-in
+  // ends here and this device's binder is cleared (signing in again brings
+  // it back). A save that can't finish clears nothing: the card asks
+  // (leaveAskHtml). force: "Sign out anyway".
+  function signOutHere(force) {
+    var user = acctUser();
+    if (!user || acct.leaving) return;
+    acct.leaving = true;
+    acct.leaveAsk = false;
+    acct.error = "";
     clearTimeout(acct.timer);
     acct.timer = 0;
-    account.signOut("local").then(function () {
-      toast(t("account.signedOut"));
+    drawSync('[data-sum="acct-out"]');
+    Supa.signOutFlow({
+      force: !!force,
+      unsaved: function () { return hasUnsaved(user.id); },
+      save: function () { return acctNow(); },
+      leave: function () { return leaveHere(); }
+    }).then(function (result) {
+      acct.leaving = false;
+      if (result === "ask") {
+        acct.leaveAsk = true;
+        acct.menu = true;
+        drawSync('[data-sum="acct-stay"]');
+      }
+    }, function (err) {
+      console.error(err);
+      acct.leaving = false;
+      drawSync('[data-sum="acct-out"]');
+    });
+  }
+
+  function leaveHere() {
+    var git = !!syncCfg;
+    return account.signOut("local").then(function () {
+      return acct.outDone; // afterOut() cleared this device
+    }).then(function () {
+      return Store.flush(); // the other tabs read it now
+    }).then(function () {
+      toast(t("account.signedOut") + (git ? " " + t("account.signedOutGit") : ""));
       drawSync('[data-sum="acct-in"]');
     });
+  }
+
+  // After a sign-out, what happens to this device's binder (Supa.afterSignOut).
+  function afterOut(reason, uid) {
+    var plan = Supa.afterSignOut(reason, hasUnsaved(uid));
+    if (plan === "clear") {
+      var git = !!syncCfg;
+      clearHere(uid);
+      if (reason === "expired") {
+        acct.note = "account.expiredCleared";
+        acct.noteMore = git ? "account.signedOutGit" : "";
+      }
+    } else if (plan === "keep") {
+      acct.note = "account.expiredKept";
+      acct.noteMore = "";
+    } else if (plan === "reload") {
+      return Store.reload().then(function () { drawSync(); });
+    }
+    drawSync();
   }
 
   // "Delete my data": the account's binder becomes the mark (stopping every
@@ -968,6 +1047,7 @@
       acct.deleting = false;
       acct.stopped = false;
       acct.confirm = false;
+      acct.menu = false;
       acct.state = "";
       acct.note = "";
       toast(t("account.deleted"));
@@ -999,41 +1079,183 @@
       (syncCfg ? '<p class="mine-import-help">' + esc(t("account.deleteGit")) + "</p>" : "") +
       (acct.error ? '<p class="mine-error" role="alert">' + esc(acct.error) + "</p>" : "") +
       '<div class="mine-import-acts mine-more">' +
-        '<button type="button" class="mine-save" data-sum="acct-delete-yes"' + (acct.deleting ? " disabled" : "") + ">" +
+        '<button type="button" class="mine-save" data-sum="acct-delete-yes"' + busyAttr(acct.deleting) + ">" +
           esc(t(acct.deleting ? "account.deleting" : "account.deleteYes")) + "</button>" +
         '<button type="button" class="mine-chip" data-sum="acct-download">' + esc(t("account.download")) + "</button>" +
-        '<button type="button" class="mine-textbtn" data-sum="acct-delete-no"' + (acct.deleting ? " disabled" : "") + ">" + esc(t("own.cancel")) + "</button>" +
+        '<button type="button" class="mine-textbtn" data-sum="acct-delete-no"' + busyAttr(acct.deleting) + ">" + esc(t("own.cancel")) + "</button>" +
       "</div></div>";
   }
 
-  function accountHtml() {
-    var user = acctUser();
-    var html = '<div class="mine-sync mine-account">';
-    if (!user) {
-      html += '<p class="mine-sync-intro">' + esc(t("account.intro")) + "</p>";
-      if (acct.note) html += '<p class="mine-sync-status is-warn" role="status">' + esc(acct.note) + "</p>";
-      if (acct.error) html += '<p class="mine-error" role="alert">' + esc(acct.error) + "</p>";
-      html += '<div class="mine-slip-acts"><button type="button" class="mine-save" data-sum="acct-in"' + (acct.going ? " disabled" : "") + ">" +
-        esc(t(acct.going ? "account.going" : "account.google")) + "</button></div>" +
-        '<p class="mine-note">' + esc(t("account.privacy")) + "</p>";
-    } else {
-      html += '<p class="mine-sync-on">' + esc(t("account.as", { who: who(user) })) + "</p>" +
-        '<p class="mine-sync-status' + (acctTrouble() ? " is-warn" : "") + '" data-acct-status tabindex="-1" role="status">' + esc(acctStatusText()) + "</p>";
-      if (acct.confirm) html += confirmDeleteHtml();
-      else {
-        html += '<div class="mine-more">' +
-          '<button type="button" class="mine-chip" data-sum="acct-now"' + (acct.state === "busy" ? " disabled" : "") + ">" + esc(t("account.now")) + "</button>" +
-          '<button type="button" class="mine-chip" data-sum="acct-download">' + esc(t("account.download")) + "</button>" +
-          '<button type="button" class="mine-textbtn" data-sum="acct-out">' + esc(t("account.signOut")) + "</button>" +
-          '<button type="button" class="mine-textbtn" data-sum="acct-delete">' + esc(t("account.delete")) + "</button></div>";
-        if (acct.error) html += '<p class="mine-error" role="alert">' + esc(acct.error) + "</p>";
-      }
-      html += '<p class="mine-note">' + esc(t("account.pricesStay")) + "</p>";
-    }
-    html += '<details class="mine-extra" data-acct-advanced' + (acct.advanced ? " open" : "") + "><summary>" + esc(t("account.advanced")) + "</summary>" +
-      githubHtml() + "</details>";
-    return html + "</div>";
+  // The account card at the top of My binder, once accounts are on. Signed
+  // out: a line, the Google button and the privacy note. Signed in: one row
+  // saying how saving is going, with the rest under "More". GitHub sync stays
+  // tucked under "Advanced" either way.
+  function initial(user) {
+    var s = String((user && (user.name || user.email)) || "").replace(/^[\s"'(]+/, "");
+    return (s.charAt(0) || "?").toUpperCase();
   }
+
+  function acctShortText() {
+    if (acct.state === "busy") return t("account.busyShort");
+    if (acctTrouble()) return t("account.troubleShort");
+    return acct.at ? t("account.okShort", { time: syncWhen(acct.at) }) : "";
+  }
+
+  function advancedHtml() {
+    return '<details class="mine-extra acct-extra" data-acct-advanced' + (acct.advanced ? " open" : "") + "><summary>" + esc(t("account.advanced")) + "</summary>" +
+      '<div class="acct-github">' + githubHtml("acct-sync") + "</div></details>";
+  }
+
+  // Buttons that are busy say so with aria-disabled, so focus stays on them.
+  function busyAttr(busy) { return busy ? ' aria-disabled="true"' : ""; }
+
+  // Sign out couldn't save first: nothing is cleared until the person says.
+  function leaveAskHtml() {
+    return '<div class="mine-import is-error" role="group" aria-label="' + esc(t("account.signOut")) + '">' +
+      "<p>" + esc(t("account.leaveAsk")) + "</p>" +
+      '<p class="mine-import-help">' + esc(t("account.leaveHelp")) + "</p>" +
+      '<div class="mine-import-acts mine-more">' +
+        '<button type="button" class="mine-save" data-sum="acct-download">' + esc(t("account.leaveDownload")) + "</button>" +
+        '<button type="button" class="mine-chip" data-sum="acct-leave-anyway">' + esc(t("account.leaveAnyway")) + "</button>" +
+        '<button type="button" class="mine-textbtn" data-sum="acct-stay">' + esc(t("account.stay")) + "</button>" +
+      "</div></div>";
+  }
+
+  function accountCardHtml() {
+    var user = acctUser();
+    var html;
+    if (!user) {
+      html = '<div class="acct-card is-out"><div class="acct-main">' +
+        '<p class="acct-line">' + esc(t("account.short")) + "</p>" +
+        '<button type="button" class="mine-save acct-google" data-sum="acct-in"' + busyAttr(acct.going) + ">" +
+          esc(t(acct.going ? "account.going" : "account.google")) + "</button></div>";
+      if (acct.note) {
+        html += '<p class="mine-sync-status is-warn" role="status">' + esc(t(acct.note)) + (acct.noteMore ? " " + esc(t(acct.noteMore)) : "") + "</p>";
+        // Signed out with changes the account hasn't seen: they stay here.
+        if (acct.note === "account.expiredKept") {
+          html += '<div class="mine-more"><button type="button" class="mine-chip" data-sum="acct-download">' + esc(t("account.leaveDownload")) + "</button></div>";
+        }
+      }
+      if (acct.error) html += '<p class="mine-error" role="alert">' + esc(acct.error) + "</p>";
+      return html + '<p class="acct-privacy">' + esc(t("account.privacy")) + "</p>" + advancedHtml() + "</div>";
+    }
+    var trouble = acctTrouble();
+    html = '<div class="acct-card is-in"><div class="acct-row">' +
+      '<span class="acct-avatar" aria-hidden="true">' + esc(initial(user)) + "</span>" +
+      '<p class="acct-who" data-acct-status tabindex="-1"><span class="acct-name">' + esc(t("account.as", { who: user.name || user.email || "—" })) + "</span>" +
+        '<span class="acct-state' + (trouble ? " is-warn" : "") + '" role="status">' + esc(acctShortText()) + "</span></p>" +
+      '<div class="acct-acts">' +
+        '<button type="button" class="mine-chip" data-sum="acct-now"' + busyAttr(acct.state === "busy") + ">" + esc(t("account.now")) + "</button>" +
+        '<button type="button" class="mine-chip acct-more" data-sum="acct-menu" aria-expanded="' + acct.menu + '" aria-controls="acct-menu">' +
+          esc(t("account.more")) + '<span class="acct-caret" aria-hidden="true"></span></button>' +
+      "</div></div>";
+    if (trouble) html += '<p class="mine-sync-status is-warn">' + esc(acctStatusText()) + "</p>";
+    if (acct.error && !acct.confirm) html += '<p class="mine-error" role="alert">' + esc(acct.error) + "</p>";
+    html += '<div class="acct-menu" id="acct-menu" role="group" aria-label="' + esc(t("account.menu")) + '"' + (acct.menu ? "" : " hidden") + ">";
+    if (acct.confirm) html += confirmDeleteHtml();
+    else if (acct.leaveAsk) html += leaveAskHtml();
+    else {
+      html += '<div class="mine-more">' +
+        '<button type="button" class="mine-chip" data-sum="acct-download">' + esc(t("account.download")) + "</button>" +
+        '<button type="button" class="mine-textbtn" data-sum="acct-out"' + busyAttr(acct.leaving) + ">" + esc(t(acct.leaving ? "account.signingOut" : "account.signOut")) + "</button>" +
+        '<button type="button" class="mine-textbtn" data-sum="acct-delete">' + esc(t("account.delete")) + "</button></div>";
+    }
+    return html + '<p class="acct-privacy">' + esc(t("account.pricesStay")) + "</p>" + advancedHtml() + "</div></div>";
+  }
+
+  // Drawn under My binder's title (app.js paintResult draws the header);
+  // redrawn only when something in it changed, with focus kept.
+  var drawnCard = { box: null, html: "" };
+  function drawAccountCard() {
+    if (!accountsOn) return;
+    var box = $("mine-account");
+    if (!box) {
+      var head = document.querySelector("#result .result-header.is-mine");
+      if (!head) return;
+      box = document.createElement("section");
+      box.className = "mine-summary mine-acct";
+      box.id = "mine-account";
+      box.tabIndex = -1;
+      head.parentNode.insertBefore(box, head.nextSibling);
+    }
+    box.setAttribute("aria-label", t("account.card"));
+    var html = accountCardHtml();
+    if (drawnCard.box !== box || drawnCard.html !== html) {
+      var focus = acct.focusPending ? "" : focusKey(document.activeElement, box);
+      box.innerHTML = html;
+      drawnCard = { box: box, html: html };
+      var again = focus ? box.querySelector(focus) : null;
+      if (again) again.focus({ preventScroll: true });
+    }
+    if (acct.focusPending) {
+      acct.focusPending = false;
+      (box.querySelector(acctUser() ? "[data-acct-status]" : '[data-sum="acct-in"]') || box).focus({ preventScroll: true });
+    }
+  }
+
+  // The top bar's way in (index.html): "Sign in", or your initial with a dot
+  // for how saving is going. Hidden, and the page as before, while accounts
+  // are off.
+  var PERSON_ICON = '<svg class="acct-link-icon" viewBox="0 0 16 16" aria-hidden="true" shape-rendering="crispEdges">' +
+    '<path d="M6 1h4v1h1v5h-1v1H6V7H5V2h1z"/><path d="M4 9h8v1h1v1h1v4H2v-4h1v-1h1z"/></svg>';
+  function acctDot() {
+    if (acct.state === "busy") return "is-busy";
+    if (acctTrouble()) return "is-warn";
+    return acct.at ? "is-ok" : "";
+  }
+  var topDrawn = "";
+  function drawTopButton() {
+    var btn = $("acct-link");
+    if (document.body) document.body.classList.toggle("has-accounts", accountsOn);
+    if (!btn) return;
+    btn.hidden = !accountsOn;
+    if (!accountsOn) return;
+    var user = acctUser();
+    var html, label;
+    if (!user) {
+      html = PERSON_ICON + '<span class="acct-link-text">' + esc(t("account.signInShort")) + "</span>";
+      label = t("account.topOut");
+      btn.removeAttribute("title");
+    } else {
+      var dot = acctDot();
+      var state = acctStatusText();
+      html = '<span class="acct-link-initial" aria-hidden="true">' + esc(initial(user)) + "</span>" +
+        (dot ? '<span class="acct-dot ' + dot + '" aria-hidden="true"></span>' : "");
+      label = t("account.topIn", { who: user.name || user.email || "" }) + (state ? ". " + state : "");
+      btn.title = label;
+    }
+    btn.classList.toggle("is-in", !!user);
+    if (topDrawn !== html) btn.innerHTML = topDrawn = html;
+    btn.setAttribute("aria-label", label);
+  }
+
+  // The top bar's button opens My binder (app.js, data-open-mine) with the
+  // account card focused: the Google button, or "Signed in as" with More open.
+  document.addEventListener("click", function (ev) {
+    var btn = ev.target.closest && ev.target.closest("[data-open-account]");
+    if (!btn || ev.button || ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.altKey) return;
+    acct.focusPending = true;
+    if (acctUser()) acct.menu = true;
+    // Already in My binder: app.js only scrolls up, so draw it here.
+    setTimeout(function () { if (acct.focusPending && $("mine-account")) drawAccountCard(); }, 0);
+  });
+
+  // Escape puts the delete question away, then "More".
+  document.addEventListener("keydown", function (ev) {
+    if (ev.key !== "Escape" || !(ev.target.closest && ev.target.closest("#mine-account"))) return;
+    if (acct.confirm && !acct.deleting) {
+      acct.confirm = false;
+      acct.error = "";
+      drawSync('[data-sum="acct-delete"]');
+    } else if (acct.leaveAsk) {
+      acct.leaveAsk = false;
+      drawSync('[data-sum="acct-out"]');
+    } else if (acct.menu && !acct.confirm) {
+      acct.menu = false;
+      drawSync('[data-sum="acct-menu"]');
+    } else return;
+    ev.preventDefault();
+  });
 
   // The GitHub panel stays open across redraws (toggle doesn't bubble).
   document.addEventListener("toggle", function (ev) {
@@ -1044,17 +1266,24 @@
     account.onChange(function (event, detail) {
       if (event === "in") {
         accountsOn = true;
+        acct.uid = acctUser().id;
         acct.at = readAcctAt();
         acct.note = "";
+        acct.noteMore = "";
         acct.error = "";
         acct.first = true;
+        acct.menu = false;
         scheduleAcct(0);
       } else if (event === "out") {
         clearTimeout(acct.timer);
         acct.timer = 0;
         acct.state = "";
         acct.at = "";
-        if (detail === "expired") acct.note = t("account.expired");
+        acct.menu = false;
+        acct.confirm = false;
+        acct.leaveAsk = false;
+        var uid = acct.uid;
+        acct.outDone = Store.ready.then(function () { return afterOut(detail, uid); });
       } else if (event === "error") {
         acct.going = false;
         var why = { expired: "account.err.slow", offline: "account.err.signinOffline", refused: "account.err.refused" }[detail];
@@ -1066,20 +1295,18 @@
     root.addEventListener("storage", function (ev) {
       if (ev.key === null || ev.key === "pullfolio.account") account.reload();
     });
-    // Coming back from Google: open the panel so it says what happened.
+    // Coming back from Google: the account card says what happened.
     account.finish().then(function (result) {
       if (!result) return;
       accountsOn = true;
-      shelf.open = "sync";
+      acct.focusPending = true;
       if (result === "in") toast(t("account.welcome", { who: who(acctUser()) }));
-      drawSync(result === "in" ? "[data-acct-status]" : '[data-sum="acct-in"]');
+      drawSync();
     });
   }
+  drawTopButton();
 
-  function chipLabel() {
-    if (accountsOn) return t(acctUser() ? "account.chipOn" : "account.chip");
-    return t(syncCfg ? "sync.chipOn" : "sync.chip");
-  }
+  function chipLabel() { return t(syncCfg ? "sync.chipOn" : "sync.chip"); }
 
   /* ---- My binder's summary card ---- */
 
@@ -1134,10 +1361,10 @@
     var local = Store.model().doc.local;
     var due = backupDue(local);
     var syncOpen = shelf.open === "sync";
-    // The open panel says how sync is doing; the row then shows the last backup.
-    var signed = accountsOn && !!acctUser();
-    var synced = syncOpen ? "" : (signed ? acctStatusText() : syncStatusText());
-    var trouble = signed ? acctTrouble() : syncTrouble();
+    // The open panel says how sync is doing; the row then shows the last
+    // backup. How an account is saving is in the account card at the top.
+    var synced = syncOpen ? "" : syncStatusText();
+    var trouble = syncTrouble();
     html += '<div class="mine-sum-tools">' +
       (rate ? '<button type="button" class="mine-chip' + (inLira ? " is-on" : "") + '" data-sum="lira" aria-pressed="' + inLira + '">' + esc(t("sum.inLira")) + "</button>" : "") +
       '<span class="mine-backup' + (due || (synced && trouble) ? " is-due" : "") + '">' +
@@ -1145,8 +1372,8 @@
       '<button type="button" class="mine-chip' + (due ? " is-due" : "") + '" data-sum="backup">' + esc(t("backup.download")) + "</button>" +
       '<button type="button" class="mine-chip" data-sum="import">' + esc(t("backup.load")) + "</button>" +
       '<button type="button" class="mine-chip" data-sum="csv">' + esc(t("backup.csv")) + "</button>" +
-      '<button type="button" class="mine-chip' + (syncOpen ? " is-on" : "") + '" data-sum="shelf" data-val="sync" aria-expanded="' + syncOpen + '"' +
-        (syncOpen ? ' aria-controls="mine-sync-panel"' : "") + ">" + esc(chipLabel()) + "</button>" +
+      (accountsOn ? "" : '<button type="button" class="mine-chip' + (syncOpen ? " is-on" : "") + '" data-sum="shelf" data-val="sync" aria-expanded="' + syncOpen + '"' +
+        (syncOpen ? ' aria-controls="mine-sync-panel"' : "") + ">" + esc(chipLabel()) + "</button>") +
       "</div>" +
       (syncOpen ? '<div class="mine-shelf" id="mine-sync-panel" role="region" aria-label="' + esc(t("sync.chip")) + '">' + syncHtml() + "</div>" : "") +
       (Store.volatile ? '<p class="mine-note is-warn">' + esc(t("store.volatile")) + "</p>" : "") +
@@ -1448,6 +1675,7 @@
     if (el.name && el.form && el.form.matches("[data-sync-form]")) return '[data-sync-form] [name="' + el.name + '"]';
     if (el.hasAttribute("data-sync-status")) return "[data-sync-status]";
     if (el.hasAttribute("data-acct-status")) return "[data-acct-status]";
+    if (el.matches("[data-acct-advanced] > summary")) return "[data-acct-advanced] > summary";
     var act = el.getAttribute("data-sum");
     if (!act) return "";
     var val = el.getAttribute("data-val");
@@ -1459,6 +1687,7 @@
   var lastSummary = null;
   function renderSummary(stats) {
     if (stats) lastSummary = stats;
+    drawAccountCard();
     var box = $("mine-summary");
     if (!box || !lastSummary) return;
     var focus = focusKey(document.activeElement, box);
@@ -1473,8 +1702,8 @@
   function emptyHtml() {
     return '<div class="mine-empty"><p>' + esc(t("mine.empty")) + "</p>" +
       '<div class="mine-sum-tools"><button type="button" class="mine-chip" data-sum="import">' + esc(t("backup.load")) + "</button>" +
-      '<button type="button" class="mine-chip" data-sum="shelf" data-val="sync" aria-expanded="' + (shelf.open === "sync") + '">' +
-        esc(chipLabel()) + "</button></div>" +
+      (accountsOn ? "" : '<button type="button" class="mine-chip" data-sum="shelf" data-val="sync" aria-expanded="' + (shelf.open === "sync") + '">' +
+        esc(chipLabel()) + "</button>") + "</div>" +
       (Store.volatile ? '<p class="mine-note is-warn">' + esc(t("store.volatile")) + "</p>" : "") +
       '<div class="mine-shelf" data-mine-sync-empty' + (shelf.open === "sync" ? ">" + syncHtml() : " hidden>") + "</div>" +
       '<div data-mine-import aria-live="polite">' + importHtml() + "</div></div>";
@@ -1503,14 +1732,26 @@
     } else if (act === "sync-now") syncNow();
     else if (act === "sync-off") disconnectSync();
     else if (act === "acct-in") signInWithGoogle();
-    else if (act === "acct-now") acctNow();
-    else if (act === "acct-out") signOutHere();
+    else if (act === "acct-now") { if (acct.state !== "busy") acctNow(); }
+    else if (act === "acct-menu") {
+      if (acct.deleting) return;
+      acct.menu = !acct.menu;
+      if (!acct.menu) { acct.confirm = false; acct.leaveAsk = false; acct.error = ""; }
+      drawSync('[data-sum="acct-menu"]');
+    }
+    else if (act === "acct-out") signOutHere(false);
+    else if (act === "acct-leave-anyway") signOutHere(true);
+    else if (act === "acct-stay") {
+      acct.leaveAsk = false;
+      drawSync('[data-sum="acct-out"]');
+    }
     else if (act === "acct-download") downloadBackup(false);
     else if (act === "acct-delete") {
       acct.confirm = true;
       acct.error = "";
       drawSync('[data-sum="acct-delete-no"]');
     } else if (act === "acct-delete-no") {
+      if (acct.deleting) return;
       acct.confirm = false;
       acct.error = "";
       drawSync('[data-sum="acct-delete"]');
@@ -1564,6 +1805,7 @@
     updateCard: updateCard,
     hideCard: hideCard,
     isEditing: function () { return !!slip; },
+    accountsOn: function () { return accountsOn; },
     renderSummary: renderSummary,
     emptyHtml: emptyHtml,
     toast: toast,

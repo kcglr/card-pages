@@ -177,6 +177,8 @@
       changed("settings");
     },
     flush: flush,
+    // Reads the binder again (another tab signed out and cleared it).
+    reload: reload,
     // The last prices fetched for the collection: { payloads, updatedAt }.
     readPrices: function () {
       return ready.then(function () { return db ? read(PRICE_KEY) : null; }).catch(function () { return null; });
