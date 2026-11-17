@@ -723,19 +723,19 @@
   // A copy counts from the day it was bought, else the day it was added.
   function ownedFrom(copy) { return copy.bought || String(copy.added || "").slice(0, 10); }
 
-  function worthOn(copies, prices, date) {
+  function worthOn(copies, prices, date, along) {
     var v = 0;
     copies.forEach(function (c) {
-      if (ownedFrom(c) > date) return;
+      if (!along && ownedFrom(c) > date) return;
       var u = unitValue(c, prices[c.card] ? { value: prices[c.card] } : null);
       if (u) v += u.value * c.qty;
     });
     return round2(v);
   }
-  function paidBy(copies, date) {
+  function paidBy(copies, date, along) {
     var v = 0;
     copies.forEach(function (c) {
-      if (c.paid && c.paid.usd != null && ownedFrom(c) <= date) v += c.paid.usd * c.qty;
+      if (c.paid && c.paid.usd != null && (along || ownedFrom(c) <= date)) v += c.paid.usd * c.qty;
     });
     return round2(v);
   }
@@ -744,7 +744,11 @@
   // each day with saved prices (the day before the range, if any, starts it
   // at the left edge); `cost` steps up on each purchase date. Both count
   // only copies owned by then, so new cards step both lines up together.
-  function valueSeries(history, copies, from, to) {
+  // With opts.allAlong the value counts every copy on every day instead:
+  // what the cards you have now were worth then; `cost` is then one flat
+  // line, all you paid for them, to read the value against.
+  function valueSeries(history, copies, from, to, opts) {
+    var along = !!(opts && opts.allAlong);
     var days = (history && history.days) || [];
     var state = {};
     var value = [];
@@ -752,12 +756,13 @@
       Object.assign(state, days[i].prices);
       if (days[i].date < from) {
         var next = days[i + 1];
-        if (!next || next.date > from) value.push({ date: from, value: worthOn(copies, state, from) });
+        if (!next || next.date > from) value.push({ date: from, value: worthOn(copies, state, from, along) });
         continue;
       }
-      value.push({ date: days[i].date, value: worthOn(copies, state, days[i].date) });
+      value.push({ date: days[i].date, value: worthOn(copies, state, days[i].date, along) });
     }
-    var cost = [{ date: from, value: paidBy(copies, from) }];
+    var cost = [{ date: from, value: paidBy(copies, from, along) }];
+    if (along) return { value: value, cost: cost };
     var dates = {};
     copies.forEach(function (c) {
       var d = ownedFrom(c);
@@ -768,9 +773,11 @@
   }
 
   // The first day the chart can start on: the first saved prices, or the
-  // first card you owned, whichever is earlier.
-  function firstDay(history, copies) {
+  // first card you owned, whichever is earlier. With opts.allAlong, the
+  // first prices when there are any.
+  function firstDay(history, copies, opts) {
     var first = history && history.days && history.days.length ? history.days[0].date : "";
+    if (first && opts && opts.allAlong) return first;
     copies.forEach(function (c) {
       var d = ownedFrom(c);
       if (d && (!first || d < first)) first = d;

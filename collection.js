@@ -10,12 +10,16 @@
   var t = i18n.t;
   var num = i18n.num;
   var formatUsd = root.PricePick.formatUsd;
+  var Hist = root.PullfolioHistory;
   var $ = function (id) { return document.getElementById(id); };
 
   var api = { fxRate: function () { return null; }, speciesName: function (key) { return key; }, filterTo: function () {}, relink: function () {} };
   var history = null; // the saved price history, once read (Store.readHistory)
+  // The weekly market prices of the cards in My binder, from the Pokémon's
+  // history files (price-history.js), as a price history like the saved one.
+  var market = { sig: "", loading: false, history: null };
   // The summary card's drawer: which panel is open and each panel's choice.
-  var shelf = { open: "", by: "set", range: "90", days: "7" };
+  var shelf = { open: "", by: "set", range: "all", days: "7" };
   var shown = null; // { card, ctx } of the pulled-out card
   var slip = null; // { uid } while the slip is open; uid "" adds a copy
   var LIRA_STORE = "pullfolio.mine.lira";
@@ -879,8 +883,63 @@
 
   function shelfHtml(s) {
     if (shelf.open === "breakdown") return breakdownHtml(s);
+    ensureMarket(s);
     if (shelf.open === "history") return historyHtml();
     return moversHtml(s);
+  }
+
+  // Loads the history files of the Pokémon in My binder (once each) and
+  // turns them into each card's weekly market price. Run again when the
+  // cards change, or when today's price names a different subtype.
+  function ensureMarket(s) {
+    if (!Hist) return;
+    var cards = {};
+    Store.model().all().forEach(function (c) {
+      if (cards[c.card] || !c.snap.pid) return;
+      cards[c.card] = { copy: c, price: s.priceOf ? s.priceOf(c) : null };
+    });
+    var ids = Object.keys(cards).sort();
+    var sig = ids.map(function (id) {
+      var e = cards[id];
+      return e.copy.species + "/" + id + "/" + ((e.price && e.price.subtype) || "");
+    }).join(",");
+    if (sig === market.sig) return;
+    market.sig = sig;
+    var keys = [];
+    ids.forEach(function (id) {
+      var k = cards[id].copy.species;
+      if (k && keys.indexOf(k) === -1) keys.push(k);
+    });
+    if (!keys.length) {
+      market.history = null;
+      market.loading = false;
+      return;
+    }
+    market.loading = true;
+    Promise.all(keys.map(function (k) { return Hist.load(k); })).then(function (loaded) {
+      if (market.sig !== sig) return;
+      var files = {};
+      keys.forEach(function (k, i) { files[k] = loaded[i]; });
+      market.history = Hist.toHistory(ids.map(function (id) {
+        var c = cards[id].copy;
+        var file = files[c.species];
+        var card = { productId: c.snap.pid, variant: c.snap.variant, rarity: c.snap.rarity, name: c.snap.name, price: cards[id].price };
+        return { id: id, points: file ? Hist.cardPoints(card, file, c.snap.pidUnique) : [] };
+      }));
+      market.loading = false;
+      if (shelf.open === "history" || shelf.open === "movers") renderSummary();
+    });
+  }
+
+  // This browser's saved prices with the weekly market prices under them
+  // (a day both have keeps this browser's).
+  var merged = { mine: null, theirs: null, history: null };
+  function chartHistory() {
+    var theirs = market.history && market.history.days.length ? market.history : null;
+    if (!theirs) return history;
+    if (merged.history && merged.mine === history && merged.theirs === theirs) return merged.history;
+    merged = { mine: history, theirs: theirs, history: core.mergeHistory(history, theirs) };
+    return merged.history;
   }
 
   // Breakdown (§4.4): rows by set (grouped by language), language or
@@ -928,27 +987,34 @@
     return html;
   }
 
-  // Value over time (§4.3): the value of the cards you owned on each day
-  // with saved prices, and what you had paid by then, as steps.
+  // Value over time (§4.3): what the cards you have now were worth each
+  // week, from their market prices since they were first priced (and this
+  // browser's own saved days), against all you paid for them.
   var RANGES = [["30", "range.30"], ["90", "range.90"], ["365", "range.365"], ["all", "range.all"]];
+  var ALONG = { allAlong: true };
 
   function historyHtml() {
     var copies = Store.model().all();
+    var h = chartHistory();
     var to = today();
-    var from = shelf.range === "all" ? core.firstDay(history, copies) || to : core.shiftDay(to, -Number(shelf.range));
+    var from = shelf.range === "all" ? core.firstDay(h, copies, ALONG) || to : core.shiftDay(to, -Number(shelf.range));
     if (from > to) from = to;
-    var series = core.valueSeries(history, copies, from, to);
+    var series = core.valueSeries(h, copies, from, to, ALONG);
     var lastV = series.value.length ? series.value[series.value.length - 1].value : null;
     var lastC = series.cost[series.cost.length - 1].value;
     var html = segHtml("range", RANGES, shelf.range, t("shelf.history")) +
       '<div class="mine-legend"><span class="mine-key is-value">' + esc(t("history.value")) + " <b>" + esc(lastV != null ? formatUsd(lastV) : "—") + "</b></span>" +
-      '<span class="mine-key is-cost">' + esc(t("history.paid")) + " <b>" + esc(lastC ? formatUsd(lastC) : "—") + "</b></span></div>";
-    var days = (history && history.days) || [];
-    if (!series.value.length && !lastC && series.cost.length < 2) {
-      return html + '<p class="mine-shelf-note">' + esc(t("history.none")) + "</p>";
+      (lastC ? '<span class="mine-key is-cost">' + esc(t("history.paid")) + " <b>" + esc(formatUsd(lastC)) + "</b></span>" : "") + "</div>";
+    var loading = market.loading ? '<p class="mine-shelf-note">' + esc(t("history.loading")) + "</p>" : "";
+    if (!series.value.length) {
+      return html + (loading || '<p class="mine-shelf-note">' + esc(t("history.none")) + "</p>");
     }
-    return html + chartHtml(series, from, to, lastV, lastC) +
-      '<p class="mine-shelf-note">' + esc(t("history.note", { date: day(days.length ? days[0].date : to) })) + "</p>";
+    var marketDays = market.history && market.history.days;
+    var note = marketDays && marketDays.length ?
+      t("history.market", { date: day(marketDays[0].date) }) :
+      t("history.note", { date: day(h.days[0].date) });
+    return html + chartHtml(series, from, to, lastV, lastC) + loading +
+      '<p class="mine-shelf-note">' + esc(note) + "</p>";
   }
 
   function dayNumber(date) { return Math.round(new Date(date + "T00:00:00Z").getTime() / 864e5); }
@@ -959,12 +1025,14 @@
     for (var i = 0; i < steps.length; i++) if (steps[i] * p >= v) return steps[i] * p;
     return 10 * p;
   }
-  function usdShort(v) { return "$" + num(Math.round(v)); }
+  // Whole dollars on the scale, cents when it tops out under $10.
+  function usdShort(v, max) { return max < 10 ? formatUsd(v) : "$" + num(Math.round(v)); }
 
   // The chart stretches to the card's width: the lines are SVG with
   // non-scaling strokes, the labels HTML, and the 4 px grid the frame's
-  // background, so text and lines stay the same size on a phone.
-  function chartHtml(series, from, to, lastV, lastC) {
+  // background, so text and lines stay the same size on a phone. `caption`
+  // is what a screen reader hears (the binder's summary by default).
+  function chartHtml(series, from, to, lastV, lastC, caption) {
     // Each day is a slot, today's included, so the last step has a width.
     var x0 = dayNumber(from);
     var x1 = dayNumber(to) + 1;
@@ -979,9 +1047,9 @@
       return d + "H1000";
     }
     var grid = [0, max / 2, max];
-    var label = t("history.summary", { date: day(to), value: lastV != null ? formatUsd(lastV) : "—", paid: lastC ? formatUsd(lastC) : "—" });
+    var label = caption || t("history.summary", { date: day(to), value: lastV != null ? formatUsd(lastV) : "—", paid: lastC ? formatUsd(lastC) : "—" });
     return '<figure class="mine-chart"><div class="mine-chart-plot">' +
-      grid.map(function (v) { return '<span class="mine-chart-y" style="--y:' + Y(v) + '">' + esc(usdShort(v)) + "</span>"; }).join("") +
+      grid.map(function (v) { return '<span class="mine-chart-y" style="--y:' + Y(v) + '">' + esc(usdShort(v, max)) + "</span>"; }).join("") +
       '<svg viewBox="0 0 1000 100" preserveAspectRatio="none" aria-hidden="true" focusable="false">' +
       grid.map(function (v) { return '<line x1="0" x2="1000" y1="' + Y(v) + '" y2="' + Y(v) + '" class="mine-chart-rule"/>'; }).join("") +
       '<path class="mine-chart-cost" d="' + steps(series.cost) + '"/>' +
@@ -991,8 +1059,26 @@
       '<figcaption class="sr-only">' + esc(label) + "</figcaption></figure>";
   }
 
-  // Top movers (§4.5): price now against the saved price a week (or 30
-  // days) back, by the change in dollars times the copies you own.
+  // A printing's market price over time for the card file, from [{ date,
+  // usd }] (the last one today's): the chart and where the prices come from.
+  // Empty without two points to draw.
+  function priceChartHtml(points) {
+    if (!points || points.length < 2) return "";
+    var from = points[0].date;
+    var to = points[points.length - 1].date;
+    var usd = points.map(function (p) { return p.usd; });
+    var last = usd[usd.length - 1];
+    var caption = t("sheet.historySummary", {
+      from: day(from), to: day(to), first: formatUsd(usd[0]), last: formatUsd(last),
+      low: formatUsd(Math.min.apply(null, usd)), high: formatUsd(Math.max.apply(null, usd))
+    });
+    var series = { value: points.map(function (p) { return { date: p.date, value: p.usd }; }), cost: [] };
+    return chartHtml(series, from, to, last, 0, caption) +
+      '<p class="sheet-history-note">' + esc(t("sheet.historyNote", { date: day(from) })) + "</p>";
+  }
+
+  // Top movers (§4.5): price now against the market price a week, 30 days
+  // or a year back, by the change in dollars times the copies you own.
   function moversHtml(s) {
     var byCard = {};
     Store.model().all().forEach(function (c) {
@@ -1002,10 +1088,11 @@
       if (p && p.value > 0) e.now = p.value;
     });
     var cards = Object.keys(byCard).map(function (k) { return byCard[k]; });
-    var r = core.movers(history, cards, today(), Number(shelf.days));
-    var html = segHtml("days", [["7", "range.7"], ["30", "range.30"]], shelf.days, t("movers.title"));
+    var r = core.movers(chartHistory(), cards, today(), Number(shelf.days));
+    var html = segHtml("days", [["7", "range.7"], ["30", "range.30"], ["365", "range.365"]], shelf.days, t("movers.title"));
     if (!r.ready) {
-      return html + '<p class="mine-shelf-note">' + esc(t(shelf.days === "30" ? "movers.wait30" : "movers.wait")) +
+      if (market.loading) return html + '<p class="mine-shelf-note">' + esc(t("history.loading")) + "</p>";
+      return html + '<p class="mine-shelf-note">' + esc(t(shelf.days === "365" ? "movers.wait365" : shelf.days === "30" ? "movers.wait30" : "movers.wait")) +
         (r.first ? " " + esc(t("movers.first", { date: day(r.first) })) : "") + "</p>";
     }
     return html + '<p class="mine-shelf-note">' + esc(t("movers.since", { date: day(r.since) })) + "</p>" +
@@ -1152,6 +1239,9 @@
     emptyHtml: emptyHtml,
     toast: toast,
     recordPrices: recordPrices,
+    chartHtml: chartHtml,
+    priceChartHtml: priceChartHtml,
+    today: today,
     syncNow: syncNow,
     relabel: function () {
       if (shown && !slip) render();

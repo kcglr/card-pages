@@ -997,6 +997,7 @@
       box.className = "sheet-price is-none" + (waiting ? " is-busy" : "");
       box.innerHTML = '<div class="price-tag"><span class="price-kind">' + escapeHtml(t(waiting ? "sheet.priceLoading" : "sheet.noPrice")) + "</span></div>" +
         (waiting ? "" : '<p class="price-meta">' + escapeHtml(t(card.productId ? "sheet.noPriceNote" : "sheet.noProduct")) + "</p>");
+      fillPriceHistory(card);
       return;
     }
     var lira = formatTry(p.value, fxRate);
@@ -1007,6 +1008,37 @@
       '<div class="price-meta"><p class="price-source"><img src="assets/markets/tcgplayer.png" alt="" width="18" height="18">' +
       escapeHtml("TCGplayer" + (p.subtype ? " · " + p.subtype : "")) + "</p>" +
       (p.range ? '<p class="price-range">' + escapeHtml(t("sheet.listed", { range: p.range })) + "</p>" : "") + "</div>";
+    fillPriceHistory(card);
+  }
+
+  // Under the price: the printing's TCGplayer market price each week since
+  // it was first priced (its Pokémon's history file), ending on today's.
+  function fillPriceHistory(card) {
+    var box = $("sheet-history");
+    var Hist = window.PullfolioHistory;
+    var key = card.species || (current && current.meta.key);
+    if (!box) return;
+    // Another card's chart doesn't stay up while this one's file loads.
+    if (box.getAttribute("data-card") !== String(card.id)) {
+      box.setAttribute("data-card", String(card.id));
+      box.hidden = true;
+      box.innerHTML = "";
+    }
+    if (!Hist || !card.productId || !key) return;
+    var unique = card.pidUnique != null ? !!card.pidUnique : Core.pidCounts(current ? current.cards : [])[String(card.productId)] === 1;
+    Hist.load(key).then(function (file) {
+      if (activeCard !== card) return;
+      var points = file ? Hist.cardPoints(card, file, unique) : [];
+      var now = card.price && card.price.value > 0 ? card.price.value : 0;
+      var today = Mine.today();
+      if (now) {
+        if (points.length && points[points.length - 1].date >= today) points = points.slice(0, -1);
+        points = points.concat([{ date: today, usd: now }]);
+      }
+      var html = Mine.priceChartHtml(points);
+      box.hidden = !html;
+      box.innerHTML = html ? '<h4 class="sheet-history-label">' + escapeHtml(t("sheet.history")) + "</h4>" + html : "";
+    });
   }
 
   function fillFacts(card) {
@@ -1032,6 +1064,8 @@
   }
 
   function fillSheet(card) {
+    var mine = current && current.meta.mine;
+    paintPokemonTheme(mine ? Core.speciesNumber(card.species) : 0, true);
     fillSheetText(card);
     var art = $("sheet-art");
     var small = card.image || card.imageLarge || "";
@@ -2439,14 +2473,17 @@
   // A binder takes its Pokémon's colour (--poke-rgb) and puts the Pokémon on
   // its page slider (--scrub-sprite).
   var THEME_PROPS = ["--poke-rgb", "--scrub-sprite", "--scrub-sprite-back", "--scrub-sprite-size", "--scrub-sprite-y", "--scrub-render"];
-  var themeToken = 0;
-  function paintPokemonTheme(number) {
-    var token = ++themeToken;
-    var root = document.documentElement.style;
+  // `sheet` paints only the card file: in My binder a pulled-out card wears
+  // its own Pokémon, while the page keeps the binder's. 0 clears it.
+  var themeTokens = { page: 0, sheet: 0 };
+  function paintPokemonTheme(number, sheet) {
+    var which = sheet ? "sheet" : "page";
+    var token = ++themeTokens[which];
+    var root = (sheet ? $("overlay") : document.documentElement).style;
     THEME_PROPS.forEach(function (name) { root.removeProperty(name); });
     if (!number) return;
     loadIcon(number).then(function (img) {
-      if (token !== themeToken || !img) return;
+      if (token !== themeTokens[which] || !img) return;
       var rgb = spriteColor(img);
       if (rgb) root.setProperty("--poke-rgb", rgb);
       var sprite = thumbSprite(img);
