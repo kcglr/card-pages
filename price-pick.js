@@ -1,7 +1,7 @@
 /* PricePick: which TCGplayer price row belongs to a printing, and the one
-   price the site shows for it (market, else mid, else the lowest listing).
-   The same rules as prices.py. Shared by the Pokémon binders and My binder,
-   so a price sticker and the collection's totals always agree. */
+   price the site shows for it: TCGplayer's market price, else the cheapest
+   TCGplayer Direct listing. Shared by the Pokémon binders and My binder, so
+   a price sticker and the collection's totals always agree. */
 (function (root, factory) {
   if (typeof module === "object" && module.exports) module.exports = factory();
   else root.PricePick = factory();
@@ -125,23 +125,30 @@
       (!wantsReverse(card) && /reverse/i.test(n));
   }
 
-  // The price the site shows for one printing, or null.
+  // What the site shows: the market price (from sales), else the cheapest
+  // TCGplayer Direct listing. Both match TCGplayer's own product page to the
+  // cent. The feed's low and mid figures don't: the low is a day-old
+  // cheapest listing of any condition, and TCGplayer shows no "mid" at all.
+  // They only help pick the row (bestAmount).
+  function shownAmount(row) {
+    if (positive(row, "marketPrice")) return { kind: "market", value: positive(row, "marketPrice") };
+    if (positive(row, "directLowPrice")) return { kind: "direct", value: positive(row, "directLowPrice") };
+    return null;
+  }
+
+  // The price the site shows for one printing, or null. `direct`: the
+  // cheapest TCGplayer Direct listing beside a market price ("" if none).
   function price(card, payload, uniqueProduct) {
     var row = pickPriceRow(card, payload, uniqueProduct);
-    var amount = bestAmount(row);
+    var amount = shownAmount(row);
     if (!amount) return null;
-    var low = positive(row, "lowPrice");
-    var mid = positive(row, "midPrice");
-    var range = "";
-    if (low && mid && low <= amount.value && mid < amount.value * 20) {
-      range = formatUsd(low) + "–" + formatUsd(mid);
-    }
+    var direct = amount.kind === "market" ? positive(row, "directLowPrice") : 0;
     return {
       headline: formatUsd(amount.value),
       value: amount.value,
       subtype: subName(row),
       kind: amount.kind,
-      range: range
+      direct: direct ? formatUsd(direct) : ""
     };
   }
 

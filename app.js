@@ -1030,7 +1030,7 @@
       (lira ? '<span class="price-try">' + escapeHtml(lira) + "</span>" : "") + "</div>" +
       '<div class="price-meta"><p class="price-source"><img src="assets/markets/tcgplayer.png" alt="" width="18" height="18">' +
       escapeHtml("TCGplayer" + (p.subtype ? " · " + p.subtype : "")) + "</p>" +
-      (p.range ? '<p class="price-range">' + escapeHtml(t("sheet.listed", { range: p.range })) + "</p>" : "") + "</div>";
+      (p.direct ? '<p class="price-range">' + escapeHtml(t("sheet.direct", { price: p.direct })) + "</p>" : "") + "</div>";
     fillPriceHistory(card);
   }
 
