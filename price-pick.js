@@ -103,12 +103,26 @@
       return preferred;
     }
     if (uniqueProduct) {
-      if (preferred && bestAmount(preferred)) return preferred;
-      for (var i = 0; i < rows.length; i++) {
-        if (bestAmount(rows[i])) return rows[i];
+      // Any priced row may stand in, but first one that isn't a printing the
+      // card doesn't ask for. Shadowless Charizard (106999) lists a lone
+      // $100,000 "1st Edition Holofoil" (also its `preferred`) beside a priced
+      // "Unlimited Holofoil" row; the Unlimited row is the card's price.
+      var candidates = (preferred ? [preferred] : []).concat(rows);
+      for (var i = 0; i < candidates.length; i++) {
+        if (bestAmount(candidates[i]) && !unaskedPrinting(card, candidates[i])) return candidates[i];
+      }
+      for (var j = 0; j < candidates.length; j++) {
+        if (bestAmount(candidates[j])) return candidates[j];
       }
     }
     return null;
+  }
+
+  // A 1st Edition or reverse holo row for a card that doesn't say it is one.
+  function unaskedPrinting(card, row) {
+    var n = subName(row);
+    return (!wantsFirst(card) && /(1st|first)\s+edition/i.test(n)) ||
+      (!wantsReverse(card) && /reverse/i.test(n));
   }
 
   // The price the site shows for one printing, or null.
