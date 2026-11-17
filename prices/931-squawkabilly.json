@@ -5,6 +5,7 @@
 "497684":{"Holofoil":[1047,1298]},
 "534437":{"Holofoil":[58,79]},
 "535654":{"Holofoil":[114,130]},
+"538741":{"Holofoil":[97,null]},
 "567555":{"Holofoil":[28,null]},
 "567737":{"Holofoil":[66,null]},
 "567822":{"Holofoil":[29,null]},
@@ -16,9 +17,11 @@
 "593338":{"Holofoil":[49,null]},
 "623568":{"Normal":[14,5],"Reverse Holofoil":[25,14]},
 "628727":{"Normal":[9,null]},
+"630277":{"Normal":[52,null]},
 "632962":{"Normal":[12,5],"Reverse Holofoil":[21,15]},
 "637550":{"Normal":[68,null]},
 "637555":{"Normal":[41,null]},
 "669586":{"Normal":[80,null]},
+"669587":{"Holofoil":[99,null]},
 "690463":{"Normal":[150,null]}
 }}

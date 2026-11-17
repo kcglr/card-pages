@@ -17,6 +17,7 @@
 "130928":{"Normal":[37,null],"Reverse Holofoil":[54,50]},
 "148346":{"Holofoil":[4816,5431]},
 "169948":{"Holofoil":[1161,null]},
+"173105":{"Holofoil":[326,null]},
 "189211":{"Normal":[241,null],"Reverse Holofoil":[588,823]},
 "223007":{"Normal":[19,4],"Reverse Holofoil":[25,21]},
 "246844":{"Normal":[23,5],"Reverse Holofoil":[31,20]},
@@ -46,6 +47,7 @@
 "612783":{"1st Edition":[1000,null],"Unlimited":[1100,null]},
 "612840":{"1st Edition Holofoil":[2500,null],"Unlimited Holofoil":[3499,null]},
 "613075":{"Unlimited":[805,null]},
+"613514":{"Normal":[1000,null]},
 "655830":{"Holofoil":[33,null]},
 "655877":{"Holofoil":[256,null]},
 "655889":{"Holofoil":[1005,null]},
@@ -53,5 +55,7 @@
 "662192":{"Holofoil":[322,null]},
 "662193":{"Holofoil":[1635,1873]},
 "669920":{"Normal":[768,null]},
+"704435":{"Holofoil":[1034,null]},
+"709129":{"Normal":[144,null]},
 "728035":{"Normal":[12,1],"Reverse Holofoil":[26,21]}
 }}

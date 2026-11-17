@@ -25,7 +25,6 @@
 "480428":{"Normal":[842,null]},
 "509637":{"Normal":[16,2],"Reverse Holofoil":[21,10]},
 "516156":{"Normal":[20,3],"Reverse Holofoil":[33,20]},
-"524008":{"Normal":[76,null]},
 "525293":{"Normal":[638,3364]},
 "534459":{"Holofoil":[997,1417]},
 "566388":{"Normal":[13,null]},
@@ -64,5 +63,6 @@
 "669720":{"Normal":[137,null]},
 "675813":{"Normal":[18,5]},
 "676852":{"Reverse Holofoil":[24,16]},
-"676992":{"Reverse Holofoil":[25,18]}
+"676992":{"Reverse Holofoil":[25,18]},
+"684041":{"Holofoil":[32,null]}
 }}
