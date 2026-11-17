@@ -127,17 +127,20 @@
     return out;
   }
 
-  // The query without the names Supabase adds on the way back.
-  var RETURN_NAMES = ["code", "error", "error_code", "error_description", "state", "sb"];
-  function withoutReturn(search) {
+  // A query ("?a=1&b=2") without the given names; "" when nothing is left.
+  function without(search, names) {
     var kept = String(search || "").replace(/^\?/, "").split("&").filter(function (pair) {
       if (!pair) return false;
       var k = pair.split("=")[0];
       try { k = decodeURIComponent(k); } catch (e) { return true; }
-      return RETURN_NAMES.indexOf(k) < 0;
+      return names.indexOf(k) < 0;
     });
     return kept.length ? "?" + kept.join("&") : "";
   }
+
+  // The query without the names Supabase adds on the way back.
+  var RETURN_NAMES = ["code", "error", "error_code", "error_description", "state", "sb"];
+  function withoutReturn(search) { return without(search, RETURN_NAMES); }
 
   // A session, from Supabase's answer or from storage. null if it isn't one.
   function cleanSession(raw, nowSec) {
@@ -211,8 +214,25 @@
 
   // Accounts are shown only after ?accounts=1 was opened once on this device
   // (?accounts=0 hides them again), while Google sign-in is in testing.
+  // "?accounts=1" typed at the end of an address that has a "#" in it
+  // (…/card-pages/#my-binder?accounts=1) lands after the "#", where the
+  // query isn't. It counts there too, and moves in front of the "#", so the
+  // page (app.js, which runs after this) still finds its own "#my-binder".
   Account.prototype.enabled = function () {
-    var q = params(this.location && this.location.search);
+    var loc = this.location || {};
+    var q = params(loc.search);
+    var hash = String(loc.hash || "");
+    var cut = hash.indexOf("?");
+    var inHash = cut < 0 ? {} : params(hash.slice(cut + 1));
+    if (inHash.accounts === "1" || inHash.accounts === "0") {
+      q.accounts = inHash.accounts;
+      var search = without(loc.search, ["accounts"]);
+      search = (search ? search + "&" : "?") + "accounts=" + inHash.accounts;
+      var rest = without(hash.slice(cut + 1), ["accounts"]);
+      if (this.history && this.history.replaceState) {
+        this.history.replaceState(null, "", loc.pathname + search + hash.slice(0, cut) + rest);
+      }
+    }
     if (q.accounts === "1") this.store.set(GATE_STORE, 1);
     else if (q.accounts === "0") this.store.drop(GATE_STORE);
     return this.store.get(GATE_STORE) === 1 || !!this.session;
