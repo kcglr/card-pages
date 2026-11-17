@@ -68,8 +68,15 @@
     if (!isSource(url) || img.getAttribute("data-fallback")) return;
     streak++;
     var alt = fallbackFor(url);
-    // Without a stand-in the page's own handler runs, as before.
-    if (!alt) return;
+    // Without a stand-in the page's own handler runs, as before. The picture
+    // is hidden first: a binder pocket has no handler, and Chrome and Safari
+    // would draw a broken-image icon over the card back. A later load that
+    // works shows it again (onLoad).
+    if (!alt) {
+      img.setAttribute("data-broken", "1");
+      if (img.style) img.style.visibility = "hidden";
+      return;
+    }
     // Otherwise it must not: some hide or remove the picture.
     event.stopPropagation();
     img.setAttribute("data-fallback", "tcgplayer");
@@ -79,7 +86,12 @@
 
   function onLoad(event) {
     var img = event && event.target;
-    if (img && img.tagName === "IMG" && isSource(urlOf(img))) streak = 0;
+    if (!img || img.tagName !== "IMG") return;
+    if (img.getAttribute("data-broken") !== null) {
+      if (img.removeAttribute) img.removeAttribute("data-broken");
+      if (img.style) img.style.visibility = "";
+    }
+    if (isSource(urlOf(img))) streak = 0;
   }
 
   var installed = false;

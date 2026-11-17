@@ -286,6 +286,7 @@
 
   var binder = null;
   var animating = false;
+  var closeQueued = false; // Escape, × or a click outside while the card is still flying out
   var filterState = { langs: {}, variants: {}, species: {}, set: "", hideReverse: false, own: "", query: "", graded: false, noPrice: false, unmatched: false };
   var LANG_STORE = "pullfolio.langs";
   // "Mark cards I own" (collect mode): taps mark pockets instead of pulling
@@ -544,15 +545,24 @@
       t("count.of", { n: num(shown), total: num(total) });
   }
 
+  // When prices were fetched: a clock time, or (stand-in prices) a day.
+  function priceTimeText() {
+    var time = current && current.priceTime;
+    return typeof time === "function" ? time() : time || "";
+  }
+
   function renderFooter() {
     var footer = $("result-footer");
     if (!footer || !current) return;
+    var time = priceTimeText();
+    // Stand-in prices must not be called live (price-fallback.js).
+    var fallback = !!current.priceFallback;
     if (current.meta.mine) {
-      footer.textContent = current.priceTime ? t("mine.footer", { time: current.priceTime }) : "";
+      footer.textContent = time ? t(fallback ? "mine.footer.fallback" : "mine.footer", { time: time }) : "";
       return;
     }
     var slug = current.meta.slug || (current.meta.key || "").replace(/^\d+-/, "");
-    footer.innerHTML = (current.priceTime ? escapeHtml(t("footer.prices", { time: current.priceTime })) + " " : "") +
+    footer.innerHTML = (time ? escapeHtml(t(fallback ? "footer.fallback" : "footer.prices", { time: time })) + " " : "") +
       escapeHtml(t("footer.list")) + ' <a href="https://pokecottage.com/pokemon-master-sets/' + encodeURIComponent(slug) +
       '" target="_blank" rel="noopener noreferrer">PokéCottage</a>. ' + escapeHtml(t("footer.rest"));
   }
@@ -1286,6 +1296,7 @@
   function pullCard(card, pocket) {
     if (!card || activeCard || animating) return;
     activeCard = card;
+    closeQueued = false;
     fillSheet(card);
     var art = $("sheet-art");
     var overlay = $("overlay");
@@ -1307,6 +1318,8 @@
         if (activeCard !== card) return;
         art.classList.remove("is-waiting");
         if (fly) art.classList.add("is-landing");
+        // Asked to close while it was flying out: put it back now it's here.
+        if (closeQueued) closeSheet(false);
       });
     });
     resolveCardLinks(card);
@@ -1314,7 +1327,10 @@
 
   // Fly the card back into its pocket. `instant` skips the animation.
   function closeSheet(instant) {
-    if (!activeCard || (animating && !instant)) return;
+    if (!activeCard) return;
+    // Still flying out: close as soon as it lands (pullCard).
+    if (animating && !instant) { closeQueued = true; return; }
+    closeQueued = false;
     var card = activeCard;
     activeCard = null;
     Mine.hideCard();
@@ -1447,10 +1463,45 @@
     if (ev.target === $("overlay")) closeSheet(false);
   });
   $("sheet-close").addEventListener("click", function () { closeSheet(false); });
+  // The card file is a modal dialog: Tab and Shift+Tab stay inside it, and in
+  // the undo strip when one shows, wrapping at either end. Focus that gets
+  // out anyway (Safari's Tab skips links, so the last stop can be missed) is
+  // brought back.
+  var FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), ' +
+    'select:not([disabled]), textarea:not([disabled]), summary, [tabindex]:not([tabindex="-1"])';
+  var tabBack = false;
+  function sheetStops() {
+    var sheet = document.querySelector("#overlay .sheet");
+    var list = sheet ? Array.prototype.slice.call(sheet.querySelectorAll(FOCUSABLE)) : [];
+    var toast = $("mine-toast");
+    if (toast && toast.classList.contains("is-on")) list = list.concat(Array.prototype.slice.call(toast.querySelectorAll("button")));
+    return list.filter(function (el) {
+      if (el.type === "radio" && !el.checked) return false; // a radio group is one stop
+      return el.getClientRects().length > 0 && window.getComputedStyle(el).visibility !== "hidden";
+    });
+  }
+  function trapTab(ev) {
+    tabBack = ev.shiftKey;
+    var stops = sheetStops();
+    if (!stops.length) return;
+    var at = stops.indexOf(document.activeElement);
+    if (at === -1 || (ev.shiftKey ? at === 0 : at === stops.length - 1)) {
+      ev.preventDefault();
+      stops[ev.shiftKey ? stops.length - 1 : 0].focus();
+    }
+  }
+  document.addEventListener("focusin", function (ev) {
+    if (!activeCard || (ev.target.closest && ev.target.closest("#overlay .sheet, #mine-toast"))) return;
+    var stops = sheetStops();
+    if (stops.length) stops[tabBack ? stops.length - 1 : 0].focus();
+  });
+
   document.addEventListener("keydown", function (ev) {
     if (ev.key === "Escape") {
       if (activeCard) closeSheet(false); // the search field handles its own Escape
       else if (dexItem) closeDexCard();
+    } else if (ev.key === "Tab" && activeCard) {
+      trapTab(ev);
     } else if ((ev.key === "ArrowLeft" || ev.key === "ArrowRight") && binder && !activeCard && $("binder") &&
         !(ev.target.closest && ev.target.closest("input, select, textarea"))) {
       ev.preventDefault();
@@ -1710,15 +1761,18 @@
       if (p && p.asOf > standIn) standIn = p.asOf;
     });
     var elapsed = started ? Math.max(0, Date.now() - started) : 0;
-    var when = standIn ? dayLabel(standIn) : formatIstanbul(updatedAt || Date.now());
+    // A day is written in the page's language when it's shown, so a language
+    // switch redraws it ("Nov 16" / "16 Kas").
+    var when = standIn ? function () { return dayLabel(standIn); } : formatIstanbul(updatedAt || Date.now());
     current.priceTime = when;
+    current.priceFallback = !!standIn;
     current.priced = priced;
     if (standIn) setStatus("status.fallback", { n: priced, time: when }, true);
     else setStatus("status.priced", {
       n: priced,
       time: when,
       elapsed: function () {
-        return elapsed >= 50 ? " (" + (elapsed / 1000).toLocaleString(i18n.locale(), { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + " s)" : "";
+        return elapsed >= 50 ? " (" + (elapsed / 1000).toLocaleString(i18n.locale(), { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + " s)" : "";
       }
     });
     if (current.meta.mine) {
@@ -1904,7 +1958,7 @@
     var priceOf = function (copy) { return byId[copy.card] ? byId[copy.card].price : null; };
     var stats = Core.totals(copies, priceOf);
     stats.priceOf = priceOf; // for the Breakdown and Top movers panels
-    stats.priceTime = current.priceTime;
+    stats.priceTime = priceTimeText();
     stats.loading = !current.priceTime && current.cards.some(function (c) { return c.productId; });
     stats.unmatched = copies.reduce(function (n, c) { return n + (c.unmatched ? c.qty : 0); }, 0);
     Mine.renderSummary(stats);

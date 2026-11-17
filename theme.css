@@ -1777,7 +1777,9 @@ body.is-mine .mine-count { background: #fbf7ef; }
   display: flex;
   align-items: center;
   gap: 14px;
-  max-width: calc(100vw - 32px);
+  /* left: 50% alone would let it shrink to half the window on a phone. */
+  width: max-content;
+  max-width: min(600px, calc(100vw - 32px));
   padding: 9px 9px 9px 16px;
   border: 2px solid #1f1a16;
   border-radius: 8px;
@@ -2016,6 +2018,8 @@ body.is-mine .mine-count { background: #fbf7ef; }
 
 @media (prefers-reduced-motion: reduce) {
   .mine-toast, .mine-toast.is-on { transition: none; }
+  /* The card doesn't tilt with reduced motion, so don't offer it. */
+  .tilt-hint { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
