@@ -701,7 +701,11 @@
     return '<a href="' + esc(href) + '" target="_blank" rel="noopener noreferrer">' + esc(text) + "</a>";
   }
 
-  function syncHtml() {
+  // The panel behind the sync chip: the account's, with GitHub sync under
+  // "Advanced", once accounts are on; else GitHub sync as before.
+  function syncHtml() { return accountsOn ? accountHtml() : githubHtml(); }
+
+  function githubHtml() {
     if (syncCfg) {
       var url = repoUrl(syncCfg.repo);
       return '<div class="mine-sync">' +
@@ -772,16 +776,317 @@
   // A save waiting to go out goes now if the page is put away.
   document.addEventListener("visibilitychange", function () {
     if (document.visibilityState === "hidden" && syncTimer) syncNow();
+    if (document.visibilityState === "hidden" && acct.timer) acctNow();
   });
   root.addEventListener("online", function () {
     if (syncCfg && syncState === "offline") scheduleSync(0);
+    if (acct.state === "offline") scheduleAcct(0);
   });
+
+  /* ---- a Pullfolio account: sign in with Google to save (supabase/README.md) ---- */
+
+  // Shown only after ?accounts=1 was opened on this device, while Google
+  // sign-in is in testing (account.js). Searching and flipping through
+  // binders never needs an account; signing in only adds saving.
+  var Supa = root.PullfolioSupabase;
+  var Account = root.PullfolioAccount;
+  var account = Account && Supa ? Account.create() : null;
+  var accountsOn = !!account && account.enabled();
+  var ACCT_AT = "pullfolio.account.at"; // { uid, at }: this device's last good sync with the account
+  var acct = {
+    state: "", // "", "busy", "ok" or a SyncError kind, as syncState
+    at: "",
+    timer: 0,
+    syncing: null,
+    again: false,
+    applying: false, // merging the account's binder in: not a change to send back
+    first: false, // the first sync after signing in says what came in
+    going: false, // on the way to Google
+    confirm: false, // "Delete my data?" is showing
+    deleting: false,
+    stopped: false, // while deleting: nothing more goes up
+    advanced: false, // the GitHub panel is open
+    note: "", // why this device was signed out
+    error: ""
+  };
+
+  function acctUser() { return account ? account.user() : null; }
+  function sameUser(user) { var u = acctUser(); return !!u && !!user && u.id === user.id; }
+
+  function readAcctAt() {
+    var user = acctUser();
+    var v = null;
+    try { v = JSON.parse(root.localStorage.getItem(ACCT_AT) || "null"); } catch (e) { v = null; }
+    return user && v && v.uid === user.id && typeof v.at === "string" ? v.at : "";
+  }
+  function writeAcctAt(uid, at) {
+    try {
+      if (uid) root.localStorage.setItem(ACCT_AT, JSON.stringify({ uid: uid, at: at }));
+      else root.localStorage.removeItem(ACCT_AT);
+    } catch (e) { /* shown for this page only */ }
+  }
+  acct.at = readAcctAt();
+
+  function acctClient(uid) {
+    var c = new Supa.Client(Account.PROJECT, function (refused) { return account.accessToken(refused); });
+    c.seen = function () { return account.seen(uid); };
+    return c;
+  }
+
+  function scheduleAcct(delay) {
+    if (!account || !account.signedIn() || acct.stopped) return;
+    clearTimeout(acct.timer);
+    acct.timer = setTimeout(acctNow, delay == null ? SYNC_DELAY : delay);
+  }
+
+  // The account's binder is merged in (Sync.run calls this). Saved daily
+  // prices don't travel with an account (collection-supabase.js).
+  function takeAccount(doc) {
+    var before = Store.model().count();
+    if (Sync.changes(Store.model().doc, doc)) {
+      acct.applying = true;
+      try { Store.mergeIn(doc); } finally { acct.applying = false; }
+    }
+    var added = Store.model().count() - before;
+    if (acct.first && added > 0) toast(plural("account.pulled", added));
+  }
+
+  function acctNow() {
+    clearTimeout(acct.timer);
+    acct.timer = 0;
+    var user = acctUser();
+    if (!user || acct.stopped) return Promise.resolve();
+    if (acct.syncing) { acct.again = true; return acct.syncing; }
+    setAcctState("busy");
+    acct.syncing = Store.ready.then(function () {
+      return Sync.run(acctClient(user.id), function () { return { doc: Store.model().doc, history: null }; }, takeAccount);
+    }).then(function (r) {
+      if (!sameUser(user)) return;
+      account.markSeen(user.id, r.sha);
+      acct.at = new Date().toISOString();
+      writeAcctAt(user.id, acct.at);
+      setAcctState("ok");
+    }, function (err) {
+      var kind = err && err.kind && err.kind !== "conflict" ? err.kind : "server";
+      if (kind === "deleted") { deletedElsewhere(user, !!err.mark); return; }
+      if (!sameUser(user)) return; // signed out meanwhile
+      if (!err || !err.kind) console.error(err);
+      setAcctState(kind);
+      // A network or Supabase hiccup is tried again; anything else needs you.
+      if (kind === "offline" || kind === "rate" || kind === "server") scheduleAcct(RETRY_DELAY);
+    }).then(function () {
+      acct.syncing = null;
+      acct.first = false;
+      if (acct.again) { acct.again = false; scheduleAcct(1000); }
+    });
+    return acct.syncing;
+  }
+
+  function setAcctState(state) {
+    acct.state = state;
+    drawSync();
+  }
+
+  // After "Delete my data", here or on another device: this device's binder
+  // goes, with its saved prices. GitHub sync is turned off here too, or it
+  // would bring every card back (the file in the GitHub repo stays).
+  function clearHere(uid) {
+    clearTimeout(acct.timer);
+    acct.timer = 0;
+    acct.again = false;
+    clearTimeout(syncTimer);
+    syncTimer = 0;
+    if (syncCfg) { syncCfg = null; syncState = ""; saveSync(); }
+    history = null;
+    market = { sig: "", loading: false, history: null };
+    pendingImport = null;
+    acct.applying = true;
+    try { Store.clear(); } finally { acct.applying = false; }
+    if (uid) account.forget(uid);
+    acct.at = "";
+    writeAcctAt("", "");
+  }
+
+  // This device synced the account before its binder was deleted somewhere
+  // else (collection-supabase.js read()). Just the mark: clear and sign out.
+  // A new binder started since: clear, then take the new one.
+  function deletedElsewhere(user, mark) {
+    clearHere(user.id);
+    acct.state = "";
+    if (mark) {
+      acct.note = t("account.deletedElsewhere");
+      account.signOut("local", "deleted-elsewhere");
+      toast(t("account.deletedElsewhere"));
+    } else {
+      toast(t("account.restarted"));
+      acct.first = true;
+      scheduleAcct(0);
+    }
+    drawSync();
+  }
+
+  function signInWithGoogle() {
+    if (!account || acct.going) return;
+    acct.going = true;
+    acct.error = "";
+    acct.note = "";
+    drawSync('[data-sum="acct-in"]');
+    account.signIn().then(null, function (err) {
+      console.error(err);
+      acct.going = false;
+      acct.error = t("account.err.signin", { why: t("account.err.noCrypto") });
+      drawSync('[data-sum="acct-in"]');
+    });
+  }
+
+  function signOutHere() {
+    clearTimeout(acct.timer);
+    acct.timer = 0;
+    account.signOut("local").then(function () {
+      toast(t("account.signedOut"));
+      drawSync('[data-sum="acct-in"]');
+    });
+  }
+
+  // "Delete my data": the account's binder becomes the mark (stopping every
+  // other device), this device's copy goes, and the sign-in ends everywhere.
+  function deleteMyData() {
+    var user = acctUser();
+    if (!user || acct.deleting) return;
+    acct.deleting = true;
+    acct.stopped = true;
+    acct.error = "";
+    clearTimeout(acct.timer);
+    drawSync('[data-sum="acct-delete-yes"]');
+    var c = acctClient(user.id);
+    (acct.syncing || Promise.resolve()).then(function () {
+      return c.remove();
+    }).then(function () {
+      clearHere(user.id);
+      return account.signOut("global", "deleted");
+    }).then(function () {
+      acct.deleting = false;
+      acct.stopped = false;
+      acct.confirm = false;
+      acct.state = "";
+      acct.note = "";
+      toast(t("account.deleted"));
+      drawSync('[data-sum="acct-in"]');
+    }, function (err) {
+      acct.deleting = false;
+      acct.stopped = false;
+      acct.error = t("account.err." + (err && err.kind && err.kind !== "conflict" ? err.kind : "server"));
+      drawSync('[data-sum="acct-delete-yes"]');
+      scheduleAcct();
+    });
+  }
+
+  function acctStatusText() {
+    if (acct.state === "busy") return t("account.busy");
+    if (acct.state && acct.state !== "ok") return t("account.err." + acct.state);
+    return acct.at ? t("account.ok", { time: syncWhen(acct.at) }) : "";
+  }
+  function acctTrouble() { return !!acct.state && acct.state !== "ok" && acct.state !== "busy"; }
+
+  function who(user) {
+    if (user.name && user.email) return user.name + " (" + user.email + ")";
+    return user.email || user.name || "—";
+  }
+
+  function confirmDeleteHtml() {
+    return '<div class="mine-import is-error" role="group" aria-label="' + esc(t("account.delete")) + '">' +
+      "<p>" + esc(t("account.deleteAsk")) + "</p>" +
+      (syncCfg ? '<p class="mine-import-help">' + esc(t("account.deleteGit")) + "</p>" : "") +
+      (acct.error ? '<p class="mine-error" role="alert">' + esc(acct.error) + "</p>" : "") +
+      '<div class="mine-import-acts mine-more">' +
+        '<button type="button" class="mine-save" data-sum="acct-delete-yes"' + (acct.deleting ? " disabled" : "") + ">" +
+          esc(t(acct.deleting ? "account.deleting" : "account.deleteYes")) + "</button>" +
+        '<button type="button" class="mine-chip" data-sum="acct-download">' + esc(t("account.download")) + "</button>" +
+        '<button type="button" class="mine-textbtn" data-sum="acct-delete-no"' + (acct.deleting ? " disabled" : "") + ">" + esc(t("own.cancel")) + "</button>" +
+      "</div></div>";
+  }
+
+  function accountHtml() {
+    var user = acctUser();
+    var html = '<div class="mine-sync mine-account">';
+    if (!user) {
+      html += '<p class="mine-sync-intro">' + esc(t("account.intro")) + "</p>";
+      if (acct.note) html += '<p class="mine-sync-status is-warn" role="status">' + esc(acct.note) + "</p>";
+      if (acct.error) html += '<p class="mine-error" role="alert">' + esc(acct.error) + "</p>";
+      html += '<div class="mine-slip-acts"><button type="button" class="mine-save" data-sum="acct-in"' + (acct.going ? " disabled" : "") + ">" +
+        esc(t(acct.going ? "account.going" : "account.google")) + "</button></div>" +
+        '<p class="mine-note">' + esc(t("account.privacy")) + "</p>";
+    } else {
+      html += '<p class="mine-sync-on">' + esc(t("account.as", { who: who(user) })) + "</p>" +
+        '<p class="mine-sync-status' + (acctTrouble() ? " is-warn" : "") + '" data-acct-status tabindex="-1" role="status">' + esc(acctStatusText()) + "</p>";
+      if (acct.confirm) html += confirmDeleteHtml();
+      else {
+        html += '<div class="mine-more">' +
+          '<button type="button" class="mine-chip" data-sum="acct-now"' + (acct.state === "busy" ? " disabled" : "") + ">" + esc(t("account.now")) + "</button>" +
+          '<button type="button" class="mine-chip" data-sum="acct-download">' + esc(t("account.download")) + "</button>" +
+          '<button type="button" class="mine-textbtn" data-sum="acct-out">' + esc(t("account.signOut")) + "</button>" +
+          '<button type="button" class="mine-textbtn" data-sum="acct-delete">' + esc(t("account.delete")) + "</button></div>";
+        if (acct.error) html += '<p class="mine-error" role="alert">' + esc(acct.error) + "</p>";
+      }
+      html += '<p class="mine-note">' + esc(t("account.pricesStay")) + "</p>";
+    }
+    html += '<details class="mine-extra" data-acct-advanced' + (acct.advanced ? " open" : "") + "><summary>" + esc(t("account.advanced")) + "</summary>" +
+      githubHtml() + "</details>";
+    return html + "</div>";
+  }
+
+  // The GitHub panel stays open across redraws (toggle doesn't bubble).
+  document.addEventListener("toggle", function (ev) {
+    if (ev.target.matches && ev.target.matches("[data-acct-advanced]")) acct.advanced = ev.target.open;
+  }, true);
+
+  if (account) {
+    account.onChange(function (event, detail) {
+      if (event === "in") {
+        accountsOn = true;
+        acct.at = readAcctAt();
+        acct.note = "";
+        acct.error = "";
+        acct.first = true;
+        scheduleAcct(0);
+      } else if (event === "out") {
+        clearTimeout(acct.timer);
+        acct.timer = 0;
+        acct.state = "";
+        acct.at = "";
+        if (detail === "expired") acct.note = t("account.expired");
+      } else if (event === "error") {
+        acct.going = false;
+        var why = { expired: "account.err.slow", offline: "account.err.signinOffline", refused: "account.err.refused" }[detail];
+        acct.error = t("account.err.signin", { why: why ? t(why) : detail });
+      }
+      drawSync();
+    });
+    // Another tab signed in, refreshed or signed out.
+    root.addEventListener("storage", function (ev) {
+      if (ev.key === null || ev.key === "pullfolio.account") account.reload();
+    });
+    // Coming back from Google: open the panel so it says what happened.
+    account.finish().then(function (result) {
+      if (!result) return;
+      accountsOn = true;
+      shelf.open = "sync";
+      if (result === "in") toast(t("account.welcome", { who: who(acctUser()) }));
+      drawSync(result === "in" ? "[data-acct-status]" : '[data-sum="acct-in"]');
+    });
+  }
+
+  function chipLabel() {
+    if (accountsOn) return t(acctUser() ? "account.chipOn" : "account.chip");
+    return t(syncCfg ? "sync.chipOn" : "sync.chip");
+  }
 
   /* ---- My binder's summary card ---- */
 
   function backupDue(local) {
     if (!Store.model().count()) return false;
     if (syncCfg && syncCfg.at && Date.now() - new Date(syncCfg.at).getTime() < 14 * 864e5) return false;
+    if (acctUser() && acct.at && Date.now() - new Date(acct.at).getTime() < 14 * 864e5) return false;
     if (!local || !local.backupAt) return true;
     var age = Date.now() - new Date(local.backupAt).getTime();
     return local.changes >= 20 || age > 14 * 864e5;
@@ -830,16 +1135,18 @@
     var due = backupDue(local);
     var syncOpen = shelf.open === "sync";
     // The open panel says how sync is doing; the row then shows the last backup.
-    var synced = syncOpen ? "" : syncStatusText();
+    var signed = accountsOn && !!acctUser();
+    var synced = syncOpen ? "" : (signed ? acctStatusText() : syncStatusText());
+    var trouble = signed ? acctTrouble() : syncTrouble();
     html += '<div class="mine-sum-tools">' +
       (rate ? '<button type="button" class="mine-chip' + (inLira ? " is-on" : "") + '" data-sum="lira" aria-pressed="' + inLira + '">' + esc(t("sum.inLira")) + "</button>" : "") +
-      '<span class="mine-backup' + (due || (synced && syncTrouble()) ? " is-due" : "") + '">' +
+      '<span class="mine-backup' + (due || (synced && trouble) ? " is-due" : "") + '">' +
         esc(synced || (local && local.backupAt ? t("backup.last", { date: day(local.backupAt) }) : t("backup.never"))) + "</span>" +
       '<button type="button" class="mine-chip' + (due ? " is-due" : "") + '" data-sum="backup">' + esc(t("backup.download")) + "</button>" +
       '<button type="button" class="mine-chip" data-sum="import">' + esc(t("backup.load")) + "</button>" +
       '<button type="button" class="mine-chip" data-sum="csv">' + esc(t("backup.csv")) + "</button>" +
       '<button type="button" class="mine-chip' + (syncOpen ? " is-on" : "") + '" data-sum="shelf" data-val="sync" aria-expanded="' + syncOpen + '"' +
-        (syncOpen ? ' aria-controls="mine-sync-panel"' : "") + ">" + esc(t(syncCfg ? "sync.chipOn" : "sync.chip")) + "</button>" +
+        (syncOpen ? ' aria-controls="mine-sync-panel"' : "") + ">" + esc(chipLabel()) + "</button>" +
       "</div>" +
       (syncOpen ? '<div class="mine-shelf" id="mine-sync-panel" role="region" aria-label="' + esc(t("sync.chip")) + '">' + syncHtml() + "</div>" : "") +
       (Store.volatile ? '<p class="mine-note is-warn">' + esc(t("store.volatile")) + "</p>" : "") +
@@ -1140,6 +1447,7 @@
     if (!el || !box.contains(el)) return "";
     if (el.name && el.form && el.form.matches("[data-sync-form]")) return '[data-sync-form] [name="' + el.name + '"]';
     if (el.hasAttribute("data-sync-status")) return "[data-sync-status]";
+    if (el.hasAttribute("data-acct-status")) return "[data-acct-status]";
     var act = el.getAttribute("data-sum");
     if (!act) return "";
     var val = el.getAttribute("data-val");
@@ -1166,7 +1474,7 @@
     return '<div class="mine-empty"><p>' + esc(t("mine.empty")) + "</p>" +
       '<div class="mine-sum-tools"><button type="button" class="mine-chip" data-sum="import">' + esc(t("backup.load")) + "</button>" +
       '<button type="button" class="mine-chip" data-sum="shelf" data-val="sync" aria-expanded="' + (shelf.open === "sync") + '">' +
-        esc(t(syncCfg ? "sync.chipOn" : "sync.chip")) + "</button></div>" +
+        esc(chipLabel()) + "</button></div>" +
       (Store.volatile ? '<p class="mine-note is-warn">' + esc(t("store.volatile")) + "</p>" : "") +
       '<div class="mine-shelf" data-mine-sync-empty' + (shelf.open === "sync" ? ">" + syncHtml() : " hidden>") + "</div>" +
       '<div data-mine-import aria-live="polite">' + importHtml() + "</div></div>";
@@ -1193,7 +1501,21 @@
       shelf.open = shelf.open === name ? "" : name;
       drawSync('[data-sum="shelf"][data-val="' + name + '"]');
     } else if (act === "sync-now") syncNow();
-    else if (act === "sync-off") disconnectSync(); else if (act === "by" || act === "range" || act === "days") {
+    else if (act === "sync-off") disconnectSync();
+    else if (act === "acct-in") signInWithGoogle();
+    else if (act === "acct-now") acctNow();
+    else if (act === "acct-out") signOutHere();
+    else if (act === "acct-download") downloadBackup(false);
+    else if (act === "acct-delete") {
+      acct.confirm = true;
+      acct.error = "";
+      drawSync('[data-sum="acct-delete-no"]');
+    } else if (act === "acct-delete-no") {
+      acct.confirm = false;
+      acct.error = "";
+      drawSync('[data-sum="acct-delete"]');
+    } else if (act === "acct-delete-yes") deleteMyData();
+    else if (act === "by" || act === "range" || act === "days") {
       shelf[act] = btn.getAttribute("data-val");
       rerender('[data-sum="' + act + '"][data-val="' + shelf[act] + '"]');
     } else if (act === "filter") {
@@ -1224,8 +1546,15 @@
     if (reason !== "rates") renderSummary();
     if (reason === "load") ensureRates();
     // Opening the site syncs; another tab's save is that tab's to send.
-    if (reason === "load") scheduleSync(1500);
-    else if (!syncApplying && reason !== "reload" && reason !== "backup") scheduleSync();
+    if (reason === "load") { scheduleSync(1500); scheduleAcct(1500); }
+    // Another tab saved: its saved prices may have changed too (a "Delete my
+    // data" there clears them).
+    else if (reason === "reload") Store.readHistory().then(function (h) { history = h; });
+    // What one sync merged in still goes to the other.
+    else if (reason !== "backup" && reason !== "clear") {
+      if (!syncApplying) scheduleSync();
+      if (!acct.applying) scheduleAcct();
+    }
   });
 
   root.PullfolioMine = {

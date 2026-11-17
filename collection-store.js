@@ -53,6 +53,7 @@
   }
   function read(key) { return run("readonly", function (s) { return s.get(key); }); }
   function write(key, value) { return run("readwrite", function (s) { return s.put(value, key); }); }
+  function drop(key) { return run("readwrite", function (s) { return s.delete(key); }); }
 
   function emit(reason) {
     listeners.forEach(function (fn) {
@@ -145,6 +146,18 @@
       return back;
     },
     replace: function (doc) { model.replace(doc, new Date().toISOString()); changed("replace"); },
+    // "Delete my data" (an account's, here or on another device): the binder
+    // goes, with its saved prices and price history. Unlike replace(), it
+    // keeps no record of the cards that were here.
+    clear: function () {
+      model = new core.Model(null);
+      memHistory = null;
+      if (db) {
+        drop(HISTORY_KEY).catch(function (err) { console.error(err); });
+        drop(PRICE_KEY).catch(function (err) { console.error(err); });
+      }
+      changed("clear");
+    },
     mergeIn: function (doc) { model.mergeIn(doc, new Date().toISOString()); changed("merge"); },
     // Catalog fixes (§5 of the plan): saved quietly, without counting as a
     // change the backup reminder should hear about.

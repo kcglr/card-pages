@@ -15,5 +15,9 @@ https://kcglr.github.io/card-pages/
   endorsed or certified by TCGplayer. Stand-in pictures come from TCGplayer
   and TCGdex (https://tcgdex.dev, MIT licence; see `THIRD_PARTY_NOTICES.txt`).
 
+- **Accounts (testing):** opening the site with `?accounts=1` shows "Sign in
+  with Google" in My binder, to save a binder to an account (Supabase).
+  Browsing never needs one. Only invited Google accounts can sign in for now.
+
 An independent, non-commercial fan project. Not affiliated with Nintendo,
 Creatures, GAME FREAK, The Pokémon Company or any marketplace.
