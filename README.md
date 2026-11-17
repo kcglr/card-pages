@@ -5,13 +5,15 @@ https://kcglr.github.io/card-pages/
 
 - **App:** `index.html`, the scripts, styles and `assets/`. Released by hand
   from the source repo (`release.json` names the version).
-- **Data:** `data/` and `details/` (the card list), `links/`, `history/` and
-  `ids/` are rebuilt each Monday; `prices/` every day. Both come from GitHub
-  Actions in the source repo.
-- **Sources:** card data from TCGdex (https://tcgdex.dev, MIT licence; see
-  `THIRD_PARTY_NOTICES.txt`) and TCGplayer products and prices via TCGCSV
-  (https://tcgcsv.com). This product uses TCGplayer data but is not endorsed
-  or certified by TCGplayer.
+- **Data:** `data/` and `details/` (the card list), `links/` and `history/`
+  are rebuilt each Monday; `prices/` every day. Both come from GitHub Actions
+  in the source repo. `ids/` belongs to the standby card list and is not
+  used by the app.
+- **Sources:** cards and pictures from PokéCottage's master sets
+  (https://pokecottage.com). Prices are our own, from TCGplayer data via
+  TCGCSV (https://tcgcsv.com). This product uses TCGplayer data but is not
+  endorsed or certified by TCGplayer. Stand-in pictures come from TCGplayer
+  and TCGdex (https://tcgdex.dev, MIT licence; see `THIRD_PARTY_NOTICES.txt`).
 
-An independent fan project. Not affiliated with Nintendo, Creatures,
-GAME FREAK, The Pokémon Company or any marketplace.
+An independent, non-commercial fan project. Not affiliated with Nintendo,
+Creatures, GAME FREAK, The Pokémon Company or any marketplace.

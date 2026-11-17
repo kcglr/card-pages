@@ -1,16 +1,18 @@
-/* ImageFallback: when a card picture from TCGdex's image server fails to
-   load (TCGdex has no picture of that card, or the server is down), show
-   TCGplayer's picture of the same product instead. A TCGplayer picture that
-   fails, or a TCGdex one with no product to fall back to, is hidden, so the
-   card back under it shows. docs/CARD-LIST-OPTIONS.md §6.4.
+/* ImageFallback: when a card picture from PokéCottage's image server fails
+   to load (the server is down, or it stops serving other sites), show
+   TCGplayer's picture of the same product instead, and when that fails too,
+   TCGdex's picture of the card. When every stand-in fails, or there is none,
+   the picture is hidden, so the card back under it shows.
+   docs/SITE-PLAN.md §4, docs/OWN-CATALOG-SWITCH.md.
 
    One listener on the whole page catches the failures, so the binders, card
    files, search results and My binder all get it. The page tells it each
-   card's product id with remember() as cards load.
+   card's product id and TCGdex picture (data/<key>.json's "tcgdex",
+   "en/swsh/swsh4/030") with remember() as cards load.
 
    TCGplayer has one picture per product, so a reverse holo or a stamped
    printing falls back to the plain card. A product without a picture gets
-   TCGplayer's "no image" placeholder. */
+   TCGplayer's "no image" placeholder or an error, and then TCGdex's. */
 (function (root, factory) {
   if (typeof module === "object" && module.exports) {
     module.exports = factory();
@@ -21,45 +23,62 @@
 })(typeof window !== "undefined" ? window : this, function () {
   "use strict";
 
-  var SOURCE = /^https:\/\/assets\.tcgdex\.net\//;
+  var SOURCE = /^https:\/\/pokecottagecdn\.com\//;
   var TCGPLAYER = "https://tcgplayer-cdn.tcgplayer.com/product/";
-  var KNOWN = /^https:\/\/(assets\.tcgdex\.net|tcgplayer-cdn\.tcgplayer\.com)\//;
+  var TCGDEX = "https://assets.tcgdex.net/";
+  var KNOWN = /^https:\/\/(pokecottagecdn\.com|tcgplayer-cdn\.tcgplayer\.com|assets\.tcgdex\.net)\//;
   var PID = /^\d{1,12}$/;
-  // After this many TCGdex pictures fail in a row, src() skips it.
+  var DEX = /^(en|ja)\/[A-Za-z0-9.-]+\/[A-Za-z0-9.-]+\/[A-Za-z0-9.-]+$/;
+  // After this many PokéCottage pictures fail in a row, src() skips it.
   var DOWN_AFTER = 3;
 
   function isSource(url) { return SOURCE.test(String(url || "")); }
-  function isLarge(url) { return /\/high\.[a-z]+$/i.test(String(url || "")); }
 
   // TCGplayer's picture of a product: 1000 for the card page, 400 for a
-  // binder pocket (TCGdex's are 600×825 and 245×337).
+  // binder pocket (PokéCottage's are 733×1024 and 360 wide).
   function tcgplayer(pid, large) {
     pid = String(pid || "");
     return PID.test(pid) ? TCGPLAYER + pid + (large ? "_in_1000x1000.jpg" : "_in_400x400.jpg") : "";
   }
 
-  var pids = {};
-  // cards: [{ image, imageLarge, productId }], as in data/<key>.json and My
-  // binder's copies.
+  // TCGdex's picture of a card: 600×825 for the card page, 245×337 for a pocket.
+  function tcgdex(path, large) {
+    path = String(path || "");
+    return DEX.test(path) ? TCGDEX + path + (large ? "/high.webp" : "/low.webp") : "";
+  }
+
+  // A PokéCottage picture -> its stand-ins in order; a stand-in -> the next.
+  var chains = {};
+  var nextOf = {};
+  // cards: [{ image, imageLarge, productId, tcgdex }], as in data/<key>.json
+  // and My binder's copies.
   function remember(cards) {
     (cards || []).forEach(function (c) {
-      var pid = String((c && c.productId) || "");
-      if (!PID.test(pid)) return;
-      if (isSource(c.image)) pids[c.image] = pid;
-      if (isSource(c.imageLarge)) pids[c.imageLarge] = pid;
+      if (!c) return;
+      [[c.image, false], [c.imageLarge, true]].forEach(function (pair) {
+        var url = pair[0];
+        if (!isSource(url)) return;
+        var list = [tcgplayer(c.productId, pair[1]), tcgdex(c.tcgdex, pair[1])].filter(Boolean);
+        if (!list.length) return;
+        chains[url] = list;
+        for (var i = 0; i + 1 < list.length; i++) nextOf[list[i]] = list[i + 1];
+      });
     });
   }
 
-  // The stand-in for a TCGdex picture, "" when there's none.
+  // The stand-in for a picture that failed, "" when there's none: the first
+  // for a PokéCottage picture, the next one for a stand-in.
   function fallbackFor(url) {
-    return isSource(url) ? tcgplayer(pids[url], isLarge(url)) : "";
+    url = String(url || "");
+    if (isSource(url)) return (chains[url] || [])[0] || "";
+    return nextOf[url] || "";
   }
 
   var streak = 0;
   function down() { return streak >= DOWN_AFTER; }
 
   // For pictures the page loads itself (preloads, the large scan): the
-  // stand-in once TCGdex keeps failing, else the URL as it is.
+  // stand-in once PokéCottage keeps failing, else the URL as it is.
   function src(url) { return (down() && fallbackFor(url)) || url; }
 
   function urlOf(img) { return img.getAttribute("src") || img.currentSrc || img.src || ""; }
@@ -70,7 +89,7 @@
     var url = urlOf(img);
     if (!KNOWN.test(url)) return;
     if (isSource(url)) streak++;
-    var alt = img.getAttribute("data-fallback") ? "" : fallbackFor(url);
+    var alt = fallbackFor(url);
     // Without a stand-in the page's own handler runs, as before. The picture
     // is hidden first: a binder pocket has no handler, and Chrome and Safari
     // would draw a broken-image icon over the card back. A later load that
@@ -82,7 +101,7 @@
     }
     // Otherwise it must not: some hide or remove the picture.
     event.stopPropagation();
-    img.setAttribute("data-fallback", "tcgplayer");
+    img.setAttribute("data-fallback", alt.indexOf(TCGDEX) === 0 ? "tcgdex" : "tcgplayer");
     if (img.style && img.style.visibility === "hidden") img.style.visibility = "";
     img.src = alt;
   }
@@ -109,6 +128,7 @@
 
   return {
     tcgplayer: tcgplayer,
+    tcgdex: tcgdex,
     remember: remember,
     fallbackFor: fallbackFor,
     src: src,

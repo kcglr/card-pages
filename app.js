@@ -593,9 +593,11 @@
       footer.textContent = time ? t(fallback ? "mine.footer.fallback" : "mine.footer", { time: time }) : "";
       return;
     }
+    var slug = current.meta.slug || (current.meta.key || "").replace(/^\d+-/, "");
     footer.innerHTML = (time ? escapeHtml(t(fallback ? "footer.fallback" : "footer.prices", { time: time })) + " " : "") +
-      escapeHtml(t("footer.list")) + ' <a href="https://tcgdex.dev" target="_blank" rel="noopener noreferrer">TCGdex</a>' +
-      escapeHtml(t("footer.and")) + '<a href="https://tcgcsv.com" target="_blank" rel="noopener noreferrer">TCGCSV</a>. ' +
+      escapeHtml(t("footer.list")) + ' <a href="https://pokecottage.com/pokemon-master-sets/' + encodeURIComponent(slug) +
+      '" target="_blank" rel="noopener noreferrer">PokéCottage</a>. ' +
+      escapeHtml(t("footer.pricesFrom")) + ' <a href="https://tcgcsv.com" target="_blank" rel="noopener noreferrer">TCGCSV</a>. ' +
       escapeHtml(t("footer.rest"));
   }
 
@@ -972,10 +974,10 @@
 
   /* ---- the inspect sheet ---- */
 
-  // Card details from build_catalog.py: the illustrator and the set's series
-  // (older files also carry where a promo was found, a note and better promo
-  // dates). One small file per Pokémon, fetched when its binder opens.
-  var DETAILS_V = "20261116r4";
+  // Card details from build_details.py: the illustrator, the set's series, the
+  // product a promo was first found in, a collector's note and better promo
+  // dates. One small file per Pokémon, fetched when its binder opens.
+  var DETAILS_V = "20261117pc";
   var detailsCache = {};
 
   function loadDetails(key) {
@@ -1147,9 +1149,10 @@
           var img = art.querySelector("img");
           if (activeCard === card && img) img.src = largeSrc;
         };
-        // TCGdex's scan didn't load: try TCGplayer's (image-fallback.js).
+        // PokéCottage's scan didn't load: try TCGplayer's, then TCGdex's
+        // (image-fallback.js), one after the other.
         large.onerror = function () {
-          var alt = fallback && fallback.fallbackFor(card.imageLarge);
+          var alt = fallback && fallback.fallbackFor(largeSrc);
           if (alt && alt !== largeSrc) { largeSrc = alt; large.src = alt; }
         };
         large.src = largeSrc;
@@ -2859,7 +2862,7 @@
         if (!res.ok) throw new Error("data " + res.status);
         return res.json();
       }).then(function (data) {
-        // So a TCGdex picture that fails can fall back to TCGplayer's.
+        // So a PokéCottage picture that fails can fall back to TCGplayer's or TCGdex's.
         if (window.ImageFallback && data) window.ImageFallback.remember(data.cards);
         return data;
       });
