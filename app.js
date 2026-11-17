@@ -259,6 +259,29 @@
     });
   }
 
+  // fetchPrices, with our own weekly market prices (history/<key>.json)
+  // standing in for whatever the service couldn't answer, because it's down
+  // or stops answering this site (price-fallback.js, docs/SITE-PLAN.md §4).
+  // cards: the cards asked for, for their Pokémon's history files.
+  function fetchPricesSafe(ids, cards, onChunk) {
+    return fetchPrices(ids, onChunk).then(function (result) {
+      if (!result.failed || !window.PriceFallback) return result;
+      return window.PriceFallback.fill(result, ids, (cards || []).map(function (c) { return c.species; }));
+    });
+  }
+
+  // The status line once prices are in, when some are missing. (Stand-ins
+  // get their own line from applyFetchedPrices.)
+  function priceStatus(result, summary) {
+    if (summary && result.failed && !result.fallback) setStatus("status.partial", { n: summary.priced, time: summary.when }, true);
+  }
+
+  // "16 Nov": stand-in prices are a week's, so they're dated by day.
+  function dayLabel(day) {
+    var d = new Date(day + "T00:00:00Z");
+    return isNaN(d.getTime()) ? day : d.toLocaleDateString(i18n.locale(), { day: "numeric", month: "short", timeZone: "UTC" });
+  }
+
   /* ---- rendering ---- */
 
   var binder = null;
@@ -1075,12 +1098,19 @@
       art.innerHTML = '<img src="' + escapeHtml(small) + '" alt="">';
       // Start with the image already in the binder, then sharpen to the large scan.
       if (card.imageLarge && card.imageLarge !== small) {
+        var fallback = window.ImageFallback;
+        var largeSrc = fallback ? fallback.src(card.imageLarge) : card.imageLarge;
         var large = new Image();
         large.onload = function () {
           var img = art.querySelector("img");
-          if (activeCard === card && img) img.src = card.imageLarge;
+          if (activeCard === card && img) img.src = largeSrc;
         };
-        large.src = card.imageLarge;
+        // PokéCottage's scan didn't load: try TCGplayer's (image-fallback.js).
+        large.onerror = function () {
+          var alt = fallback && fallback.fallbackFor(card.imageLarge);
+          if (alt && alt !== largeSrc) { largeSrc = alt; large.src = alt; }
+        };
+        large.src = largeSrc;
       }
     } else {
       art.classList.add("is-empty");
@@ -1672,15 +1702,19 @@
       if (c.productId) pidCounts[String(c.productId)] = (pidCounts[String(c.productId)] || 0) + 1;
     });
     var priced = 0;
+    var standIn = ""; // the newest week a stand-in price is from (price-fallback.js)
     current.cards.forEach(function (card) {
       card.price = applyPriceToCard(card, payloads, pidCounts);
       if (card.price) priced++;
+      var p = card.price && payloads[String(card.productId)];
+      if (p && p.asOf > standIn) standIn = p.asOf;
     });
     var elapsed = started ? Math.max(0, Date.now() - started) : 0;
-    var when = formatIstanbul(updatedAt || Date.now());
+    var when = standIn ? dayLabel(standIn) : formatIstanbul(updatedAt || Date.now());
     current.priceTime = when;
     current.priced = priced;
-    setStatus("status.priced", {
+    if (standIn) setStatus("status.fallback", { n: priced, time: when }, true);
+    else setStatus("status.priced", {
       n: priced,
       time: when,
       elapsed: function () {
@@ -1777,15 +1811,12 @@
       setStatus("status.fetching");
       var ids = cards.map(function (c) { return c.productId; }).filter(Boolean);
       var t0 = Date.now();
-      return fetchPrices(ids, function (partial, updatedAt) {
+      return fetchPricesSafe(ids, cards, function (partial, updatedAt) {
         if (token !== loadToken) return;
         applyFetchedPrices(partial, updatedAt, t0);
       }).then(function (result) {
         if (token !== loadToken) return;
-        var summary = applyFetchedPrices(result.prices, result.updatedAt, t0);
-        if (result.failed && summary) {
-          setStatus("status.partial", { n: summary.priced, time: summary.when }, true);
-        }
+        priceStatus(result, applyFetchedPrices(result.prices, result.updatedAt, t0));
         current.elapsedMs = Date.now() - t0;
       });
     }).catch(function (err) {
@@ -1821,7 +1852,7 @@
       if (!groups[c.card]) { groups[c.card] = []; order.push(c.card); }
       groups[c.card].push(c);
     });
-    return order.map(function (id) {
+    var cards = order.map(function (id) {
       var copies = groups[id];
       var s = copies[0].snap;
       return {
@@ -1835,6 +1866,8 @@
         mineAdded: copies.reduce(function (m, c) { return c.added > m ? c.added : m; }, "")
       };
     });
+    if (window.ImageFallback) window.ImageFallback.remember(cards);
+    return cards;
   }
 
   // Each pocket's value (every copy, my value first) and gain, for sorting.
@@ -1917,6 +1950,7 @@
         meta: { key: MINE_KEY, mine: true, name: t("mine.title"), number: 0 },
         cards: mineCards(),
         payloads: (saved && saved.payloads) || {},
+        savedAt: (saved && saved.updatedAt) || "",
         priced: 0,
         priceTime: saved && saved.updatedAt ? formatIstanbul(saved.updatedAt) : ""
       };
@@ -1942,18 +1976,25 @@
     current.fetching = true;
     setStatus("status.fetching");
     renderMineSummary();
-    fetchPrices(ids, function (partial, updatedAt) {
+    fetchPricesSafe(ids, current.cards, function (partial, updatedAt) {
       if (token !== loadToken) return;
       applyFetchedPrices(Object.assign({}, base, partial), updatedAt, t0);
     }).then(function (result) {
       if (token !== loadToken || !current) return;
       current.fetching = false;
       var merged = Object.assign({}, base, result.prices);
-      var summary = applyFetchedPrices(merged, result.updatedAt, t0);
-      if (result.failed && summary) setStatus("status.partial", { n: summary.priced, time: summary.when }, true);
+      // A stand-in doesn't replace a price saved from the service on a later day.
+      var savedDay = String(current.savedAt || "").slice(0, 10);
+      Object.keys(base).forEach(function (id) {
+        var got = merged[id];
+        if (got && got.asOf && !base[id].asOf && savedDay >= got.asOf) merged[id] = base[id];
+      });
+      priceStatus(result, applyFetchedPrices(merged, result.updatedAt, t0));
       var keep = {};
-      ids.forEach(function (id) { if (merged[id]) keep[id] = merged[id]; });
+      ids.forEach(function (id) { if (merged[id] && !merged[id].asOf) keep[id] = merged[id]; });
       if (!Object.keys(result.prices).length) return;
+      // Week-old stand-ins aren't today's prices: neither kept nor recorded.
+      if (result.fallback) return;
       Store.writePrices(keep, result.updatedAt);
       // Today's price of each card goes into the history (one record a day).
       var todays = {};
@@ -2035,7 +2076,7 @@
       .map(function (c) { return c.productId; });
     if (missing.length) {
       var token = loadToken;
-      fetchPrices(missing).then(function (result) {
+      fetchPricesSafe(missing, current.cards).then(function (result) {
         if (token !== loadToken || !current) return;
         applyFetchedPrices(Object.assign({}, current.payloads, result.prices), result.updatedAt, 0);
       });
@@ -2731,6 +2772,10 @@
       var load = speciesFiles[key] = fetch("data/" + encodeURIComponent(key) + ".json", { cache: "default" }).then(function (res) {
         if (!res.ok) throw new Error("data " + res.status);
         return res.json();
+      }).then(function (data) {
+        // So a picture PokéCottage stops serving can fall back to TCGplayer's.
+        if (window.ImageFallback && data) window.ImageFallback.remember(data.cards);
+        return data;
       });
       load.catch(function () { if (speciesFiles[key] === load) delete speciesFiles[key]; });
     }

@@ -141,6 +141,7 @@
       "status.fetching": "Fetching live prices…",
       "status.priced": "{n} priced · prices live from TCGplayer · {time}{elapsed}",
       "status.partial": "{n} priced · some price requests failed · {time}",
+      "status.fallback": "{n} priced · the price service didn't answer, so these are TCGplayer market prices from {time}",
 
       "nav.mine": "My binder",
       "title.mine": "My binder · {brand}",
@@ -454,6 +455,7 @@
       "status.fetching": "Canlı fiyatlar alınıyor…",
       "status.priced": "{n} fiyatlı · fiyatlar TCGplayer'dan canlı · {time}{elapsed}",
       "status.partial": "{n} fiyatlı · bazı fiyat istekleri başarısız · {time}",
+      "status.fallback": "{n} fiyatlı · fiyat servisi yanıt vermedi, bunlar {time} tarihli TCGplayer piyasa fiyatları",
 
       "nav.mine": "Klasörüm",
       "title.mine": "Klasörüm · {brand}",
