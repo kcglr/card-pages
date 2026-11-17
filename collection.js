@@ -673,7 +673,7 @@
     syncState = "";
     saveSync();
     toast(t("sync.offDone"));
-    drawSync(accountsOn ? "[data-acct-advanced] > summary" : '[data-sum="shelf"][data-val="sync"]');
+    drawSync("[data-sync-title]");
   }
 
   // "14:05" today, else the date.
@@ -701,12 +701,17 @@
     return '<a href="' + esc(href) + '" target="_blank" rel="noopener noreferrer">' + esc(text) + "</a>";
   }
 
-  // The panel behind the "Sync with GitHub" chip. Once accounts are on there
-  // is no chip: GitHub sync is under "Advanced" in the account card.
-  function syncHtml() { return githubHtml(); }
+  // The panel behind "Sync with GitHub" (the summary card's "⋯", the empty
+  // binder's chip, or "Advanced" in the account dropdown), with its title
+  // and a close button.
+  function syncHtml(fixedId) {
+    return '<div class="mine-sync-head"><p class="mine-sync-title" tabindex="-1" data-sync-title>' + esc(t("sync.chip")) + "</p>" +
+      '<button type="button" class="mine-x" data-sum="sync-close" aria-label="' + esc(t("sync.close")) + '">' +
+        '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>' +
+      githubHtml(fixedId);
+  }
 
-  // fixedId: the form's field ids where the panel is redrawn only when its
-  // HTML changes (the account card); else a new one each time, as before.
+  // fixedId: fixed ids for the form's fields; else a new one each time.
   function githubHtml(fixedId) {
     if (syncCfg) {
       var url = repoUrl(syncCfg.repo);
@@ -741,24 +746,59 @@
       '<p class="mine-note">' + esc(t("sync.privacy")) + "</p></div>";
   }
 
-  // The panel is in the summary card, or under the empty binder's help;
-  // once accounts are on, in the account card at the top instead.
+  // The panel is in the summary card, or under the empty binder's help.
+  // The account is in the top bar's dropdown.
   function drawSync(focus) {
-    if (accountsOn && shelf.open === "sync") shelf.open = "";
     drawTopButton();
+    drawPops();
     renderSummary();
     var empty = document.querySelector("[data-mine-sync-empty]");
     if (empty) {
       var open = shelf.open === "sync";
-      empty.innerHTML = open ? syncHtml() : "";
+      var panel = open ? syncHtml("sync-empty") : "";
+      // Redrawn only when it changed, so typing in the form isn't lost.
+      if (empty.getAttribute("data-drawn") !== panel) {
+        var keep = focusKey(document.activeElement, empty);
+        empty.innerHTML = panel;
+        empty.setAttribute("data-drawn", panel);
+        var back = keep ? empty.querySelector(keep) : null;
+        if (back) back.focus({ preventScroll: true });
+      }
       empty.hidden = !open;
       var chip = document.querySelector('.mine-empty [data-sum="shelf"][data-val="sync"]');
       if (chip) chip.setAttribute("aria-expanded", open ? "true" : "false");
     }
     if (focus) {
-      var el = document.querySelector("#mine-account " + focus + ", [data-mine-sync-empty] " + focus + ", #mine-summary " + focus);
+      var el = document.querySelector("#acct-pop " + focus + ", #sum-pop " + focus + ", [data-mine-sync-empty] " + focus + ", #mine-summary " + focus);
       if (el) el.focus({ preventScroll: true });
     }
+  }
+
+  // "Sync with GitHub" from a dropdown: the panel opens in My binder (which
+  // opens first if it isn't open), with focus on its title.
+  function openGithub() {
+    if (popOpen) closePop(popOpen, false);
+    shelf.open = "sync";
+    if (!document.querySelector("#result .result-header.is-mine")) {
+      var link = document.querySelector(".mine-link");
+      if (link) link.click();
+    }
+    drawSync();
+    focusGithub(0);
+  }
+  function focusGithub(tries) {
+    var title = document.querySelector("#mine-sync-panel [data-sync-title], [data-mine-sync-empty]:not([hidden]) [data-sync-title]");
+    if (title) {
+      title.focus({ preventScroll: true });
+      title.scrollIntoView({ block: "center" });
+    } else if (tries < 30) setTimeout(function () { focusGithub(tries + 1); }, 100);
+  }
+  function closeGithub() {
+    shelf.open = "";
+    var chip = document.querySelector('.mine-empty [data-sum="shelf"][data-val="sync"]');
+    drawSync();
+    var back = chip && chip.isConnected ? chip : document.querySelector('#mine-summary [data-sum="sum-menu"]') || (accountsOn ? $("acct-link") : null);
+    if (back) back.focus({ preventScroll: true });
   }
 
   document.addEventListener("submit", function (ev) {
@@ -812,9 +852,6 @@
     confirm: false, // "Delete my data?" is showing
     deleting: false,
     stopped: false, // while deleting: nothing more goes up
-    advanced: false, // the GitHub panel is open
-    menu: false, // the account card's "More" is open
-    focusPending: false, // the top bar's account button was used: focus the card once drawn
     leaving: false, // Sign out: saving first
     leaveAsk: false, // the save before signing out couldn't finish: asking
     uid: "", // who is (or was last) signed in here
@@ -986,8 +1023,9 @@
       acct.leaving = false;
       if (result === "ask") {
         acct.leaveAsk = true;
-        acct.menu = true;
-        drawSync('[data-sum="acct-stay"]');
+        // The question is in the account's dropdown (opened again if it was closed).
+        if (popOpen === "acct") drawSync('[data-sum="acct-stay"]');
+        else openPop("acct", '[data-sum="acct-stay"]');
       }
     }, function (err) {
       console.error(err);
@@ -1004,7 +1042,8 @@
       return Store.flush(); // the other tabs read it now
     }).then(function () {
       toast(t("account.signedOut") + (git ? " " + t("account.signedOutGit") : ""));
-      drawSync('[data-sum="acct-in"]');
+      closePop("acct", true);
+      drawSync();
     });
   }
 
@@ -1017,10 +1056,13 @@
       if (reason === "expired") {
         acct.note = "account.expiredCleared";
         acct.noteMore = git ? "account.signedOutGit" : "";
+        toast(t(acct.note) + (git ? " " + t(acct.noteMore) : ""));
       }
     } else if (plan === "keep") {
+      // Said once here; the dropdown and a red dot on "Sign in" keep saying it.
       acct.note = "account.expiredKept";
       acct.noteMore = "";
+      toast(t(acct.note));
     } else if (plan === "reload") {
       return Store.reload().then(function () { drawSync(); });
     }
@@ -1047,11 +1089,11 @@
       acct.deleting = false;
       acct.stopped = false;
       acct.confirm = false;
-      acct.menu = false;
       acct.state = "";
       acct.note = "";
       toast(t("account.deleted"));
-      drawSync('[data-sum="acct-in"]');
+      closePop("acct", true);
+      drawSync();
     }, function (err) {
       acct.deleting = false;
       acct.stopped = false;
@@ -1079,31 +1121,16 @@
       (syncCfg ? '<p class="mine-import-help">' + esc(t("account.deleteGit")) + "</p>" : "") +
       (acct.error ? '<p class="mine-error" role="alert">' + esc(acct.error) + "</p>" : "") +
       '<div class="mine-import-acts mine-more">' +
-        '<button type="button" class="mine-save" data-sum="acct-delete-yes"' + busyAttr(acct.deleting) + ">" +
+        '<button type="button" class="mine-save pop-item" data-sum="acct-delete-yes"' + busyAttr(acct.deleting) + ">" +
           esc(t(acct.deleting ? "account.deleting" : "account.deleteYes")) + "</button>" +
-        '<button type="button" class="mine-chip" data-sum="acct-download">' + esc(t("account.download")) + "</button>" +
-        '<button type="button" class="mine-textbtn" data-sum="acct-delete-no"' + busyAttr(acct.deleting) + ">" + esc(t("own.cancel")) + "</button>" +
+        '<button type="button" class="mine-chip pop-item" data-sum="acct-download">' + esc(t("account.download")) + "</button>" +
+        '<button type="button" class="mine-textbtn pop-item" data-sum="acct-delete-no"' + busyAttr(acct.deleting) + ">" + esc(t("own.cancel")) + "</button>" +
       "</div></div>";
   }
 
-  // The account card at the top of My binder, once accounts are on. Signed
-  // out: a line, the Google button and the privacy note. Signed in: one row
-  // saying how saving is going, with the rest under "More". GitHub sync stays
-  // tucked under "Advanced" either way.
   function initial(user) {
     var s = String((user && (user.name || user.email)) || "").replace(/^[\s"'(]+/, "");
     return (s.charAt(0) || "?").toUpperCase();
-  }
-
-  function acctShortText() {
-    if (acct.state === "busy") return t("account.busyShort");
-    if (acctTrouble()) return t("account.troubleShort");
-    return acct.at ? t("account.okShort", { time: syncWhen(acct.at) }) : "";
-  }
-
-  function advancedHtml() {
-    return '<details class="mine-extra acct-extra" data-acct-advanced' + (acct.advanced ? " open" : "") + "><summary>" + esc(t("account.advanced")) + "</summary>" +
-      '<div class="acct-github">' + githubHtml("acct-sync") + "</div></details>";
   }
 
   // Buttons that are busy say so with aria-disabled, so focus stays on them.
@@ -1115,91 +1142,307 @@
       "<p>" + esc(t("account.leaveAsk")) + "</p>" +
       '<p class="mine-import-help">' + esc(t("account.leaveHelp")) + "</p>" +
       '<div class="mine-import-acts mine-more">' +
-        '<button type="button" class="mine-save" data-sum="acct-download">' + esc(t("account.leaveDownload")) + "</button>" +
-        '<button type="button" class="mine-chip" data-sum="acct-leave-anyway">' + esc(t("account.leaveAnyway")) + "</button>" +
-        '<button type="button" class="mine-textbtn" data-sum="acct-stay">' + esc(t("account.stay")) + "</button>" +
+        '<button type="button" class="mine-save pop-item" data-sum="acct-download">' + esc(t("account.leaveDownload")) + "</button>" +
+        '<button type="button" class="mine-chip pop-item" data-sum="acct-leave-anyway">' + esc(t("account.leaveAnyway")) + "</button>" +
+        '<button type="button" class="mine-textbtn pop-item" data-sum="acct-stay">' + esc(t("account.stay")) + "</button>" +
       "</div></div>";
   }
 
-  function accountCardHtml() {
+  /* ---- dropdowns: the account's (top bar) and the summary card's "⋯" ---- */
+
+  // One open at a time: a cream card on the page (position: absolute) with a
+  // caret pointing at its button. The button is found again each time, as
+  // the summary card draws its "⋯" anew. The account's is a dialog (it can
+  // hold a question); the "⋯" is a menu.
+  var POPS = {
+    acct: { anchor: "#acct-link", role: "dialog" },
+    sum: { anchor: '#mine-summary [data-sum="sum-menu"]', role: "menu" }
+  };
+  var popOpen = ""; // "acct", "sum" or ""
+  var popDrawn = {};
+  var popTick = 0;
+
+  function popAnchor(name) { return document.querySelector(POPS[name].anchor); }
+
+  function popBox(name) {
+    var el = $(name + "-pop");
+    if (el || !document.body) return el;
+    el = document.createElement("div");
+    el.id = name + "-pop";
+    el.className = "pop pop-" + name;
+    el.setAttribute("role", POPS[name].role);
+    el.tabIndex = -1;
+    document.body.appendChild(el);
+    popKeys(name, el);
+    return el;
+  }
+
+  // Under its button, right edges lined up; the account's spans the screen
+  // (16 px each side) on a phone, just under the top bar.
+  function placePop(name) {
+    var el = $(name + "-pop");
+    var btn = popAnchor(name);
+    if (!el || !btn) return;
+    var r = btn.getBoundingClientRect();
+    var vw = document.documentElement.clientWidth;
+    var width, left, top;
+    if (name === "acct" && vw < 600) {
+      var bar = document.querySelector(".topbar");
+      width = vw - 32;
+      left = 16;
+      top = Math.max(r.bottom, bar ? bar.getBoundingClientRect().bottom : 0) + 12;
+    } else {
+      width = Math.min(name === "acct" ? 320 : 300, vw - 32);
+      left = Math.min(Math.max(16, r.right + 4 - width), vw - 16 - width);
+      top = r.bottom + 12;
+    }
+    el.style.width = width + "px";
+    el.style.left = Math.round(left + (root.pageXOffset || 0)) + "px";
+    el.style.top = Math.round(top + (root.pageYOffset || 0)) + "px";
+    el.style.setProperty("--caret", Math.round(Math.min(Math.max(r.left + r.width / 2 - left, 22), width - 22)) + "px");
+  }
+
+  function drawPop(name, html, label) {
+    var el = popBox(name);
+    if (!el) return;
+    el.setAttribute("aria-label", label);
+    if (popDrawn[name] !== html) {
+      var focus = focusKey(document.activeElement, el);
+      el.innerHTML = '<span class="pop-caret" aria-hidden="true"></span>' + html;
+      popDrawn[name] = html;
+      var again = focus ? el.querySelector(focus) : null;
+      if (again) again.focus({ preventScroll: true });
+    }
+    if (popOpen === name) placePop(name);
+  }
+
+  function drawPops() {
+    if (popOpen === "acct") drawPop("acct", accountPopHtml(), t("account.card"));
+    if (popOpen === "sum") drawPop("sum", sumMenuHtml(), t("sum.menu"));
+  }
+
+  function openPop(name, focus) {
+    if (popOpen && popOpen !== name) closePop(popOpen, false);
+    var btn = popAnchor(name);
+    var el = popBox(name);
+    if (!btn || !el) return;
+    popOpen = name;
+    drawPops();
+    placePop(name);
+    el.classList.add("is-open");
+    btn.setAttribute("aria-expanded", "true");
+    btn.classList.add("is-on");
+    var target = (focus && el.querySelector(focus)) || el.querySelector("[data-pop-first]") || el.querySelector(".pop-item") || el;
+    target.focus({ preventScroll: true });
+    // "Saved · 2 min ago" keeps up while it's open.
+    clearInterval(popTick);
+    if (name === "acct") popTick = setInterval(drawPops, 30000);
+  }
+
+  function closePop(name, focusBack) {
+    if (!name || popOpen !== name) return;
+    popOpen = "";
+    clearInterval(popTick);
+    var el = $(name + "-pop");
+    if (el) el.classList.remove("is-open");
+    var btn = popAnchor(name);
+    if (btn) {
+      btn.setAttribute("aria-expanded", "false");
+      btn.classList.remove("is-on");
+    }
+    // A question in the account's dropdown goes with it (not mid-delete).
+    if (name === "acct" && !acct.deleting) {
+      acct.confirm = false;
+      acct.leaveAsk = false;
+      if (acctUser()) acct.error = "";
+    }
+    if (focusBack && btn) btn.focus({ preventScroll: true });
+  }
+
+  // Up/Down (Home/End) move between the items; Escape puts a question away
+  // first, then the dropdown, with focus back on its button. Tab out of the
+  // account's leaves it closed; Tab in the "⋯" menu closes it, as menus do.
+  function popKeys(name, el) {
+    el.addEventListener("keydown", function (ev) {
+      if (ev.key === "Escape") {
+        ev.preventDefault();
+        ev.stopPropagation();
+        if (name === "acct") {
+          if (acct.deleting) return;
+          if (acct.confirm) { acct.confirm = false; acct.error = ""; drawSync('[data-sum="acct-delete"]'); return; }
+          if (acct.leaveAsk) { acct.leaveAsk = false; drawSync('[data-sum="acct-out"]'); return; }
+        }
+        closePop(name, true);
+      } else if (ev.key === "ArrowDown" || ev.key === "ArrowUp" || ev.key === "Home" || ev.key === "End") {
+        if (ev.target.closest && ev.target.closest("input, select, textarea")) return;
+        var items = Array.prototype.filter.call(el.querySelectorAll(".pop-item"), function (b) { return b.getClientRects().length; });
+        if (!items.length) return;
+        ev.preventDefault();
+        ev.stopPropagation();
+        var i = items.indexOf(document.activeElement);
+        var next = ev.key === "Home" ? 0 : ev.key === "End" ? items.length - 1 :
+          ev.key === "ArrowDown" ? (i + 1) % items.length : (i <= 0 ? items.length - 1 : i - 1);
+        items[next].focus();
+      } else if (ev.key === "ArrowLeft" || ev.key === "ArrowRight") {
+        ev.stopPropagation(); // not a page turn in the binder underneath
+      } else if (ev.key === "Tab") {
+        if (name === "sum") { ev.preventDefault(); closePop(name, true); return; }
+        var stops = Array.prototype.filter.call(el.querySelectorAll("button, a[href], input, select, textarea, summary"), function (b) {
+          return !b.disabled && b.tabIndex >= 0 && b.getClientRects().length;
+        });
+        var at = stops.indexOf(document.activeElement);
+        if (ev.shiftKey && at <= 0) { ev.preventDefault(); closePop(name, true); }
+        else if (!ev.shiftKey && at === stops.length - 1) closePop(name, true); // Tab goes on from the button
+      }
+    });
+    el.addEventListener("focusout", function (ev) {
+      var to = ev.relatedTarget;
+      if (!to || popOpen !== name || el.contains(to)) return;
+      var btn = popAnchor(name);
+      if (btn && btn.contains(to)) return;
+      if (name === "acct" && acct.deleting) return;
+      closePop(name, false);
+    });
+  }
+
+  // A click anywhere else closes it (capture: before a click inside redraws it).
+  document.addEventListener("click", function (ev) {
+    if (!popOpen) return;
+    var el = $(popOpen + "-pop");
+    var btn = popAnchor(popOpen);
+    if ((el && el.contains(ev.target)) || (btn && btn.contains(ev.target))) return;
+    if (popOpen === "acct" && acct.deleting) return;
+    closePop(popOpen, false);
+  }, true);
+  document.addEventListener("keydown", function (ev) {
+    if (ev.key !== "Escape" || !popOpen) return;
+    var btn = popAnchor(popOpen);
+    if (btn && btn === document.activeElement) { ev.preventDefault(); closePop(popOpen, true); }
+  });
+  root.addEventListener("hashchange", function () { if (popOpen) closePop(popOpen, false); });
+  root.addEventListener("resize", function () { if (popOpen) placePop(popOpen); });
+
+  // 18 px line icons for the dropdowns' rows.
+  var ICONS = {
+    out: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/>',
+    trash: '<path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="m6 6 1 14h10l1-14"/><path d="M10 11v5M14 11v5"/>',
+    sync: '<path d="M21 12a9 9 0 0 1-15.4 6.4L3 16"/><path d="M3 21v-5h5"/><path d="M3 12a9 9 0 0 1 15.4-6.4L21 8"/><path d="M21 3v5h-5"/>',
+    down: '<path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/>',
+    up: '<path d="M12 15V3"/><path d="m7 8 5-5 5 5"/><path d="M5 21h14"/>',
+    table: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 4v16"/>',
+    next: '<path d="m9 6 6 6-6 6"/>'
+  };
+  function icon(name) {
+    return '<svg class="pop-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" ' +
+      'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">' + ICONS[name] + "</svg>";
+  }
+
+  // Google's "G", as its sign-in button guidelines draw it.
+  var GOOGLE_G = '<svg class="pop-g" viewBox="0 0 48 48" width="18" height="18" aria-hidden="true" focusable="false">' +
+    '<path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>' +
+    '<path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>' +
+    '<path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>' +
+    '<path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>' +
+    "</svg>";
+
+  // Your Google picture (account.js keeps only Google's own addresses), or
+  // your initial on a sticker when there's none or it doesn't load.
+  var avatarBroken = {};
+  function avatarHtml(user, cls) {
+    var url = user && user.avatar;
+    if (url && !avatarBroken[url]) {
+      return '<img class="' + cls + ' is-photo" src="' + esc(url) + '" alt="" referrerpolicy="no-referrer" decoding="async" data-avatar>';
+    }
+    return '<span class="' + cls + '" aria-hidden="true">' + esc(initial(user)) + "</span>";
+  }
+  document.addEventListener("error", function (ev) {
+    var img = ev.target;
+    if (!img || !img.hasAttribute || !img.hasAttribute("data-avatar")) return;
+    avatarBroken[img.getAttribute("src")] = true;
+    topDrawn = "";
+    drawSync();
+  }, true);
+
+  // "just now", "2 min ago", "3 h ago", then the date.
+  function ago(iso) {
+    var ms = Date.now() - new Date(iso).getTime();
+    if (!isFinite(ms)) return "";
+    var min = Math.floor(Math.max(ms, 0) / 60000);
+    if (min < 1) return t("ago.now");
+    if (min < 60) return t("ago.min", { n: num(min) });
+    if (min < 24 * 60) return t("ago.hour", { n: num(Math.floor(min / 60)) });
+    return day(iso);
+  }
+
+  // How saving is going: green saved, amber saving, red couldn't (with the
+  // only "Save now" left: Try again), grey offline.
+  function pillHtml() {
+    var cls, text, more = "";
+    if (acct.state === "busy") { cls = "is-busy"; text = t("account.pill.busy"); }
+    else if (acct.state === "offline") { cls = "is-off"; text = t("account.pill.offline"); }
+    else if (acctTrouble()) {
+      cls = "is-err";
+      text = t("account.pill.err");
+      more = ' · <button type="button" class="pop-pill-btn pop-item" data-sum="acct-now">' + esc(t("account.pill.retry")) + "</button>";
+    } else if (acct.at) { cls = "is-ok"; text = t("account.pill.ok", { ago: ago(acct.at) }); }
+    else return "";
+    return '<div class="pop-status"><p class="pop-pill ' + cls + '"><span class="pop-pill-dot" aria-hidden="true"></span><span>' + esc(text) + more + "</span></p>" +
+      (cls === "is-err" ? '<p class="pop-why">' + esc(acctStatusText()) + "</p>" : "") + "</div>";
+  }
+
+  function githubRowHtml() {
+    return '<div class="pop-foot"><button type="button" class="pop-link pop-item" data-sum="acct-github">' + icon("sync") +
+      "<span>" + esc(t("account.advanced")) + "</span>" + icon("next") + "</button></div>";
+  }
+
+  // Signed out: what an account is for and Continue with Google. Signed in:
+  // who, how saving is going, Sign out and (small, red) Delete my data.
+  // GitHub sync is at the foot either way.
+  function accountPopHtml() {
     var user = acctUser();
     var html;
     if (!user) {
-      html = '<div class="acct-card is-out"><div class="acct-main">' +
-        '<p class="acct-line">' + esc(t("account.short")) + "</p>" +
-        '<button type="button" class="mine-save acct-google" data-sum="acct-in"' + busyAttr(acct.going) + ">" +
-          esc(t(acct.going ? "account.going" : "account.google")) + "</button></div>";
+      html = '<p class="pop-title">' + esc(t("account.popTitle")) + "</p>" +
+        '<p class="pop-line">' + esc(t("account.popLine")) + "</p>";
       if (acct.note) {
-        html += '<p class="mine-sync-status is-warn" role="status">' + esc(t(acct.note)) + (acct.noteMore ? " " + esc(t(acct.noteMore)) : "") + "</p>";
+        html += '<p class="pop-note">' + esc(t(acct.note)) + (acct.noteMore ? " " + esc(t(acct.noteMore)) : "") + "</p>";
         // Signed out with changes the account hasn't seen: they stay here.
         if (acct.note === "account.expiredKept") {
-          html += '<div class="mine-more"><button type="button" class="mine-chip" data-sum="acct-download">' + esc(t("account.leaveDownload")) + "</button></div>";
+          html += '<div class="pop-note-acts"><button type="button" class="mine-chip pop-item" data-sum="acct-download">' + esc(t("account.leaveDownload")) + "</button></div>";
         }
       }
-      if (acct.error) html += '<p class="mine-error" role="alert">' + esc(acct.error) + "</p>";
-      return html + '<p class="acct-privacy">' + esc(t("account.privacy")) + "</p>" + advancedHtml() + "</div>";
+      if (acct.error) html += '<p class="mine-error pop-error" role="alert">' + esc(acct.error) + "</p>";
+      html += '<button type="button" class="pop-google pop-item" data-sum="acct-in" data-pop-first' + busyAttr(acct.going) + ">" + GOOGLE_G +
+          "<span>" + esc(t(acct.going ? "account.going" : "account.continueGoogle")) + "</span></button>" +
+        '<p class="pop-privacy">' + esc(t("account.privacy")) + "</p>";
+      return html + githubRowHtml();
     }
-    var trouble = acctTrouble();
-    html = '<div class="acct-card is-in"><div class="acct-row">' +
-      '<span class="acct-avatar" aria-hidden="true">' + esc(initial(user)) + "</span>" +
-      '<p class="acct-who" data-acct-status tabindex="-1"><span class="acct-name">' + esc(t("account.as", { who: user.name || user.email || "—" })) + "</span>" +
-        '<span class="acct-state' + (trouble ? " is-warn" : "") + '" role="status">' + esc(acctShortText()) + "</span></p>" +
-      '<div class="acct-acts">' +
-        '<button type="button" class="mine-chip" data-sum="acct-now"' + busyAttr(acct.state === "busy") + ">" + esc(t("account.now")) + "</button>" +
-        '<button type="button" class="mine-chip acct-more" data-sum="acct-menu" aria-expanded="' + acct.menu + '" aria-controls="acct-menu">' +
-          esc(t("account.more")) + '<span class="acct-caret" aria-hidden="true"></span></button>' +
-      "</div></div>";
-    if (trouble) html += '<p class="mine-sync-status is-warn">' + esc(acctStatusText()) + "</p>";
-    if (acct.error && !acct.confirm) html += '<p class="mine-error" role="alert">' + esc(acct.error) + "</p>";
-    html += '<div class="acct-menu" id="acct-menu" role="group" aria-label="' + esc(t("account.menu")) + '"' + (acct.menu ? "" : " hidden") + ">";
-    if (acct.confirm) html += confirmDeleteHtml();
-    else if (acct.leaveAsk) html += leaveAskHtml();
+    html = '<div class="pop-head" data-acct-status tabindex="-1" data-pop-first>' + avatarHtml(user, "pop-avatar") +
+      '<div class="pop-who"><p class="pop-name">' + esc(user.name || user.email || "—") + "</p>" +
+        (user.name && user.email ? '<p class="pop-email">' + esc(user.email) + "</p>" : "") + "</div></div>" +
+      pillHtml();
+    if (acct.error && !acct.confirm) html += '<p class="mine-error pop-error" role="alert">' + esc(acct.error) + "</p>";
+    if (acct.confirm) html += '<div class="pop-ask">' + confirmDeleteHtml() + "</div>";
+    else if (acct.leaveAsk) html += '<div class="pop-ask">' + leaveAskHtml() + "</div>";
     else {
-      html += '<div class="mine-more">' +
-        '<button type="button" class="mine-chip" data-sum="acct-download">' + esc(t("account.download")) + "</button>" +
-        '<button type="button" class="mine-textbtn" data-sum="acct-out"' + busyAttr(acct.leaving) + ">" + esc(t(acct.leaving ? "account.signingOut" : "account.signOut")) + "</button>" +
-        '<button type="button" class="mine-textbtn" data-sum="acct-delete">' + esc(t("account.delete")) + "</button></div>";
+      html += '<div class="pop-rows">' +
+        '<button type="button" class="pop-row pop-item" data-sum="acct-out"' + busyAttr(acct.leaving) + ">" + icon("out") +
+          '<span class="pop-row-label">' + esc(t(acct.leaving ? "account.signingOut" : "account.signOut")) + "</span></button>" +
+        '<button type="button" class="pop-row pop-item is-danger" data-sum="acct-delete">' + icon("trash") +
+          '<span class="pop-row-label">' + esc(t("account.delete")) + "</span></button></div>";
     }
-    return html + '<p class="acct-privacy">' + esc(t("account.pricesStay")) + "</p>" + advancedHtml() + "</div></div>";
+    return html + githubRowHtml();
   }
 
-  // Drawn under My binder's title (app.js paintResult draws the header);
-  // redrawn only when something in it changed, with focus kept.
-  var drawnCard = { box: null, html: "" };
-  function drawAccountCard() {
-    if (!accountsOn) return;
-    var box = $("mine-account");
-    if (!box) {
-      var head = document.querySelector("#result .result-header.is-mine");
-      if (!head) return;
-      box = document.createElement("section");
-      box.className = "mine-summary mine-acct";
-      box.id = "mine-account";
-      box.tabIndex = -1;
-      head.parentNode.insertBefore(box, head.nextSibling);
-    }
-    box.setAttribute("aria-label", t("account.card"));
-    var html = accountCardHtml();
-    if (drawnCard.box !== box || drawnCard.html !== html) {
-      var focus = acct.focusPending ? "" : focusKey(document.activeElement, box);
-      box.innerHTML = html;
-      drawnCard = { box: box, html: html };
-      var again = focus ? box.querySelector(focus) : null;
-      if (again) again.focus({ preventScroll: true });
-    }
-    if (acct.focusPending) {
-      acct.focusPending = false;
-      (box.querySelector(acctUser() ? "[data-acct-status]" : '[data-sum="acct-in"]') || box).focus({ preventScroll: true });
-    }
-  }
-
-  // The top bar's way in (index.html): "Sign in", or your initial with a dot
-  // for how saving is going. Hidden, and the page as before, while accounts
+  // The top bar's way in (index.html), once accounts are on: "Sign in", or
+  // your picture (or initial) with a dot for how saving is going. It opens
+  // the account's dropdown. Hidden, and the page as before, while accounts
   // are off.
   var PERSON_ICON = '<svg class="acct-link-icon" viewBox="0 0 16 16" aria-hidden="true" shape-rendering="crispEdges">' +
     '<path d="M6 1h4v1h1v5h-1v1H6V7H5V2h1z"/><path d="M4 9h8v1h1v1h1v4H2v-4h1v-1h1z"/></svg>';
   function acctDot() {
     if (acct.state === "busy") return "is-busy";
+    if (acct.state === "offline") return "is-off";
     if (acctTrouble()) return "is-warn";
     return acct.at ? "is-ok" : "";
   }
@@ -1209,58 +1452,39 @@
     if (document.body) document.body.classList.toggle("has-accounts", accountsOn);
     if (!btn) return;
     btn.hidden = !accountsOn;
-    if (!accountsOn) return;
+    if (!accountsOn) {
+      if (popOpen === "acct") closePop("acct", false);
+      return;
+    }
+    popBox("acct");
     var user = acctUser();
     var html, label;
     if (!user) {
-      html = PERSON_ICON + '<span class="acct-link-text">' + esc(t("account.signInShort")) + "</span>";
+      // Signed out with changes the account hasn't got: a red dot says so.
+      html = PERSON_ICON + '<span class="acct-link-text">' + esc(t("account.signInShort")) + "</span>" +
+        (acct.note === "account.expiredKept" ? '<span class="acct-dot is-warn" aria-hidden="true"></span>' : "");
       label = t("account.topOut");
       btn.removeAttribute("title");
     } else {
       var dot = acctDot();
       var state = acctStatusText();
-      html = '<span class="acct-link-initial" aria-hidden="true">' + esc(initial(user)) + "</span>" +
-        (dot ? '<span class="acct-dot ' + dot + '" aria-hidden="true"></span>' : "");
+      html = avatarHtml(user, "acct-link-face") + (dot ? '<span class="acct-dot ' + dot + '" aria-hidden="true"></span>' : "");
       label = t("account.topIn", { who: user.name || user.email || "" }) + (state ? ". " + state : "");
       btn.title = label;
     }
     btn.classList.toggle("is-in", !!user);
     if (topDrawn !== html) btn.innerHTML = topDrawn = html;
     btn.setAttribute("aria-label", label);
+    btn.setAttribute("aria-expanded", popOpen === "acct" ? "true" : "false");
   }
 
-  // The top bar's button opens My binder (app.js, data-open-mine) with the
-  // account card focused: the Google button, or "Signed in as" with More open.
   document.addEventListener("click", function (ev) {
-    var btn = ev.target.closest && ev.target.closest("[data-open-account]");
-    if (!btn || ev.button || ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.altKey) return;
-    acct.focusPending = true;
-    if (acctUser()) acct.menu = true;
-    // Already in My binder: app.js only scrolls up, so draw it here.
-    setTimeout(function () { if (acct.focusPending && $("mine-account")) drawAccountCard(); }, 0);
-  });
-
-  // Escape puts the delete question away, then "More".
-  document.addEventListener("keydown", function (ev) {
-    if (ev.key !== "Escape" || !(ev.target.closest && ev.target.closest("#mine-account"))) return;
-    if (acct.confirm && !acct.deleting) {
-      acct.confirm = false;
-      acct.error = "";
-      drawSync('[data-sum="acct-delete"]');
-    } else if (acct.leaveAsk) {
-      acct.leaveAsk = false;
-      drawSync('[data-sum="acct-out"]');
-    } else if (acct.menu && !acct.confirm) {
-      acct.menu = false;
-      drawSync('[data-sum="acct-menu"]');
-    } else return;
+    var btn = ev.target.closest && ev.target.closest("#acct-link");
+    if (!btn || !accountsOn) return;
     ev.preventDefault();
+    if (popOpen === "acct") closePop("acct", true);
+    else openPop("acct");
   });
-
-  // The GitHub panel stays open across redraws (toggle doesn't bubble).
-  document.addEventListener("toggle", function (ev) {
-    if (ev.target.matches && ev.target.matches("[data-acct-advanced]")) acct.advanced = ev.target.open;
-  }, true);
 
   if (account) {
     account.onChange(function (event, detail) {
@@ -1272,14 +1496,12 @@
         acct.noteMore = "";
         acct.error = "";
         acct.first = true;
-        acct.menu = false;
         scheduleAcct(0);
       } else if (event === "out") {
         clearTimeout(acct.timer);
         acct.timer = 0;
         acct.state = "";
         acct.at = "";
-        acct.menu = false;
         acct.confirm = false;
         acct.leaveAsk = false;
         var uid = acct.uid;
@@ -1295,13 +1517,13 @@
     root.addEventListener("storage", function (ev) {
       if (ev.key === null || ev.key === "pullfolio.account") account.reload();
     });
-    // Coming back from Google: the account card says what happened.
+    // Coming back from Google: a welcome, or the dropdown saying what went wrong.
     account.finish().then(function (result) {
       if (!result) return;
       accountsOn = true;
-      acct.focusPending = true;
-      if (result === "in") toast(t("account.welcome", { who: who(acctUser()) }));
       drawSync();
+      if (result === "in") toast(t("account.welcome", { who: who(acctUser()) }));
+      else openPop("acct");
     });
   }
   drawTopButton();
@@ -1325,7 +1547,7 @@
     var inLira = wantsLira() && !!rate;
     var value = inLira ? liraAmount(s.value * rate) : formatUsd(s.value);
     var other = inLira ? formatUsd(s.value) : lira(s.value, rate);
-    var html = '<div class="mine-sum-main"><div class="mine-total"><p class="mine-total-label">' + esc(t("sum.value")) + "</p>" +
+    var html = '<div class="mine-sum-top"><div class="mine-sum-main"><div class="mine-total"><p class="mine-total-label">' + esc(t("sum.value")) + "</p>" +
       '<p class="mine-total-value">' + esc(s.cards ? value : "—") + "</p>" +
       (s.cards && other ? '<p class="mine-total-other">' + esc((inLira ? "" : "≈ ") + other) + "</p>" : "") + "</div>";
     html += '<dl class="mine-sum-facts">';
@@ -1342,7 +1564,7 @@
     } else {
       html += '<div><dt>' + esc(t("sum.gain")) + '</dt><dd>—</dd><dd class="mine-sub">' + esc(t("sum.gainNone")) + "</dd></div>";
     }
-    html += "</dl></div>";
+    html += "</dl></div>" + cornerHtml(rate, inLira) + "</div>";
     // Notes that name a group of cards show just those cards when clicked.
     var cover = [];
     if (s.loading) cover.push([t("sheet.priceLoading")]);
@@ -1356,45 +1578,79 @@
     if (cover.length) html += '<div class="mine-sum-notes"><p>' + cover.map(function (c) {
       return c[1] ? '<button type="button" class="mine-note-link" data-sum="filter" data-kind="' + c[1] + '">' + esc(c[0]) + "</button>" : esc(c[0]);
     }).join(" · ") + "</p></div>";
+    // GitHub sync, opened from the "⋯" or the account's dropdown.
+    if (shelf.open === "sync") html += '<div class="mine-shelf mine-sync-shelf" id="mine-sync-panel" role="region" aria-label="' + esc(t("sync.chip")) + '">' + syncHtml("sync-sum") + "</div>";
+    if (Store.volatile) html += '<p class="mine-note is-warn">' + esc(t("store.volatile")) + "</p>";
+    html += '<div data-mine-import aria-live="polite">' + importHtml() + "</div>";
+    // Breakdown, Value over time and Top movers: one tab bar at the foot,
+    // the open one's panel under it.
     if (s.cards) html += shelfTabsHtml() + (shelf.open && shelf.open !== "sync" ? '<div class="mine-shelf" id="mine-shelf" role="region" aria-label="' +
       esc(t(shelfLabel(shelf.open))) + '">' + shelfHtml(s) + "</div>" : "");
+    return html;
+  }
+
+  // Something to look at in the "⋯": no recent backup (backupDue), or GitHub
+  // sync in trouble while it's the way this binder is saved.
+  function sumDue() { return backupDue(Store.model().doc.local) || (!accountsOn && syncTrouble()); }
+
+  // The card's corner: "$ | ₺" (once there's a rate) and the "⋯".
+  var DOTS = '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true" focusable="false">' +
+    '<circle cx="5" cy="12" r="2.2"/><circle cx="12" cy="12" r="2.2"/><circle cx="19" cy="12" r="2.2"/></svg>';
+  function cornerHtml(rate, inLira) {
+    var due = sumDue();
+    var open = popOpen === "sum";
+    return '<div class="mine-sum-corner">' +
+      (rate ? '<div class="mine-cur" role="group" aria-label="' + esc(t("sum.currency")) + '">' +
+        '<button type="button" data-sum="cur" data-val="usd" aria-pressed="' + !inLira + '" aria-label="' + esc(t("sum.usd")) + '">$</button>' +
+        '<button type="button" data-sum="cur" data-val="try" aria-pressed="' + inLira + '" aria-label="' + esc(t("sum.try")) + '">₺</button></div>' : "") +
+      '<button type="button" class="mine-dots' + (open ? " is-on" : "") + '" data-sum="sum-menu" aria-haspopup="menu" aria-controls="sum-pop" aria-expanded="' + open + '"' +
+        ' aria-label="' + esc(t(due ? "sum.menuDue" : "sum.menu")) + '" title="' + esc(t("sum.menu")) + '">' + DOTS +
+        (due ? '<span class="mine-dots-dot" aria-hidden="true"></span>' : "") + "</button></div>";
+  }
+
+  // The "⋯" menu: Download backup (with when the last one was), Load a
+  // backup, Export CSV, and Sync with GitHub while accounts are off.
+  function sumMenuHtml() {
     var local = Store.model().doc.local;
     var due = backupDue(local);
-    var syncOpen = shelf.open === "sync";
-    // The open panel says how sync is doing; the row then shows the last
-    // backup. How an account is saving is in the account card at the top.
-    var synced = syncOpen ? "" : syncStatusText();
-    var trouble = syncTrouble();
-    html += '<div class="mine-sum-tools">' +
-      (rate ? '<button type="button" class="mine-chip' + (inLira ? " is-on" : "") + '" data-sum="lira" aria-pressed="' + inLira + '">' + esc(t("sum.inLira")) + "</button>" : "") +
-      '<span class="mine-backup' + (due || (synced && trouble) ? " is-due" : "") + '">' +
-        esc(synced || (local && local.backupAt ? t("backup.last", { date: day(local.backupAt) }) : t("backup.never"))) + "</span>" +
-      '<button type="button" class="mine-chip' + (due ? " is-due" : "") + '" data-sum="backup">' + esc(t("backup.download")) + "</button>" +
-      '<button type="button" class="mine-chip" data-sum="import">' + esc(t("backup.load")) + "</button>" +
-      '<button type="button" class="mine-chip" data-sum="csv">' + esc(t("backup.csv")) + "</button>" +
-      (accountsOn ? "" : '<button type="button" class="mine-chip' + (syncOpen ? " is-on" : "") + '" data-sum="shelf" data-val="sync" aria-expanded="' + syncOpen + '"' +
-        (syncOpen ? ' aria-controls="mine-sync-panel"' : "") + ">" + esc(chipLabel()) + "</button>") +
-      "</div>" +
-      (syncOpen ? '<div class="mine-shelf" id="mine-sync-panel" role="region" aria-label="' + esc(t("sync.chip")) + '">' + syncHtml() + "</div>" : "") +
-      (Store.volatile ? '<p class="mine-note is-warn">' + esc(t("store.volatile")) + "</p>" : "") +
-      '<div data-mine-import aria-live="polite">' + importHtml() + "</div>";
-    return html;
+    var last = local && local.backupAt ? t("backup.lastShort", { date: day(local.backupAt) }) : "";
+    var rows = menuRow("backup", "down", t("backup.download"), due ? last || t("backup.none") : last, due) +
+      menuRow("import", "up", t("backup.load")) +
+      menuRow("csv", "table", t("backup.csvLong"));
+    if (!accountsOn) {
+      rows += '<div class="pop-rule" role="separator"></div>' +
+        menuRow("sync-panel", "sync", t("sync.chip"), syncStatusText(), syncTrouble());
+    }
+    return '<div class="pop-rows">' + rows + "</div>";
+  }
+  function menuRow(act, ic, label, hint, warn) {
+    return '<button type="button" class="pop-row pop-item" role="menuitem" data-sum="' + act + '">' + icon(ic) +
+      '<span class="pop-row-label">' + esc(label) + "</span>" +
+      (hint ? '<span class="pop-hint' + (warn ? " is-due" : "") + '">' + esc(hint) + "</span>" : "") + "</button>";
   }
 
   /* ---- the summary card's drawer: Breakdown, Value over time, Top movers ---- */
 
-  var SHELVES = [["breakdown", "shelf.breakdown"], ["history", "shelf.history"], ["movers", "movers.title"]];
+  // [name, the panel's title, the tab's short label: one line at phone width, in Turkish too]
+  var SHELVES = [["breakdown", "shelf.breakdown", "tab.breakdown"], ["history", "shelf.history", "tab.history"], ["movers", "movers.title", "tab.movers"]];
   function shelfLabel(name) {
     for (var i = 0; i < SHELVES.length; i++) if (SHELVES[i][0] === name) return SHELVES[i][1];
     return "";
   }
 
+  // One track with a sticker-yellow highlight that slides to the open tab
+  // (renderSummary moves it from where it was). Tapping the open one closes it.
+  var tabsAt = -1;
   function shelfTabsHtml() {
-    return '<div class="mine-shelf-tabs">' + SHELVES.map(function (s) {
-      var on = shelf.open === s[0];
-      return '<button type="button" class="mine-chip mine-tab' + (on ? " is-on" : "") + '" data-sum="shelf" data-val="' + s[0] +
-        '" aria-expanded="' + on + '"' + (on ? ' aria-controls="mine-shelf"' : "") + ">" + esc(t(s[1])) + "</button>";
-    }).join("") + "</div>";
+    var at = -1;
+    SHELVES.forEach(function (s, i) { if (shelf.open === s[0]) at = i; });
+    return '<div class="mine-tabs' + (at < 0 ? " is-none" : tabsAt < 0 ? " is-fresh" : "") + '" role="group" aria-label="' + esc(t("sum.views")) +
+      '" data-at="' + at + '" style="--at: ' + Math.max(at, 0) + '"><span class="mine-tabs-glider" aria-hidden="true"></span>' +
+      SHELVES.map(function (s, i) {
+        var on = at === i;
+        return '<button type="button" class="mine-tab-btn' + (on ? " is-on" : "") + '" data-sum="shelf" data-val="' + s[0] +
+          '" aria-expanded="' + on + '"' + (on ? ' aria-controls="mine-shelf"' : "") + ">" + esc(t(s[2])) + "</button>";
+      }).join("") + "</div>";
   }
 
   // A row of pressed/unpressed choices inside a panel.
@@ -1675,7 +1931,7 @@
     if (el.name && el.form && el.form.matches("[data-sync-form]")) return '[data-sync-form] [name="' + el.name + '"]';
     if (el.hasAttribute("data-sync-status")) return "[data-sync-status]";
     if (el.hasAttribute("data-acct-status")) return "[data-acct-status]";
-    if (el.matches("[data-acct-advanced] > summary")) return "[data-acct-advanced] > summary";
+    if (el.hasAttribute("data-sync-title")) return "[data-sync-title]";
     var act = el.getAttribute("data-sum");
     if (!act) return "";
     var val = el.getAttribute("data-val");
@@ -1687,14 +1943,30 @@
   var lastSummary = null;
   function renderSummary(stats) {
     if (stats) lastSummary = stats;
-    drawAccountCard();
     var box = $("mine-summary");
-    if (!box || !lastSummary) return;
+    if (!box || !lastSummary) {
+      if (popOpen === "sum") closePop("sum", false);
+      return;
+    }
     var focus = focusKey(document.activeElement, box);
     box.innerHTML = summaryHtml(lastSummary);
     if (focus) {
       var again = box.querySelector(focus);
       if (again) again.focus({ preventScroll: true });
+    }
+    // The highlight slides from the tab it was on to the open one.
+    var tabs = box.querySelector(".mine-tabs");
+    var at = tabs ? Number(tabs.getAttribute("data-at")) : -1;
+    if (tabs && at >= 0 && tabsAt >= 0 && at !== tabsAt) {
+      var glider = tabs.querySelector(".mine-tabs-glider");
+      tabs.style.setProperty("--at", tabsAt);
+      if (glider) root.getComputedStyle(glider).transform; // the start of the slide
+      tabs.style.setProperty("--at", at);
+    }
+    tabsAt = at;
+    if (popOpen === "sum") {
+      if (popAnchor("sum")) drawPops();
+      else closePop("sum", false);
     }
   }
 
@@ -1714,14 +1986,24 @@
     var btn = ev.target.closest && ev.target.closest("[data-sum]");
     if (!btn) return;
     var act = btn.getAttribute("data-sum");
-    if (act === "lira") {
-      try { root.localStorage.setItem(LIRA_STORE, wantsLira() ? "0" : "1"); } catch (e) { /* not remembered */ }
-      renderSummary();
-      var again = document.querySelector('[data-sum="lira"]');
-      if (again) again.focus({ preventScroll: true });
+    // A row in the "⋯" menu closes it first, with focus back on the "⋯".
+    if (btn.closest("#sum-pop")) closePop("sum", true);
+    if (act === "cur") {
+      var lira = btn.getAttribute("data-val") === "try";
+      try { root.localStorage.setItem(LIRA_STORE, lira ? "1" : "0"); } catch (e) { /* not remembered */ }
+      rerender('[data-sum="cur"][data-val="' + (lira ? "try" : "usd") + '"]');
+    } else if (act === "sum-menu") {
+      if (popOpen === "sum") closePop("sum", true);
+      else openPop("sum");
     } else if (act === "backup") downloadBackup(false);
     else if (act === "csv") downloadCsv();
     else if (act === "import") pickImport();
+    else if (act === "sync-panel") {
+      shelf.open = shelf.open === "sync" ? "" : "sync";
+      drawSync();
+      if (shelf.open) focusGithub(0);
+    } else if (act === "sync-close") closeGithub();
+    else if (act === "acct-github") openGithub();
     else if (act === "import-cancel") showImport(null);
     else if (act === "import-merge") finishImport("merge");
     else if (act === "import-replace") finishImport("replace");
@@ -1732,12 +2014,12 @@
     } else if (act === "sync-now") syncNow();
     else if (act === "sync-off") disconnectSync();
     else if (act === "acct-in") signInWithGoogle();
-    else if (act === "acct-now") { if (acct.state !== "busy") acctNow(); }
-    else if (act === "acct-menu") {
-      if (acct.deleting) return;
-      acct.menu = !acct.menu;
-      if (!acct.menu) { acct.confirm = false; acct.leaveAsk = false; acct.error = ""; }
-      drawSync('[data-sum="acct-menu"]');
+    else if (act === "acct-now") {
+      if (acct.state !== "busy") acctNow();
+      // "Try again" turns into "Saving…": focus stays in the dropdown.
+      var pop = $("acct-pop");
+      var head = pop && pop.querySelector("[data-acct-status]");
+      if (head && !pop.contains(document.activeElement)) head.focus({ preventScroll: true });
     }
     else if (act === "acct-out") signOutHere(false);
     else if (act === "acct-leave-anyway") signOutHere(true);
@@ -1769,10 +2051,11 @@
     }
   });
 
-  // Escape puts the drawer away.
+  // Escape puts the open panel away.
   document.addEventListener("keydown", function (ev) {
-    if (ev.key !== "Escape" || !shelf.open || !(ev.target.closest && ev.target.closest("#mine-summary"))) return;
+    if (ev.key !== "Escape" || !shelf.open || !(ev.target.closest && ev.target.closest("#mine-summary, [data-mine-sync-empty]"))) return;
     var name = shelf.open;
+    if (name === "sync") { closeGithub(); return; }
     shelf.open = "";
     rerender('[data-sum="shelf"][data-val="' + name + '"]');
   });

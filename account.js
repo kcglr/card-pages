@@ -142,6 +142,14 @@
   var RETURN_NAMES = ["code", "error", "error_code", "error_description", "state", "sb"];
   function withoutReturn(search) { return without(search, RETURN_NAMES); }
 
+  // The Google profile picture, kept only from Google's own picture host
+  // (lh3.googleusercontent.com) and only as a plain address; "" otherwise.
+  // The page shows it with referrerpolicy="no-referrer".
+  var AVATAR_RE = /^https:\/\/lh3\.googleusercontent\.com\/[A-Za-z0-9\-._~\/%=+&?,:@!$;*]*$/;
+  function avatarUrl(v) {
+    return typeof v === "string" && v.length <= 2048 && AVATAR_RE.test(v) ? v : "";
+  }
+
   // A session, from Supabase's answer or from storage. null if it isn't one.
   function cleanSession(raw, nowSec) {
     if (!raw || typeof raw !== "object") return null;
@@ -157,15 +165,18 @@
     var u = raw.user && typeof raw.user === "object" ? raw.user : {};
     var meta = u.user_metadata && typeof u.user_metadata === "object" ? u.user_metadata :
       (c.user_metadata && typeof c.user_metadata === "object" ? c.user_metadata : {});
+    var user = {
+      id: str(u.id, 64) || str(c.sub, 64),
+      email: str(u.email, 320) || str(c.email, 320),
+      name: str(meta.full_name, 120) || str(meta.name, 120)
+    };
+    var avatar = avatarUrl(meta.avatar_url) || avatarUrl(meta.picture);
+    if (avatar) user.avatar = avatar;
     return {
       access_token: access,
       refresh_token: refresh,
       expires_at: Math.floor(expires),
-      user: {
-        id: str(u.id, 64) || str(c.sub, 64),
-        email: str(u.email, 320) || str(c.email, 320),
-        name: str(meta.full_name, 120) || str(meta.name, 120)
-      }
+      user: user
     };
   }
 
@@ -286,7 +297,10 @@
   };
 
   // Off to Google. Resolves once the page is on its way (tests: once
-  // location.assign was called).
+  // location.assign was called). prompt=select_account (Supabase passes it
+  // on) makes Google ask which account every time, so a second Google
+  // account can sign in on a browser that remembers the first. Nobody is
+  // signed out of Google for it.
   Account.prototype.signIn = function () {
     var self = this;
     var verifier = makeVerifier(this.crypto);
@@ -299,7 +313,8 @@
       var url = self.project.url + "/auth/v1/authorize?provider=google" +
         "&redirect_to=" + encodeURIComponent(self.redirectTo()) +
         "&code_challenge=" + encodeURIComponent(challenge) +
-        "&code_challenge_method=s256";
+        "&code_challenge_method=s256" +
+        "&prompt=select_account";
       self.location.assign(url);
     });
   };
@@ -458,6 +473,7 @@
     base64url: base64url,
     challengeFor: challengeFor,
     cleanSession: cleanSession,
+    avatarUrl: avatarUrl,
     withoutReturn: withoutReturn
   };
 });

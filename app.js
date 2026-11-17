@@ -375,12 +375,36 @@
           '<label class="search-wrap">' + said("span", "toolbar.filter", 'class="sr-only"') +
           '<input id="filter" type="search" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="picker"' +
           saidAttr("placeholder", "toolbar.filterHint") + ' autocomplete="off" spellcheck="false"></label>' +
+          '<button type="button" class="filters-btn" id="filters-btn" aria-haspopup="dialog" aria-expanded="false" aria-controls="filters-sheet">' +
+            FILTERS_ICON + said("span", "filters.title") + '<span class="filters-badge" id="filters-badge" aria-hidden="true" hidden></span>' +
+            '<span class="sr-only" id="filters-on"></span></button>' +
           '<div class="count" id="count"></div>' +
         "</div>" +
         (chips ? '<div class="toolbar-row wraps"><div class="chips">' + chips + "</div></div>" : "") +
         '<div class="picker" id="picker"><div class="picker-clip"><div class="picker-card" id="picker-card"></div></div></div>' +
-      "</div>"
+      "</div>" +
+      filtersSheetHtml()
     );
+  }
+
+  // Phones: the sheet the Filters button opens (see openFilters). It starts
+  // empty; the toolbar's own controls move into its slots while it is open.
+  var FILTERS_ICON = '<svg class="filters-icon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" ' +
+    'stroke-width="2.2" stroke-linecap="round"><path d="M4 7h9M19 7h1M4 17h3M13 17h7"/><circle cx="16" cy="7" r="2.6"/><circle cx="10" cy="17" r="2.6"/></svg>';
+  function filtersSheetHtml() {
+    return '<div class="filters-sheet" id="filters-sheet" hidden>' +
+      '<div class="filters-backdrop" data-filters-close></div>' +
+      '<div class="filters-panel" role="dialog" aria-modal="true" aria-labelledby="filters-title" tabindex="-1">' +
+        '<div class="filters-head"><span class="filters-handle" aria-hidden="true"></span>' +
+          said("h2", "filters.title", 'class="filters-title" id="filters-title"') +
+          '<button type="button" class="filters-x" data-filters-close' + saidAttr("aria-label", "filters.close") + '>&times;</button></div>' +
+        '<div class="filters-body">' +
+          '<div class="filters-group">' + said("p", "toolbar.sort", 'class="filters-label" aria-hidden="true"') + '<div data-slot="sort"></div></div>' +
+          '<div class="filters-group">' + said("p", "toolbar.filter", 'class="filters-label" aria-hidden="true"') +
+            '<div class="filters-pickers" data-slot="pickers"></div><div data-slot="picker"></div><div class="filters-chips" data-slot="chips"></div></div>' +
+        "</div>" +
+        '<div class="filters-foot"><button type="button" class="filters-show" id="filters-show" data-filters-close></button></div>' +
+      "</div></div>";
   }
 
   // My binder's chips: "Graded only" when you have a slab, "No price"
@@ -575,6 +599,7 @@
     var shown = current.shown == null ? total : current.shown;
     $("count").textContent = shown === total ? countText(current.meta.mine ? "count.printings" : "count.cards", total) :
       t("count.of", { n: num(shown), total: num(total) });
+    syncFilters();
   }
 
   // When the prices are from (priceWhen).
@@ -947,9 +972,10 @@
     syncPickerButtons();
   }
 
-  // A click anywhere outside the toolbar puts the shelf away.
+  // A click anywhere outside the toolbar (or the phone's Filters sheet, where
+  // the shelf moves with its buttons) puts the shelf away.
   document.addEventListener("pointerdown", function (ev) {
-    if (pickerMode && !(ev.target.closest && ev.target.closest("#toolbar"))) closePicker(false);
+    if (pickerMode && !(ev.target.closest && ev.target.closest("#toolbar, #filters-sheet .filters-panel"))) closePicker(false);
   });
 
   // Re-files the binder after a filter, sort or price change.
@@ -1492,6 +1518,7 @@
     });
     $("sort").addEventListener("change", function () { showCards(true); });
     bindPickers();
+    bindFilters();
   }
 
   $("overlay").addEventListener("click", function (ev) {
@@ -1530,6 +1557,161 @@
     var stops = sheetStops();
     if (stops.length) stops[tabBack ? stops.length - 1 : 0].focus();
   });
+
+  /* ---- the Filters sheet (phones) ---- */
+
+  // Under 600px the toolbar keeps the set field and a Filters button. Sort,
+  // the Pokémon and variant buttons, the shelf they open and the filter chips
+  // move into a sheet from the bottom while it is open and back when it
+  // closes, so each control keeps its listeners and wider screens never
+  // change. Collect mode stays in the toolbar: it changes what a tap does, it
+  // isn't a filter. The sheet is a modal dialog like the card's file.
+  var PHONE_MQ = window.matchMedia ? window.matchMedia("(max-width: 599.98px)") : null;
+  var filtersOpen = false;
+  var filtersMoved = []; // [control, the comment left where it was]
+  var filtersTimer = 0;
+  var filtersTabBack = false;
+
+  // The badge: one for each picked Pokémon or variant, and one for each chip on.
+  function filtersCount() {
+    if (!filterState) return 0;
+    var n = pickedSpecies().length + pickedVariants().length;
+    ["own", "hideReverse", "graded", "noPrice", "unmatched"].forEach(function (k) { if (filterState[k]) n++; });
+    return n;
+  }
+
+  function syncFilters() {
+    var btn = $("filters-btn");
+    if (!btn || !current) return;
+    var n = filtersCount();
+    var badge = $("filters-badge");
+    badge.textContent = num(n);
+    badge.hidden = !n;
+    $("filters-on").textContent = n ? " " + t("filters.on", { n: num(n) }) : "";
+    btn.classList.toggle("is-on", n > 0);
+    btn.setAttribute("aria-expanded", filtersOpen ? "true" : "false");
+    var shown = current.shown == null ? current.cards.length : current.shown;
+    $("filters-show").textContent = t("filters.show", { n: num(shown) });
+  }
+
+  function moveToSheet(node, slot) {
+    if (!node || !slot || !node.parentNode) return;
+    var mark = document.createComment("filters");
+    node.parentNode.insertBefore(mark, node);
+    filtersMoved.push([node, mark]);
+    slot.appendChild(node);
+  }
+
+  // Each control goes back where it was; one whose toolbar was drawn again
+  // meanwhile is dropped.
+  function putFiltersBack() {
+    clearTimeout(filtersTimer);
+    filtersTimer = 0;
+    filtersMoved.forEach(function (pair) {
+      if (pair[1].parentNode) pair[1].parentNode.replaceChild(pair[0], pair[1]);
+      else if (pair[0].parentNode) pair[0].parentNode.removeChild(pair[0]);
+    });
+    filtersMoved = [];
+    var sheet = $("filters-sheet");
+    if (sheet && !filtersOpen) sheet.hidden = true;
+  }
+
+  function openFilters() {
+    var sheet = $("filters-sheet");
+    if (!sheet || filtersOpen || !current) return;
+    if (filtersTimer) putFiltersBack();
+    if (pickerMode) closePicker(false);
+    var slot = function (name) { return sheet.querySelector('[data-slot="' + name + '"]'); };
+    moveToSheet(document.querySelector("#toolbar .sort-wrap"), slot("sort"));
+    moveToSheet($("species-btn"), slot("pickers"));
+    moveToSheet($("variant-btn"), slot("pickers"));
+    moveToSheet($("picker"), slot("picker"));
+    [].slice.call(document.querySelectorAll('#toolbar .chips .chip:not([data-filter="collect"])')).forEach(function (chip) {
+      moveToSheet(chip, slot("chips"));
+    });
+    filtersOpen = true;
+    sheet.hidden = false;
+    sheet.getBoundingClientRect(); // so the panel slides up from below
+    sheet.classList.add("is-open");
+    document.body.classList.add("has-filters");
+    syncFilters();
+    sheet.querySelector(".filters-panel").focus({ preventScroll: true });
+  }
+
+  function closeFilters(focusBack) {
+    if (!filtersOpen) return;
+    filtersOpen = false;
+    if (pickerMode) closePicker(false);
+    var sheet = $("filters-sheet");
+    if (sheet) sheet.classList.remove("is-open");
+    document.body.classList.remove("has-filters");
+    syncFilters();
+    if (focusBack && $("filters-btn")) $("filters-btn").focus({ preventScroll: true });
+    // The controls ride the panel down, then go home.
+    if (sheet && sheet.isConnected && !motionOff()) filtersTimer = setTimeout(putFiltersBack, 220);
+    else putFiltersBack();
+  }
+
+  function filterStops() {
+    var panel = document.querySelector("#filters-sheet .filters-panel");
+    var list = panel ? [].slice.call(panel.querySelectorAll(FOCUSABLE)) : [];
+    return list.filter(function (el) {
+      return el.getClientRects().length > 0 && window.getComputedStyle(el).visibility !== "hidden";
+    });
+  }
+
+  function bindFilters() {
+    // A new toolbar: whatever the last one had open is gone with it.
+    filtersOpen = false;
+    clearTimeout(filtersTimer);
+    filtersTimer = 0;
+    filtersMoved = [];
+    document.body.classList.remove("has-filters");
+    var btn = $("filters-btn");
+    var sheet = $("filters-sheet");
+    if (!btn || !sheet) return;
+    btn.addEventListener("click", function () { if (filtersOpen) closeFilters(true); else openFilters(); });
+    sheet.addEventListener("click", function (ev) {
+      if (ev.target.closest("[data-filters-close]")) closeFilters(true);
+    });
+    sheet.addEventListener("keydown", function (ev) {
+      if (ev.key === "Tab") {
+        filtersTabBack = ev.shiftKey;
+        var stops = filterStops();
+        var at = stops.indexOf(document.activeElement);
+        if (stops.length && (at === -1 || (ev.shiftKey ? at === 0 : at === stops.length - 1))) {
+          ev.preventDefault();
+          stops[ev.shiftKey ? stops.length - 1 : 0].focus();
+        }
+      } else if (ev.key === "ArrowLeft" || ev.key === "ArrowRight") {
+        ev.stopPropagation(); // not a page turn behind the sheet
+      }
+    });
+    syncFilters();
+  }
+
+  // Escape puts away the shelf inside the sheet first, then the sheet. It's
+  // caught on the way down: Safari doesn't focus a tapped button, so the key
+  // may not start inside the shelf.
+  document.addEventListener("keydown", function (ev) {
+    if (!filtersOpen || ev.key !== "Escape") return;
+    ev.preventDefault();
+    ev.stopPropagation();
+    if (pickerMode) closePicker(true);
+    else closeFilters(true);
+  }, true);
+  // Focus that gets out of the open sheet is brought back.
+  document.addEventListener("focusin", function (ev) {
+    if (!filtersOpen || (ev.target.closest && ev.target.closest("#filters-sheet .filters-panel, #mine-toast"))) return;
+    var stops = filterStops();
+    if (stops.length) stops[filtersTabBack ? stops.length - 1 : 0].focus();
+  });
+  window.addEventListener("hashchange", function () { closeFilters(false); });
+  if (PHONE_MQ) {
+    var wider = function (ev) { if (!ev.matches) closeFilters(false); };
+    if (PHONE_MQ.addEventListener) PHONE_MQ.addEventListener("change", wider);
+    else if (PHONE_MQ.addListener) PHONE_MQ.addListener(wider);
+  }
 
   document.addEventListener("keydown", function (ev) {
     if (ev.key === "Escape") {
@@ -3285,6 +3467,7 @@
       fillSites(activeCard);
     }
     if (binder) syncPickers();
+    syncFilters();
     if (suggestItems.length) showSuggest($("q").value.trim(), true);
     else showActive();
     if (dexItem) { renderDexCard(); placeDexCard(); }

@@ -1566,6 +1566,132 @@ body.is-mine .mine-count { background: #fbf7ef; }
 .collect-tick { width: 11px; height: 9.5px; image-rendering: pixelated; }
 .chip.collect-chip.is-on { background: var(--sticker); color: #1f1a16; border-color: #1f1a16; }
 .toolbar .chip:focus-visible { outline: 3px solid var(--sticker); outline-offset: 2px; }
+
+/* Phones (app.js, the Filters sheet): the toolbar keeps the set field, a
+   Filters button with a count, Collect mode and the count. Sort, the Pokémon
+   and variant buttons, their shelf and the filter chips move into a sheet
+   from the bottom while it's open. Wider screens keep the toolbar as it was. */
+.filters-btn, .filters-sheet { display: none; }
+@media (max-width: 599.98px) {
+  .toolbar { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 8px; }
+  .toolbar > .toolbar-row:first-child { display: contents; }
+  .toolbar .sort-wrap, .toolbar .picker-btn, .toolbar .chips .chip:not([data-filter="collect"]) { display: none; }
+  .toolbar .search-wrap { grid-column: 1; grid-row: 1; }
+  .toolbar .search-wrap input { text-overflow: ellipsis; }
+  .toolbar .count { grid-column: 2; grid-row: 2; align-self: center; justify-self: end; margin-top: 10px; }
+  .toolbar .toolbar-row.wraps { grid-column: 1; grid-row: 2; min-height: 0; }
+  .toolbar .picker { grid-column: 1 / -1; grid-row: 3; }
+  .filters-btn {
+    grid-column: 2;
+    grid-row: 1;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 44px;
+    padding: 0 14px 0 12px;
+    border: 2px solid var(--edge);
+    border-radius: 8px;
+    background: var(--field);
+    color: var(--text);
+    font: 700 15px/1 var(--font);
+    cursor: pointer;
+  }
+  .filters-btn.is-on { border-color: #1f1a16; background: var(--sticker); color: #1f1a16; }
+  .filters-btn:focus-visible { outline: none; border-color: var(--sticker); box-shadow: 0 0 0 3px rgb(255 212 59 / .28); }
+  .filters-btn.is-on:focus-visible { border-color: #1f1a16; box-shadow: 0 0 0 3px rgb(31 26 22 / .35); }
+  .filters-icon { flex: none; }
+  .filters-badge {
+    display: inline-grid;
+    place-items: center;
+    min-width: 21px;
+    height: 21px;
+    padding: 0 6px;
+    border-radius: 999px;
+    background: #1f1a16;
+    color: #fbf7ef;
+    font-size: 12px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+  }
+  .filters-badge[hidden] { display: none; }
+
+  body.has-filters { overflow: hidden; }
+  .filters-sheet { display: block; position: fixed; inset: 0; z-index: 80; }
+  .filters-sheet[hidden] { display: none; }
+  .filters-backdrop { position: absolute; inset: 0; background: rgba(24, 16, 10, .6); opacity: 0; transition: opacity .2s ease; }
+  /* Light in both themes, like the card's file. */
+  .filters-panel {
+    --text: #1f1a16;
+    --muted: #66584b;
+    --line: #d3c4aa;
+    --edge: #1f1a16;
+    --field: #fffdf8;
+    --chip: #e8dec9;
+    --paper: #fbf7ef;
+    --ink-btn: #1f1a16;
+    --on-ink: #fbf7ef;
+    --soft: #8a7a69;
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    display: flex;
+    flex-direction: column;
+    max-height: 88vh;
+    max-height: 88dvh;
+    border: 2px solid #1f1a16;
+    border-bottom: 0;
+    border-radius: 14px 14px 0 0;
+    background: #fbf7ef;
+    color: #1f1a16;
+    font-family: var(--font);
+    transform: translateY(100%);
+    transition: transform .22s cubic-bezier(.2, .8, .25, 1);
+  }
+  .filters-sheet.is-open .filters-backdrop { opacity: 1; }
+  .filters-sheet.is-open .filters-panel { transform: none; }
+  .filters-panel:focus { outline: none; }
+  .filters-head { position: relative; display: flex; align-items: center; gap: 8px; padding: 20px 8px 10px 18px; border-bottom: 2px dashed #d3c4aa; }
+  .filters-handle { position: absolute; top: 8px; left: 50%; width: 40px; height: 4px; margin-left: -20px; border-radius: 999px; background: #d3c4aa; }
+  .filters-title { flex: 1; margin: 0; font-size: 21px; font-weight: 800; letter-spacing: -.01em; line-height: 1.15; }
+  .filters-x { display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 10px; background: none; color: #66584b; font: 700 26px/1 var(--font); cursor: pointer; }
+  .filters-x:hover, .filters-x:focus-visible { color: #c8302a; background: #fff1a6; outline: none; }
+  .filters-body { flex: 1 1 auto; min-height: 0; overflow: auto; overscroll-behavior: contain; padding: 14px 18px 20px; }
+  .filters-group + .filters-group { margin-top: 20px; }
+  .filters-label { margin: 0 0 8px; color: #66584b; font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+  .filters-panel .sort-wrap { display: block; }
+  .filters-panel .sort-wrap select { width: 100%; max-width: none; height: 44px; font-size: 16px; }
+  .filters-pickers { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); gap: 8px; }
+  .filters-pickers:empty { display: none; }
+  .filters-panel .picker-btn { width: 100%; max-width: none; height: 44px; justify-content: space-between; }
+  .filters-panel .picker.is-open { margin-top: 10px; }
+  .filters-panel .picker-list { grid-template-columns: 1fr 1fr; max-height: 34vh; }
+  .filters-panel .is-sets.picker-list { grid-template-columns: 1fr; }
+  .filters-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .filters-chips:empty { display: none; }
+  .filters-pickers:not(:empty) ~ .filters-chips { margin-top: 12px; }
+  .filters-panel .chip { min-height: 40px; }
+  .filters-panel .chip:focus-visible { outline: 3px solid #1f1a16; outline-offset: 2px; }
+  .filters-foot { padding: 12px 22px calc(16px + env(safe-area-inset-bottom)) 18px; border-top: 2px solid #1f1a16; background: #f4ecdc; }
+  .filters-show {
+    width: 100%;
+    min-height: 50px;
+    padding: 0 16px;
+    border: 2px solid #1f1a16;
+    border-radius: 14px;
+    background: var(--sticker);
+    color: #1f1a16;
+    font: 800 17px/1.1 var(--font);
+    box-shadow: 4px 4px 0 #1f1a16;
+    cursor: pointer;
+    transition: transform .08s ease, box-shadow .08s ease;
+  }
+  .filters-show:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 #1f1a16; }
+  .filters-show:focus-visible { outline: 3px solid #1f1a16; outline-offset: 3px; }
+}
+@media (max-width: 599.98px) and (prefers-reduced-motion: reduce) {
+  .filters-backdrop, .filters-panel, .filters-show { transition: none; }
+}
 .is-collecting .pocket[aria-pressed="false"] .pk-card { filter: grayscale(1) brightness(.6); }
 .is-collecting .pocket[aria-pressed="false"]:hover .pk-card,
 .is-collecting .pocket[aria-pressed="false"]:focus-visible .pk-card { filter: grayscale(.35) brightness(.85); }
@@ -1892,7 +2018,6 @@ body.is-mine .mine-count { background: #fbf7ef; }
 
 /* The summary card's drawer: Breakdown, Value over time and Top movers. It
    opens inside the card, drawn in the card's own ink and cream. */
-.mine-shelf-tabs { display: flex; flex-wrap: wrap; gap: 8px; }
 .mine-shelf { display: grid; gap: 12px; padding: 14px; border: 2px solid #1f1a16; border-radius: 8px; background: #fffaf0; }
 .mine-shelf[hidden] { display: none; }
 
@@ -2018,8 +2143,8 @@ body.is-mine .mine-count { background: #fbf7ef; }
 }
 
 /* An account (supabase/README.md), once accounts are on (body.has-accounts):
-   the top bar's "Sign in", or your initial on a sticker with a dot for how
-   saving is going. It opens My binder at the account card. */
+   the top bar's "Sign in", or your picture (or initial) with a dot for how
+   saving is going. It opens the account's dropdown. */
 .acct-link {
   position: relative;
   display: inline-flex;
@@ -2086,43 +2211,217 @@ body.is-mine .mine-count { background: #fbf7ef; }
   body.has-accounts .lang-switch { margin-left: auto; }
 }
 
-/* The account card, right under My binder's title: the summary card's cream
-   and pixel frame, slimmer. Signed out: a line, the Google button, the
-   privacy note; signed in: one row, with the rest under "More". */
-.mine-summary.mine-acct { gap: 0; margin: 0 0 22px; padding: calc(var(--px) + 14px) calc(var(--px) + 18px); filter: drop-shadow(4px 4px 0 rgba(0, 0, 0, .5)); }
-.mine-acct:focus { outline: none; }
-.acct-card { display: grid; gap: 10px; text-align: left; }
-.acct-card p { margin: 0; }
-.acct-main { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; }
-.acct-line { flex: 1 1 240px; font-size: 15.5px; font-weight: 750; line-height: 1.35; }
-.acct-google { flex: none; }
-.acct-privacy { color: #66584b; font-size: 12px; font-weight: 600; line-height: 1.45; }
-.acct-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
-.acct-avatar { display: grid; flex: none; place-items: center; width: 36px; height: 36px; border: 2px solid #1f1a16; border-radius: 50%; background: var(--sticker); font-size: 16px; font-weight: 800; }
-.acct-who { display: grid; flex: 1 1 160px; gap: 2px; min-width: 0; border-radius: 4px; }
-.acct-who:focus { outline: none; }
-.acct-who:focus-visible, .mine-acct:focus-visible { box-shadow: 0 0 0 3px var(--sticker); }
-.acct-name { overflow: hidden; font-size: 14.5px; font-weight: 750; white-space: nowrap; text-overflow: ellipsis; }
-.acct-state { color: #66584b; font-size: 12.5px; font-weight: 650; font-variant-numeric: tabular-nums; }
-.acct-state.is-warn { color: #7c1d16; font-weight: 750; }
-.acct-state:empty { display: none; }
-.acct-acts { display: flex; flex: none; flex-wrap: wrap; gap: 6px; }
-.acct-caret { display: inline-block; margin-left: 6px; border: 4px solid transparent; border-top: 5px solid currentColor; border-bottom: 0; vertical-align: 1px; }
-.acct-more[aria-expanded="true"] { background: #1f1a16; color: #fbf7ef; }
-.acct-more[aria-expanded="true"] .acct-caret { border-top: 0; border-bottom: 5px solid currentColor; }
-.acct-menu { display: grid; gap: 10px; padding-top: 12px; border-top: 2px dashed #d3c4aa; }
-.acct-menu[hidden] { display: none; }
-.acct-menu .mine-more { margin: 0; align-items: center; }
-.acct-card .mine-sync-status.is-warn { font-size: 13px; }
-.acct-card .mine-extra { padding-top: 10px; }
-.acct-github { margin-top: 12px; }
+/* Dropdowns: the account's under the top bar's button, and the summary
+   card's "⋯". Cream paper, a 2px ink edge, a hard 4px shadow, 14px corners
+   and a caret pointing at the button (--caret, from collection.js). They
+   open with a quick fade and grow from the caret. */
+.pop {
+  position: absolute;
+  z-index: 90;
+  top: 0;
+  left: 0;
+  width: 320px;
+  padding: 14px;
+  border: 2px solid #1f1a16;
+  border-radius: 14px;
+  background: #fbf7ef;
+  color: #1f1a16;
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, .5);
+  font-family: var(--font);
+  text-align: left;
+  opacity: 0;
+  visibility: hidden;
+  transform: scale(.96);
+  transform-origin: var(--caret, 50%) -10px;
+  transition: opacity .12s ease, transform .12s ease, visibility 0s linear .12s;
+}
+.pop.is-open { opacity: 1; visibility: visible; transform: none; transition: opacity .12s ease, transform .12s ease; }
+.pop:focus { outline: none; }
+.pop p { margin: 0; }
+.pop-caret {
+  position: absolute;
+  top: -9px;
+  left: calc(var(--caret, 50%) - 8px);
+  width: 16px;
+  height: 16px;
+  border-top: 2px solid #1f1a16;
+  border-left: 2px solid #1f1a16;
+  border-radius: 3px 0 0 0;
+  background: #fbf7ef;
+  transform: rotate(45deg);
+}
+.pop-sum { padding: 8px; }
+
+/* Rows: 44 px, an 18 px line icon, a yellow tint on hover and focus. */
+.pop-rows { display: grid; gap: 2px; }
+.pop-row, .pop-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 9px;
+  background: none;
+  color: #1f1a16;
+  font: 750 14px/1.2 var(--font);
+  text-align: left;
+  cursor: pointer;
+}
+.pop-row:hover, .pop-link:hover { background: #fff1a6; }
+.pop-row:focus-visible, .pop-link:focus-visible { outline: none; background: #fff1a6; box-shadow: inset 0 0 0 2px #1f1a16; }
+.pop-row[aria-disabled="true"] { opacity: .55; cursor: default; }
+.pop-icon { flex: none; width: 18px; height: 18px; }
+.pop-row-label { flex: 1 1 auto; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.pop-row.is-danger { color: #b02a22; font-size: 12.5px; }
+.pop-hint { flex: none; color: #66584b; font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.pop-hint.is-due { padding: 2px 8px; border: 2px solid #1f1a16; border-radius: 999px; background: var(--sticker); color: #1f1a16; }
+.pop-rule { height: 0; margin: 6px 4px; border-top: 2px dashed #d3c4aa; }
+.pop-foot { margin-top: 10px; padding-top: 8px; border-top: 2px dashed #d3c4aa; }
+.pop-link { gap: 10px; min-height: 40px; color: #66584b; font-size: 13px; font-weight: 700; }
+.pop-link > span { flex: 1 1 auto; }
+.pop-link:hover, .pop-link:focus-visible { color: #1f1a16; }
+
+/* Signed in: who, then how saving is going. */
+.pop-head { display: flex; align-items: center; gap: 12px; padding: 2px; border-radius: 10px; }
+.pop-head:focus { outline: none; }
+.pop-head:focus-visible { box-shadow: 0 0 0 3px var(--sticker); }
+.pop-avatar { display: grid; flex: none; place-items: center; width: 44px; height: 44px; border: 2px solid #1f1a16; border-radius: 50%; background: var(--sticker); color: #1f1a16; font-size: 19px; font-weight: 800; object-fit: cover; }
+.pop-who { display: grid; gap: 2px; min-width: 0; }
+.pop-name { overflow: hidden; font-size: 15.5px; font-weight: 800; white-space: nowrap; text-overflow: ellipsis; }
+.pop-email { overflow: hidden; color: #66584b; font-size: 12.5px; font-weight: 600; white-space: nowrap; text-overflow: ellipsis; }
+.pop-status { display: grid; justify-items: start; gap: 6px; margin: 12px 0 10px; }
+.pop-pill { display: inline-flex; align-items: center; gap: 7px; padding: 4px 11px 4px 9px; border: 2px solid #1f1a16; border-radius: 999px; background: #fffdf8; font-size: 12.5px; font-weight: 750; line-height: 1.3; font-variant-numeric: tabular-nums; }
+.pop-pill-dot { flex: none; width: 9px; height: 9px; border-radius: 50%; background: #857565; }
+.pop-pill.is-ok .pop-pill-dot { background: #1d6b35; }
+.pop-pill.is-busy { background: #fff6cc; }
+.pop-pill.is-busy .pop-pill-dot { background: #d08f00; }
+.pop-pill.is-err { background: #fbe3dc; color: #7c1d16; }
+.pop-pill.is-err .pop-pill-dot { background: #c8302a; }
+.pop-pill.is-off { background: #e8dec9; color: #3a2f26; }
+.pop-pill-btn { margin: -8px -4px; padding: 8px 4px; border: 0; background: none; color: inherit; font: inherit; text-decoration: underline 2px; text-underline-offset: 3px; cursor: pointer; }
+.pop-pill-btn:focus-visible { outline: none; border-radius: 4px; box-shadow: 0 0 0 3px var(--sticker); }
+.pop-why { color: #66584b; font-size: 12px; font-weight: 600; line-height: 1.4; }
+.pop-error { margin: 0 0 8px; font-size: 13px; }
+.pop-ask { margin: 2px 0 0; }
+.pop-ask .mine-import { padding: 12px; }
+.pop-ask .mine-import-acts { gap: 8px 12px; }
+
+/* Signed out: what it's for, then Continue with Google. */
+.pop-title { font-size: 19px; font-weight: 800; letter-spacing: -.01em; line-height: 1.2; }
+.pop-line { margin: 4px 0 14px !important; color: #3a2f26; font-size: 14px; font-weight: 600; line-height: 1.4; }
+.pop-note { margin: 0 0 10px !important; padding: 8px 10px; border-left: 3px solid #c8302a; background: #fbeee0; color: #5a2a1c; font-size: 13px; font-weight: 700; line-height: 1.4; }
+.pop-note-acts { margin: 0 0 12px; }
+.pop-google {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 46px;
+  padding: 0 18px;
+  border: 2px solid #1f1a16;
+  border-radius: 999px;
+  background: #fff;
+  color: #1f1a16;
+  font: 750 15px/1 var(--font);
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, .5);
+  cursor: pointer;
+}
+.pop-google:hover { background: #fff1a6; }
+.pop-google:focus-visible { outline: none; box-shadow: 2px 2px 0 rgba(0, 0, 0, .5), 0 0 0 4px var(--sticker); }
+.pop-google[aria-disabled="true"] { opacity: .7; cursor: default; }
+.pop-g { flex: none; width: 18px; height: 18px; }
+.pop-privacy { margin: 12px 0 0 !important; color: #66584b; font-size: 11.5px; font-weight: 600; line-height: 1.45; }
+
+/* The top bar's button, signed in: your picture or initial, with a 10 px dot:
+   green saved, amber saving (a gentle pulse), red not saved, grey offline. */
+.acct-link-face { display: grid; place-items: center; width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+.acct-link.is-in.is-on, .acct-link.is-on { box-shadow: 2px 2px 0 var(--edge-shadow), 0 0 0 3px var(--sticker); }
+.acct-link .acct-dot { right: -3px; bottom: -3px; width: 14px; height: 14px; border-width: 2px; }
+.acct-link:not(.is-in) .acct-dot { top: -4px; right: -4px; bottom: auto; }
+.acct-dot.is-off { background: #857565; }
+.acct-dot.is-busy { animation: acct-pulse 1.4s ease-in-out infinite; }
+@keyframes acct-pulse { 50% { opacity: .45; transform: scale(.85); } }
+
+/* The summary card: the total, Paid and Gain/loss, with "$ | ₺" and the
+   "⋯" in the corner, and the tab bar at the foot. */
+.mine-sum-top { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 14px; }
+.mine-sum-corner { display: flex; align-items: center; gap: 8px; }
+.mine-cur { display: inline-flex; padding: 2px; border: 2px solid #1f1a16; border-radius: 999px; background: #fffdf8; }
+.mine-cur button { min-width: 32px; height: 28px; padding: 0 9px; border: 0; border-radius: 999px; background: none; color: #1f1a16; font: 800 14px/1 var(--font); cursor: pointer; }
+.mine-cur button:hover { background: #e8dec9; }
+.mine-cur button[aria-pressed="true"] { background: #1f1a16; color: #fbf7ef; }
+.mine-cur button:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--sticker); }
+.mine-dots { position: relative; display: grid; flex: none; place-items: center; width: 36px; height: 36px; padding: 0; border: 2px solid #1f1a16; border-radius: 50%; background: #fffdf8; color: #1f1a16; cursor: pointer; }
+.mine-dots:hover { background: #e8dec9; }
+.mine-dots.is-on { background: #1f1a16; color: #fbf7ef; }
+.mine-dots:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--sticker); }
+.mine-dots-dot { position: absolute; top: -4px; right: -4px; width: 13px; height: 13px; border: 2px solid #1f1a16; border-radius: 50%; background: var(--sticker); }
+
+.mine-tabs {
+  --at: 0;
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  width: 100%;
+  max-width: 600px;
+  padding: 3px;
+  border: 2px solid #1f1a16;
+  border-radius: 12px;
+  background: #f4ecdc;
+}
+.mine-tabs-glider {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  left: 3px;
+  width: calc((100% - 6px) / 3);
+  border: 2px solid #1f1a16;
+  border-radius: 9px;
+  background: var(--sticker);
+  box-shadow: inset 0 3px 0 rgba(255, 255, 255, .55);
+  transform: translateX(calc(var(--at) * 100%));
+  transition: transform .22s cubic-bezier(.2, .8, .25, 1), opacity .12s ease;
+}
+.mine-tabs.is-none .mine-tabs-glider { opacity: 0; }
+.mine-tabs.is-fresh .mine-tabs-glider { animation: tabs-in .14s ease-out; }
+@keyframes tabs-in { from { opacity: 0; transform: translateX(calc(var(--at) * 100%)) scale(.9); } }
+.mine-tab-btn { position: relative; min-width: 0; min-height: 40px; padding: 6px 8px; border: 0; border-radius: 9px; background: none; color: #3a2f26; font: 750 13px/1.15 var(--font); cursor: pointer; }
+.mine-tab-btn:hover { color: #1f1a16; text-decoration: underline 2px #d3c4aa; text-underline-offset: 3px; }
+.mine-tab-btn.is-on { color: #1f1a16; font-weight: 800; text-decoration: none; }
+.mine-tab-btn:focus-visible { outline: none; box-shadow: inset 0 0 0 2px #1f1a16, 0 0 0 3px var(--sticker); }
+
+/* GitHub sync's panel: a title and a close button over the steps. */
+.mine-sync-head { display: flex; align-items: center; gap: 10px; margin: 0 0 10px; }
+.mine-sync-title { flex: 1; margin: 0; font-size: 13px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; border-radius: 3px; }
+.mine-sync-title:focus { outline: none; }
+.mine-sync-title:focus-visible { box-shadow: 0 0 0 3px var(--sticker); }
+.mine-x { display: grid; flex: none; place-items: center; width: 32px; height: 32px; padding: 0; border: 2px solid #1f1a16; border-radius: 50%; background: #fffdf8; color: #1f1a16; cursor: pointer; }
+.mine-x:hover { background: #e8dec9; }
+.mine-x:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--sticker); }
+.mine-empty [data-mine-sync-empty] { width: 100%; }
+
 .mine-save[aria-disabled="true"], .mine-chip[aria-disabled="true"], .mine-textbtn[aria-disabled="true"] { opacity: .55; cursor: default; }
+@media (max-width: 600px) {
+  /* The total and the corner share the first row; Paid and Gain/loss go
+     under them, the whole width. */
+  .mine-sum-top .mine-sum-main { display: contents; }
+  .mine-sum-top .mine-total { grid-column: 1; grid-row: 1; justify-self: start; max-width: 100%; }
+  .mine-sum-top .mine-sum-corner { grid-column: 2; grid-row: 1; }
+  .mine-sum-top .mine-sum-facts { grid-column: 1 / -1; }
+  .mine-total-value { font-size: clamp(26px, 8vw, 32px); }
+  .mine-tab-btn { font-size: 12.5px; }
+}
 @media (max-width: 700px) {
-  .mine-summary.mine-acct { margin-bottom: 18px; padding: calc(var(--px) + 12px) calc(var(--px) + 14px); }
-  .acct-line { font-size: 15px; }
   /* An empty binder on a phone: the cover at most about 45% of the screen's
      height, so the help and "Load a backup" show without much scrolling. */
   body.has-accounts .mine-empty-state .closed-binder { width: min(380px, 84vw, 33.75vh); width: min(380px, 84vw, 33.75svh); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pop, .pop.is-open, .mine-tabs-glider { transition: none; }
+  .acct-dot.is-busy, .mine-tabs.is-fresh .mine-tabs-glider { animation: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
