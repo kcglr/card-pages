@@ -1,4 +1,4 @@
-{"v":1,"day":"2026-11-16","p":{
+{"v":1,"day":"2026-11-17","p":{
 "84332":{"Holofoil":[1879,null],"Reverse Holofoil":[2535,null]},
 "84333":{"Normal":[68,null],"Reverse Holofoil":[1406,null]},
 "84334":{"Holofoil":[1599,null],"Normal":[1349,null],"Reverse Holofoil":[2036,null]},
@@ -13,12 +13,12 @@
 "97057":{"Holofoil":[290,370],"Reverse Holofoil":[961,null]},
 "101456":{"Normal":[20,null],"Reverse Holofoil":[58,56]},
 "170901":{"Normal":[29,null],"Reverse Holofoil":[65,null]},
-"208413":{"Normal":[37,null],"Reverse Holofoil":[81,null]},
-"234230":{"Normal":[20,5],"Reverse Holofoil":[23,20]},
-"250333":{"Holofoil":[35,40]},
-"253359":{"Normal":[9,4],"Reverse Holofoil":[21,16]},
+"208413":{"Normal":[37,null],"Reverse Holofoil":[83,null]},
+"234230":{"Normal":[21,5],"Reverse Holofoil":[23,20]},
+"250333":{"Holofoil":[36,40]},
+"253359":{"Normal":[10,4],"Reverse Holofoil":[21,20]},
 "263775":{"Normal":[10,1],"Reverse Holofoil":[12,null]},
-"451748":{"Normal":[6,null],"Reverse Holofoil":[20,null]},
+"451748":{"Normal":[7,null],"Reverse Holofoil":[20,null]},
 "477450":{"Normal":[251,null]},
 "479768":{"Normal":[110,null]},
 "479769":{"Normal":[101,null]},
@@ -32,7 +32,7 @@
 "568544":{"Normal":[280,null]},
 "569076":{"Normal":[20,null]},
 "569450":{"Normal":[29,null]},
-"569672":{"Normal":[35,null]},
+"569672":{"Normal":[33,null]},
 "570106":{"Normal":[8,null]},
 "594629":{"Holofoil":[235,null]},
 "595740":{"Normal":[329,null]},
@@ -43,9 +43,9 @@
 "612499":{"1st Edition Holofoil":[2000,null],"Unlimited Holofoil":[3000,null]},
 "612806":{"1st Edition":[300,null]},
 "619275":{"Normal":[97,null]},
-"632894":{"Normal":[7,3],"Reverse Holofoil":[30,18]},
-"683698":{"Normal":[13,null]},
-"683741":{"Holofoil":[189,null]},
-"693466":{"Normal":[8,1],"Reverse Holofoil":[26,15]},
-"693467":{"Holofoil":[140,145]}
+"632894":{"Normal":[7,3],"Reverse Holofoil":[28,29]},
+"683698":{"Normal":[12,null]},
+"683741":{"Holofoil":[195,null]},
+"693466":{"Normal":[6,1],"Reverse Holofoil":[25,20]},
+"693467":{"Holofoil":[131,150]}
 }}
