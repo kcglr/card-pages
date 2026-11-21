@@ -1,9 +1,9 @@
-{"v":1,"day":"2026-11-19","p":{
-"126914":{"Normal":[19,10],"Reverse Holofoil":[32,32]},
-"138560":{"Normal":[18,15],"Reverse Holofoil":[32,27]},
+{"v":1,"day":"2026-11-20","p":{
+"126914":{"Normal":[19,10],"Reverse Holofoil":[31,31]},
+"138560":{"Normal":[18,15],"Reverse Holofoil":[31,27]},
 "139094":{"Holofoil":[3223,null]},
 "139095":{"Holofoil":[469,null]},
-"189204":{"Normal":[53,null],"Reverse Holofoil":[156,null]},
+"189204":{"Normal":[53,null],"Reverse Holofoil":[157,null]},
 "201157":{"Normal":[27,null],"Reverse Holofoil":[42,49]},
 "241752":{"Normal":[10,1],"Reverse Holofoil":[22,15]},
 "253143":{"Holofoil":[107,122]},
@@ -11,7 +11,7 @@
 "509842":{"Normal":[19,2],"Reverse Holofoil":[23,null]},
 "565905":{"Normal":[8,null]},
 "567268":{"Normal":[9,2],"Reverse Holofoil":[23,14]},
-"567431":{"Holofoil":[270,339]},
+"567431":{"Holofoil":[275,339]},
 "567879":{"Normal":[4,null]},
 "567962":{"Holofoil":[130,null]},
 "569269":{"Normal":[9,null]},
@@ -24,6 +24,6 @@
 "580335":{"Reverse Holofoil":[1836,null]},
 "595653":{"Normal":[65,null]},
 "598179":{"Normal":[285,null]},
-"650958":{"Holofoil":[199,null]},
+"650958":{"Holofoil":[198,null]},
 "669952":{"Normal":[100,null]}
 }}
