@@ -1,4 +1,4 @@
-{"v":1,"day":"2026-11-20","p":{
+{"v":1,"day":"2026-11-21","p":{
 "84598":{"1st Edition":[1152,999],"Unlimited":[372,null]},
 "85542":{"1st Edition Holofoil":[6250,162863],"Unlimited Holofoil":[3634,null]},
 "85543":{"Holofoil":[22499,null]},
@@ -9,19 +9,19 @@
 "85548":{"Holofoil":[1657,null],"Reverse Holofoil":[3965,null]},
 "85549":{"Normal":[1903,null]},
 "85550":{"Normal":[188,null],"Reverse Holofoil":[282,null]},
-"85551":{"Holofoil":[523,4590],"Reverse Holofoil":[209,null]},
+"85551":{"Holofoil":[523,540],"Reverse Holofoil":[209,null]},
 "85552":{"Normal":[77,null],"Reverse Holofoil":[1975,null]},
 "85553":{"Holofoil":[787,null],"Reverse Holofoil":[395,null]},
-"85554":{"Normal":[36,null],"Reverse Holofoil":[402,null]},
+"85554":{"Normal":[35,null],"Reverse Holofoil":[402,null]},
 "91197":{"Normal":[130,null],"Reverse Holofoil":[253,2490]},
 "178939":{"Normal":[35,null],"Reverse Holofoil":[61,null]},
 "226567":{"Normal":[14,null],"Reverse Holofoil":[21,18]},
-"488027":{"Normal":[16,null],"Reverse Holofoil":[22,12]},
+"488027":{"Normal":[16,1],"Reverse Holofoil":[22,12]},
 "497416":{"Holofoil":[66,null]},
-"497634":{"Holofoil":[115,null]},
-"534133":{"Holofoil":[50,58]},
-"535297":{"Holofoil":[102,94]},
-"542854":{"Normal":[16,2],"Reverse Holofoil":[21,10]},
+"497634":{"Holofoil":[112,null]},
+"534133":{"Holofoil":[52,60]},
+"535297":{"Holofoil":[105,94]},
+"542854":{"Normal":[16,1],"Reverse Holofoil":[21,10]},
 "565867":{"Holofoil":[27,null]},
 "565946":{"Holofoil":[117,null]},
 "566194":{"Normal":[7,null]},
@@ -30,7 +30,7 @@
 "568283":{"Normal":[9,null]},
 "571935":{"Normal":[15,null]},
 "572939":{"Normal":[75,null]},
-"575417":{"Holofoil":[1104,null]},
+"575417":{"Holofoil":[1108,null]},
 "575537":{"Normal":[499,null]},
 "576181":{"1st Edition":[500,null],"Unlimited":[450,null]},
 "603353":{"1st Edition":[419,null]},
@@ -40,5 +40,5 @@
 "611865":{"1st Edition Holofoil":[2500,null],"Unlimited Holofoil":[1800,null]},
 "613821":{"Normal":[1879,null]},
 "628714":{"Normal":[13,null]},
-"632947":{"Normal":[15,4],"Reverse Holofoil":[31,15]}
+"632947":{"Normal":[15,4],"Reverse Holofoil":[31,27]}
 }}

@@ -1,7 +1,7 @@
-{"v":1,"day":"2026-11-20","p":{
+{"v":1,"day":"2026-11-21","p":{
 "84332":{"Holofoil":[1902,null],"Reverse Holofoil":[2535,null]},
-"84333":{"Normal":[68,null],"Reverse Holofoil":[1406,null]},
-"84334":{"Holofoil":[1599,null],"Normal":[1349,null],"Reverse Holofoil":[2036,null]},
+"84333":{"Normal":[69,null],"Reverse Holofoil":[1406,null]},
+"84334":{"Holofoil":[1699,null],"Normal":[1349,null],"Reverse Holofoil":[2036,null]},
 "84335":{"Normal":[1658,null],"Reverse Holofoil":[6360,null]},
 "84336":{"Normal":[60,97],"Reverse Holofoil":[2188,null]},
 "84337":{"Normal":[563,null],"Reverse Holofoil":[615,null]},
@@ -14,9 +14,9 @@
 "101456":{"Normal":[20,null],"Reverse Holofoil":[58,55]},
 "170901":{"Normal":[29,null],"Reverse Holofoil":[65,null]},
 "208413":{"Normal":[36,null],"Reverse Holofoil":[83,null]},
-"234230":{"Normal":[22,10],"Reverse Holofoil":[23,10]},
-"250333":{"Holofoil":[36,36]},
-"253359":{"Normal":[10,4],"Reverse Holofoil":[21,15]},
+"234230":{"Normal":[22,10],"Reverse Holofoil":[22,15]},
+"250333":{"Holofoil":[36,37]},
+"253359":{"Normal":[10,4],"Reverse Holofoil":[21,20]},
 "263775":{"Normal":[10,1],"Reverse Holofoil":[13,null]},
 "451748":{"Normal":[8,null],"Reverse Holofoil":[20,null]},
 "477450":{"Normal":[251,null]},
@@ -27,7 +27,7 @@
 "479873":{"Normal":[76,null]},
 "480017":{"Normal":[95,null]},
 "480018":{"Normal":[90,null]},
-"509924":{"Holofoil":[12,5],"Reverse Holofoil":[24,null]},
+"509924":{"Holofoil":[13,5],"Reverse Holofoil":[24,null]},
 "567004":{"Holofoil":[24,null]},
 "568544":{"Normal":[280,null]},
 "569076":{"Normal":[20,null]},
@@ -43,9 +43,9 @@
 "612499":{"1st Edition Holofoil":[2000,null],"Unlimited Holofoil":[3000,null]},
 "612806":{"1st Edition":[300,null]},
 "619275":{"Normal":[97,null]},
-"632894":{"Normal":[10,3],"Reverse Holofoil":[27,15]},
+"632894":{"Normal":[11,3],"Reverse Holofoil":[26,23]},
 "683698":{"Normal":[12,null]},
-"683741":{"Holofoil":[196,null]},
-"693466":{"Normal":[9,1],"Reverse Holofoil":[23,15]},
-"693467":{"Holofoil":[152,193]}
+"683741":{"Holofoil":[195,null]},
+"693466":{"Normal":[9,1],"Reverse Holofoil":[23,20]},
+"693467":{"Holofoil":[153,249]}
 }}
