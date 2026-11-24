@@ -1,4 +1,4 @@
-{"v":1,"day":"2026-11-22","p":{
+{"v":1,"day":"2026-11-23","p":{
 "88315":{"Holofoil":[1006,9589],"Reverse Holofoil":[1786,null]},
 "88316":{"Holofoil":[977,null]},
 "88317":{"Holofoil":[1036,null],"Reverse Holofoil":[1292,null]},
@@ -8,17 +8,17 @@
 "88321":{"Holofoil":[15500,null]},
 "97091":{"Holofoil":[29900,null]},
 "101488":{"Normal":[32,30],"Reverse Holofoil":[108,56]},
-"101489":{"Holofoil":[288,null],"Reverse Holofoil":[494,5706]},
-"138601":{"Holofoil":[44,null],"Reverse Holofoil":[72,null]},
+"101489":{"Holofoil":[288,null],"Reverse Holofoil":[494,5702]},
+"138601":{"Holofoil":[45,null],"Reverse Holofoil":[70,null]},
 "189259":{"Holofoil":[178,null],"Reverse Holofoil":[241,null]},
 "198531":{"Holofoil":[957,null]},
 "198532":{"Holofoil":[1094,null]},
-"241795":{"Holofoil":[114,null],"Reverse Holofoil":[105,null]},
+"241795":{"Holofoil":[116,null],"Reverse Holofoil":[105,null]},
 "284066":{"Normal":[20,null],"Reverse Holofoil":[33,null]},
-"523825":{"Holofoil":[20,15],"Reverse Holofoil":[32,25]},
-"523895":{"Holofoil":[1438,1586]},
+"523825":{"Holofoil":[21,15],"Reverse Holofoil":[32,25]},
+"523895":{"Holofoil":[1436,1649]},
 "566010":{"Holofoil":[34,null]},
-"566037":{"Holofoil":[474,null]},
+"566037":{"Holofoil":[472,null]},
 "569186":{"Holofoil":[98,null]},
 "570016":{"Normal":[19,null]},
 "572766":{"Holofoil":[54,null]},
@@ -26,9 +26,10 @@
 "573673":{"Holofoil":[63,null]},
 "598394":{"Holofoil":[755,null]},
 "602759":{"1st Edition Holofoil":[999,null],"Unlimited Holofoil":[460,null]},
-"603959":{"1st Edition Holofoil":[999,null],"Unlimited Holofoil":[1099,null]},
-"606782":{"1st Edition Holofoil":[1308,null],"Unlimited Holofoil":[875,null]},
+"603958":{"1st Edition":[200,null]},
+"603959":{"1st Edition Holofoil":[967,null],"Unlimited Holofoil":[1099,null]},
+"606782":{"1st Edition Holofoil":[1446,null],"Unlimited Holofoil":[875,null]},
 "607708":{"1st Edition":[375,null]},
 "628724":{"Normal":[23,null]},
-"630828":{"Normal":[21,10],"Reverse Holofoil":[29,27]}
+"630828":{"Normal":[17,5],"Reverse Holofoil":[28,20]}
 }}
