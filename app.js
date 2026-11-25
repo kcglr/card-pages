@@ -1190,9 +1190,19 @@
         var fallback = window.ImageFallback;
         var largeSrc = fallback ? fallback.src(card.imageLarge) : card.imageLarge;
         var large = new Image();
+        // Decoded first, and swapped in only once the card has stopped moving
+        // (settleSheet): a big picture changing mid-flight costs frames.
         large.onload = function () {
-          var img = art.querySelector("img");
-          if (activeCard === card && img) img.src = largeSrc;
+          var swap = function () {
+            var img = art.querySelector("img");
+            if (activeCard === card && img) img.src = largeSrc;
+          };
+          var decoded = large.decode ? large.decode().catch(function () {}) : Promise.resolve();
+          decoded.then(function () {
+            if (activeCard !== card) return;
+            if ($("overlay").classList.contains("is-settled")) swap();
+            else afterSettle = swap;
+          });
         };
         // PokéCottage's scan didn't load: try TCGplayer's, then TCGdex's
         // (image-fallback.js), one after the other.
@@ -1372,11 +1382,27 @@
     }
   }
 
+  // The card has landed. Only now does the backdrop go soft (theme.css,
+  // .overlay.is-settled) and the sharper scan take the small one's place:
+  // both cost frames while the card and its file are still moving.
+  var settleTimer = 0;
+  var afterSettle = null;
+  function settleSheet(card) {
+    if (activeCard !== card) return;
+    $("overlay").classList.add("is-settled");
+    var run = afterSettle;
+    afterSettle = null;
+    if (run) run();
+  }
+
   // Pull the card out of its sleeve and lay it on the inspect stage.
   function pullCard(card, pocket) {
     if (!card || activeCard || animating) return;
     activeCard = card;
     closeQueued = false;
+    clearTimeout(settleTimer);
+    afterSettle = null;
+    $("overlay").classList.remove("is-settled");
     fillSheet(card);
     var art = $("sheet-art");
     var overlay = $("overlay");
@@ -1400,7 +1426,8 @@
         art.classList.remove("is-waiting");
         if (fly) art.classList.add("is-landing");
         // Asked to close while it was flying out: put it back now it's here.
-        if (closeQueued) closeSheet(false);
+        if (closeQueued) { closeSheet(false); return; }
+        settleTimer = setTimeout(function () { settleSheet(card); }, fly ? 1000 : 0);
       });
     });
     resolveCardLinks(card);
@@ -1414,6 +1441,8 @@
     closeQueued = false;
     var card = activeCard;
     activeCard = null;
+    clearTimeout(settleTimer);
+    afterSettle = null;
     Mine.hideCard();
     var overlay = $("overlay");
     var art = $("sheet-art");
@@ -1422,7 +1451,7 @@
     var thumb = pocket && pocket.querySelector(".pk-card img");
     function finish() {
       animating = false;
-      overlay.classList.remove("is-on", "is-closing");
+      overlay.classList.remove("is-on", "is-closing", "is-settled");
       settleDrag(overlay.querySelector(".sheet"));
       overlay.setAttribute("aria-hidden", "true");
       document.body.classList.remove("is-locked");

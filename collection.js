@@ -1376,6 +1376,8 @@
 
   // How saving is going: green saved, amber saving, red couldn't (with the
   // only "Save now" left: Try again), grey offline.
+  // How saving is going, as one quiet line under the name: a dot and a few
+  // words. Only trouble gets more: "Try again" and what went wrong.
   function pillHtml() {
     var cls, text, more = "";
     if (acct.state === "busy") { cls = "is-busy"; text = t("account.pill.busy"); }
@@ -1386,18 +1388,20 @@
       more = ' · <button type="button" class="pop-pill-btn pop-item" data-sum="acct-now">' + esc(t("account.pill.retry")) + "</button>";
     } else if (acct.at) { cls = "is-ok"; text = t("account.pill.ok", { ago: ago(acct.at) }); }
     else return "";
-    return '<div class="pop-status"><p class="pop-pill ' + cls + '"><span class="pop-pill-dot" aria-hidden="true"></span><span>' + esc(text) + more + "</span></p>" +
-      (cls === "is-err" ? '<p class="pop-why">' + esc(acctStatusText()) + "</p>" : "") + "</div>";
+    return '<p class="pop-pill ' + cls + '"><span class="pop-pill-dot" aria-hidden="true"></span><span>' + esc(text) + more + "</span></p>";
   }
 
-  function githubRowHtml() {
-    return '<div class="pop-foot"><button type="button" class="pop-link pop-item" data-sum="acct-github">' + icon("sync") +
-      "<span>" + esc(t("account.advanced")) + "</span>" + icon("next") + "</button></div>";
+  function githubRowHtml(inRows) {
+    var row = '<button type="button" class="' + (inRows ? "pop-row" : "pop-link") + ' pop-item" data-sum="acct-github">' + icon("sync") +
+      '<span class="pop-row-label">' + esc(t(inRows ? "sync.chip" : "account.advanced")) + "</span>" +
+      (inRows ? '<span class="pop-hint">' + esc(t("account.advancedTag")) + "</span>" : "") + icon("next") + "</button>";
+    return inRows ? row : '<div class="pop-foot">' + row + "</div>";
   }
 
-  // Signed out: what an account is for and Continue with Google. Signed in:
-  // who, how saving is going, Sign out and (small, red) Delete my data.
-  // GitHub sync is at the foot either way.
+  // Signed out: what an account is for and Continue with Google, with
+  // GitHub sync at the foot. Signed in, three parts: who you are and how
+  // saving is going; Sign out and GitHub sync; and, apart and small, Delete
+  // my data.
   function accountPopHtml() {
     var user = acctUser();
     var html;
@@ -1415,23 +1419,21 @@
       html += '<button type="button" class="pop-google pop-item" data-sum="acct-in" data-pop-first' + busyAttr(acct.going) + ">" + GOOGLE_G +
           "<span>" + esc(t(acct.going ? "account.going" : "account.continueGoogle")) + "</span></button>" +
         '<p class="pop-privacy">' + esc(t("account.privacy")) + "</p>";
-      return html + githubRowHtml();
+      return html + githubRowHtml(false);
     }
     html = '<div class="pop-head" data-acct-status tabindex="-1" data-pop-first>' + avatarHtml(user, "pop-avatar") +
       '<div class="pop-who"><p class="pop-name">' + esc(user.name || user.email || "—") + "</p>" +
-        (user.name && user.email ? '<p class="pop-email">' + esc(user.email) + "</p>" : "") + "</div></div>" +
-      pillHtml();
+        (user.name && user.email ? '<p class="pop-email">' + esc(user.email) + "</p>" : "") + pillHtml() + "</div></div>";
+    if (acctTrouble() && acct.state !== "busy" && acct.state !== "offline") html += '<p class="pop-why">' + esc(acctStatusText()) + "</p>";
     if (acct.error && !acct.confirm) html += '<p class="mine-error pop-error" role="alert">' + esc(acct.error) + "</p>";
-    if (acct.confirm) html += '<div class="pop-ask">' + confirmDeleteHtml() + "</div>";
-    else if (acct.leaveAsk) html += '<div class="pop-ask">' + leaveAskHtml() + "</div>";
-    else {
-      html += '<div class="pop-rows">' +
-        '<button type="button" class="pop-row pop-item" data-sum="acct-out"' + busyAttr(acct.leaving) + ">" + icon("out") +
-          '<span class="pop-row-label">' + esc(t(acct.leaving ? "account.signingOut" : "account.signOut")) + "</span></button>" +
-        '<button type="button" class="pop-row pop-item is-danger" data-sum="acct-delete">' + icon("trash") +
-          '<span class="pop-row-label">' + esc(t("account.delete")) + "</span></button></div>";
-    }
-    return html + githubRowHtml();
+    if (acct.confirm) return html + '<div class="pop-ask">' + confirmDeleteHtml() + "</div>";
+    if (acct.leaveAsk) return html + '<div class="pop-ask">' + leaveAskHtml() + "</div>";
+    return html + '<div class="pop-rows">' +
+      '<button type="button" class="pop-row pop-item" data-sum="acct-out"' + busyAttr(acct.leaving) + ">" + icon("out") +
+        '<span class="pop-row-label">' + esc(t(acct.leaving ? "account.signingOut" : "account.signOut")) + "</span></button>" +
+      githubRowHtml(true) + "</div>" +
+      '<div class="pop-foot"><button type="button" class="pop-danger pop-item" data-sum="acct-delete">' + icon("trash") +
+        "<span>" + esc(t("account.delete")) + "</span></button></div>";
   }
 
   // The top bar's way in (index.html), once accounts are on: "Sign in", or
@@ -1564,7 +1566,7 @@
     } else {
       html += '<div><dt>' + esc(t("sum.gain")) + '</dt><dd>—</dd><dd class="mine-sub">' + esc(t("sum.gainNone")) + "</dd></div>";
     }
-    html += "</dl></div>" + cornerHtml(rate, inLira) + "</div>";
+    html += "</dl>" + trendHtml(s) + "</div>" + cornerHtml(rate, inLira) + "</div>";
     // Notes that name a group of cards show just those cards when clicked.
     var cover = [];
     if (s.loading) cover.push([t("sheet.priceLoading")]);
@@ -1588,6 +1590,45 @@
       '" id="mine-shelf" role="region" aria-label="' +
       esc(t(shelfLabel(shelf.open))) + '">' + shelfHtml(s) + "</div>" : "");
     return html;
+  }
+
+  // The last 30 days at a glance, beside Paid and Gain/loss: a small line of
+  // what today's cards were worth each day and the change over it. It opens
+  // Value over time at 30 days. The market prices behind it are fetched when
+  // My binder opens if it holds up to TREND_MAX different Pokémon (a file
+  // each); a bigger binder gets the line once History or Movers was opened.
+  var TREND_MAX = 24;
+  var TREND_DAYS = 30;
+  function trendHtml(s) {
+    if (!s.cards || !Hist) return "";
+    var copies = Store.model().all();
+    var kinds = {};
+    copies.forEach(function (c) { if (c.snap.pid && c.species) kinds[c.species] = true; });
+    if (Object.keys(kinds).length <= TREND_MAX) ensureMarket(s);
+    var h = chartHistory();
+    if (!h || !h.days || !h.days.length) return "";
+    var to = today();
+    var series = core.valueSeries(h, copies, core.shiftDay(to, -TREND_DAYS), to, ALONG).value;
+    if (series.length < 2) return "";
+    var first = series[0].value;
+    var last = series[series.length - 1].value;
+    var change = last - first;
+    var lo = Infinity, hi = -Infinity;
+    series.forEach(function (p) { lo = Math.min(lo, p.value); hi = Math.max(hi, p.value); });
+    var x0 = dayNumber(series[0].date);
+    var span = Math.max(1, dayNumber(to) - x0);
+    var X = function (p) { return ((dayNumber(p.date) - x0) / span * 100).toFixed(1); };
+    var Y = function (p) { return (hi > lo ? 26 - (p.value - lo) / (hi - lo) * 22 : 15).toFixed(1); };
+    var d = "M" + X(series[0]) + " " + Y(series[0]);
+    for (var i = 1; i < series.length; i++) d += "H" + X(series[i]) + "V" + Y(series[i]);
+    d += "H100";
+    var cls = change > 0.004 ? "is-gain" : change < -0.004 ? "is-loss" : "";
+    var arrow = change > 0.004 ? "▲ " : change < -0.004 ? "▼ " : "";
+    var text = signed(amount(Math.abs(change)), change) + (first > 0 ? " (" + pct(change / first) + ")" : "");
+    return '<button type="button" class="mine-trend" data-sum="trend" aria-label="' + esc(t("trend.open", { change: text })) + '">' +
+      '<svg viewBox="0 0 100 30" preserveAspectRatio="none" aria-hidden="true" focusable="false"><path class="mine-trend-area" d="' + d +
+      'V30H0Z"/><path class="mine-trend-line" d="' + d + '"/></svg>' +
+      '<span class="mine-trend-text"><small>' + esc(t("trend.label")) + '</small><b class="' + cls + '">' + esc(arrow + text) + "</b></span></button>";
   }
 
   // Something to look at in the "⋯": no recent backup (backupDue), or GitHub
@@ -1718,7 +1759,7 @@
         return { id: id, points: file ? Hist.cardPoints(card, file, c.snap.pidUnique) : [] };
       }));
       market.loading = false;
-      if (shelf.open === "history" || shelf.open === "movers") renderSummary();
+      renderSummary();
     });
   }
 
@@ -1809,45 +1850,232 @@
   }
 
   function dayNumber(date) { return Math.round(new Date(date + "T00:00:00Z").getTime() / 864e5); }
-  function niceMax(v) {
-    if (!(v > 0)) return 1;
-    var p = Math.pow(10, Math.floor(Math.log(v) / Math.LN10));
-    var steps = [1, 2, 2.5, 5, 10];
-    for (var i = 0; i < steps.length; i++) if (steps[i] * p >= v) return steps[i] * p;
-    return 10 * p;
-  }
-  // Whole dollars on the scale, cents when it tops out under $10.
-  function usdShort(v, max) { return max < 10 ? formatUsd(v) : "$" + num(Math.round(v)); }
-
   // The chart stretches to the card's width: the lines are SVG with
   // non-scaling strokes, the labels HTML, and the 4 px grid the frame's
   // background, so text and lines stay the same size on a phone. `caption`
-  // is what a screen reader hears (the binder's summary by default).
-  function chartHtml(series, from, to, lastV, lastC, caption) {
+  // is what a screen reader hears (the binder's summary by default); `kind`
+  // is "price" for one printing's market price.
+  //
+  // The chart can be read: pointing at it, tapping it or pressing the arrow
+  // keys on it shows that day's amounts (the reader further down), and under
+  // it are where the stretch started, its lowest and highest days and the
+  // change over it. The points travel with the figure in data-chart.
+  function isoDay(n) { return new Date(n * 864e5).toISOString().slice(0, 10); }
+  // The scale fits what is drawn instead of starting at zero: a binder that
+  // went from $480 to $640 fills the frame, where a scale from $0 to $1,000
+  // showed it as a small step. { min, max } are round amounts around the
+  // lowest and highest values; a flat line sits in the middle.
+  function niceStep(v) {
+    if (!(v > 0)) return 1;
+    var p = Math.pow(10, Math.floor(Math.log(v) / Math.LN10));
+    var steps = [1, 2, 2.5, 5, 10];
+    for (var i = 0; i < steps.length; i++) if (steps[i] * p >= v - 1e-9) return steps[i] * p;
+    return 10 * p;
+  }
+  function chartScale(values) {
+    var lo = Math.min.apply(null, values);
+    var hi = Math.max.apply(null, values);
+    if (!values.length || !isFinite(lo) || !isFinite(hi) || hi <= 0) return { min: 0, max: 1 };
+    var flat = hi - lo < 1e-9;
+    var step = niceStep(Math.max(hi - lo, hi * 0.02) / 2);
+    var min = flat ? Math.max(0, lo - step) : Math.max(0, Math.floor(lo / step + 1e-9) * step);
+    var max = flat ? hi + step : Math.ceil(hi / step - 1e-9) * step;
+    if (max <= min) max = min + step;
+    return { min: Math.round(min * 1e6) / 1e6, max: Math.round(max * 1e6) / 1e6 };
+  }
+  function chartHtml(series, from, to, lastV, lastC, caption, kind) {
     // Each day is a slot, today's included, so the last step has a width.
     var x0 = dayNumber(from);
     var x1 = dayNumber(to) + 1;
     if (x1 <= x0) x0 = x1 - 1;
-    var max = niceMax(Math.max.apply(null, series.value.concat(series.cost).map(function (p) { return p.value; }).concat([0])));
+    // Paid is drawn, and counted in the scale, only when something was paid.
+    var hasCost = series.cost.some(function (p) { return p.value > 0; });
+    var scale = chartScale(series.value.concat(hasCost ? series.cost : []).map(function (p) { return p.value; }));
+    var min = scale.min;
+    var max = scale.max;
+    var cents = max < 10 || max - min < 8;
     function X(d) { return Math.round((dayNumber(d) - x0) / (x1 - x0) * 1000 * 10) / 10; }
-    function Y(v) { return Math.round((96 - v / max * 92) * 10) / 10; }
+    function Y(v) { return Math.round((96 - (v - min) / (max - min) * 92) * 10) / 10; }
     function steps(points) {
       if (!points.length) return "";
       var d = "M" + X(points[0].date) + " " + Y(points[0].value);
       for (var i = 1; i < points.length; i++) d += "H" + X(points[i].date) + "V" + Y(points[i].value);
       return d + "H1000";
     }
-    var grid = [0, max / 2, max];
+    var grid = [min, (min + max) / 2, max];
     var label = caption || t("history.summary", { date: day(to), value: lastV != null ? formatUsd(lastV) : "—", paid: lastC ? formatUsd(lastC) : "—" });
-    return '<figure class="mine-chart"><div class="mine-chart-plot">' +
-      grid.map(function (v) { return '<span class="mine-chart-y" style="--y:' + Y(v) + '">' + esc(usdShort(v, max)) + "</span>"; }).join("") +
+    var value = series.value;
+    var line = steps(value);
+    var data = {
+      x0: x0, x1: x1, min: min, max: max, kind: kind || "value",
+      v: value.map(function (p) { return [dayNumber(p.date), p.value]; }),
+      c: hasCost ? series.cost.map(function (p) { return [dayNumber(p.date), p.value]; }) : []
+    };
+    var first = value[0], low = value[0], high = value[0];
+    value.forEach(function (p) {
+      if (p.value < low.value) low = p;
+      if (p.value > high.value) high = p;
+    });
+    var stats = "";
+    if (first && lastV != null) {
+      var change = lastV - first.value;
+      var stat = function (key, big, small, cls) {
+        return "<div><dt>" + esc(t(key)) + '</dt><dd' + (cls ? ' class="' + cls + '"' : "") + ">" + esc(big) + (small ? "<small>" + esc(small) + "</small>" : "") + "</dd></div>";
+      };
+      stats = '<dl class="mine-chart-stats">' +
+        stat("chart.start", formatUsd(first.value), day(first.date)) +
+        stat("chart.low", formatUsd(low.value), day(low.date)) +
+        stat("chart.high", formatUsd(high.value), day(high.date)) +
+        stat("chart.change", signed(formatUsd(Math.abs(change)), change), first.value > 0 ? pct(change / first.value) : "",
+          change > 0.004 ? "is-gain" : change < -0.004 ? "is-loss" : "") + "</dl>";
+    }
+    var days = x1 - x0;
+    var middle = days > 2 ? "<span>" + esc(day(isoDay(x0 + Math.floor((days - 1) / 2)))) + "</span>" : "";
+    return '<figure class="mine-chart" data-chart="' + esc(JSON.stringify(data)) + '">' +
+      '<div class="mine-chart-plot" tabindex="0" role="slider" aria-label="' + esc(t(kind === "price" ? "sheet.history" : "shelf.history")) +
+      '" aria-valuemin="0" aria-valuemax="' + Math.max(0, value.length - 1) + '" aria-valuenow="' + Math.max(0, value.length - 1) +
+      '" aria-valuetext="' + esc(label) + '">' +
+      grid.map(function (v) { return '<span class="mine-chart-y" style="--y:' + Y(v) + '">' + esc(cents ? formatUsd(v) : "$" + num(Math.round(v))) + "</span>"; }).join("") +
       '<svg viewBox="0 0 1000 100" preserveAspectRatio="none" aria-hidden="true" focusable="false">' +
       grid.map(function (v) { return '<line x1="0" x2="1000" y1="' + Y(v) + '" y2="' + Y(v) + '" class="mine-chart-rule"/>'; }).join("") +
-      '<path class="mine-chart-cost" d="' + steps(series.cost) + '"/>' +
-      '<path class="mine-chart-value" d="' + steps(series.value) + '"/>' +
-      "</svg></div>" +
-      '<div class="mine-chart-x"><span>' + esc(day(from)) + "</span><span>" + esc(day(to)) + "</span></div>" +
+      (line ? '<path class="mine-chart-area" d="' + line + "V" + Y(min) + "H" + X(value[0].date) + 'Z"/>' : "") +
+      (hasCost ? '<path class="mine-chart-cost" d="' + steps(series.cost) + '"/>' : "") +
+      '<path class="mine-chart-value" d="' + line + '"/>' +
+      "</svg>" +
+      (lastV != null ? '<span class="mine-chart-end" style="--y:' + Y(lastV) + '" aria-hidden="true"></span>' : "") +
+      '<span class="mine-chart-cursor" aria-hidden="true" hidden></span><span class="mine-chart-dot" aria-hidden="true" hidden></span>' +
+      '<div class="mine-chart-tip" aria-hidden="true" hidden></div></div>' +
+      '<div class="mine-chart-x"><span>' + esc(day(from)) + "</span>" + middle + "<span>" + esc(day(to)) + "</span></div>" +
+      stats +
+      (value.length > 1 ? '<p class="mine-chart-hint">' + esc(t("chart.hint")) + "</p>" : "") +
       '<figcaption class="sr-only">' + esc(label) + "</figcaption></figure>";
+  }
+
+  /* ---- reading a chart ---- */
+
+  // One reader for every chart on the page (My binder's and the card
+  // file's). A dashed line and a dot mark the day under the pointer, or the
+  // finger, and a small card names the day and its amounts. The arrow keys
+  // step from one price change to the next; Home and End go to the ends.
+  var chartOn = null;
+  function chartOf(plot) {
+    if (plot._chart === undefined) {
+      try { plot._chart = JSON.parse(plot.parentNode.getAttribute("data-chart")); } catch (err) { plot._chart = null; }
+    }
+    return plot._chart;
+  }
+  // The last point on or before day d: its place in the list, -1 if none.
+  function pointAt(points, d) {
+    var lo = 0, hi = points.length - 1, at = -1;
+    while (lo <= hi) {
+      var mid = (lo + hi) >> 1;
+      if (points[mid][0] <= d) { at = mid; lo = mid + 1; } else hi = mid - 1;
+    }
+    return at;
+  }
+  function chartHide(plot) {
+    if (!plot) return;
+    ["cursor", "dot", "tip"].forEach(function (k) {
+      var el = plot.querySelector(".mine-chart-" + k);
+      if (el) el.hidden = true;
+    });
+    plot._at = null;
+    if (chartOn === plot) chartOn = null;
+  }
+  function chartShow(plot, d) {
+    var c = chartOf(plot);
+    if (!c || !c.v.length) return;
+    d = Math.max(c.v[0][0], Math.min(c.x1 - 1, Math.round(d)));
+    var i = pointAt(c.v, d);
+    if (i < 0) return;
+    var v = c.v[i][1];
+    var svg = plot.querySelector("svg");
+    var cursor = plot.querySelector(".mine-chart-cursor");
+    var dot = plot.querySelector(".mine-chart-dot");
+    var tip = plot.querySelector(".mine-chart-tip");
+    if (!svg || !cursor || !dot || !tip) return;
+    if (chartOn && chartOn !== plot) chartHide(chartOn);
+    var box = svg.getBoundingClientRect();
+    var host = plot.getBoundingClientRect();
+    var left = box.left - host.left - plot.clientLeft;
+    var top = box.top - host.top - plot.clientTop;
+    var x = left + (d + 0.5 - c.x0) / (c.x1 - c.x0) * box.width;
+    var y = top + (96 - (v - c.min) / (c.max - c.min) * 92) / 100 * box.height;
+    cursor.style.left = x.toFixed(1) + "px";
+    dot.style.left = x.toFixed(1) + "px";
+    dot.style.top = y.toFixed(1) + "px";
+    var ci = pointAt(c.c, d);
+    var paid = ci >= 0 ? c.c[ci][1] : 0;
+    var row = function (key, text, cls) { return "<span" + (cls ? ' class="' + cls + '"' : "") + "><i>" + esc(t(key)) + "</i>" + esc(text) + "</span>"; };
+    var delta = paid > 0 ? v - paid : v - c.v[0][1];
+    var base = paid > 0 ? paid : c.v[0][1];
+    var deltaText = signed(formatUsd(Math.abs(delta)), delta) + (base > 0 ? " (" + pct(delta / base) + ")" : "");
+    var html = "<b>" + esc(day(isoDay(d))) + "</b>" + row(c.kind === "price" ? "kind.market" : "history.value", formatUsd(v));
+    if (paid > 0) html += row("history.paid", formatUsd(paid));
+    if (paid > 0 || i > 0) html += row(paid > 0 ? "sum.gain" : "chart.change", deltaText, delta > 0.004 ? "is-gain" : delta < -0.004 ? "is-loss" : "");
+    tip.innerHTML = html;
+    cursor.hidden = dot.hidden = tip.hidden = false;
+    // The card keeps inside the frame, and out of the dot's way.
+    var half = tip.offsetWidth / 2;
+    var inner = plot.clientWidth;
+    tip.style.left = Math.max(half + 6, Math.min(inner - half - 6, x)).toFixed(1) + "px";
+    tip.classList.toggle("is-low", y - top < box.height * 0.5);
+    plot.setAttribute("aria-valuenow", String(i));
+    plot.setAttribute("aria-valuetext", tip.textContent ? day(isoDay(d)) + ": " + formatUsd(v) + (paid > 0 ? ", " + t("history.paid") + " " + formatUsd(paid) : "") : "");
+    plot._at = { day: d, i: i };
+    chartOn = plot;
+  }
+  function chartPoint(plot, clientX) {
+    var c = chartOf(plot);
+    var svg = plot.querySelector("svg");
+    if (!c || !svg) return;
+    var box = svg.getBoundingClientRect();
+    if (!box.width) return;
+    var f = Math.max(0, Math.min(0.999999, (clientX - box.left) / box.width));
+    chartShow(plot, Math.floor(c.x0 + f * (c.x1 - c.x0)));
+  }
+  function plotAt(node) { return node && node.closest ? node.closest(".mine-chart-plot") : null; }
+  if (root.document && root.document.addEventListener) {
+    root.document.addEventListener("pointermove", function (ev) {
+      var plot = plotAt(ev.target);
+      if (plot) chartPoint(plot, ev.clientX);
+      else if (chartOn && ev.pointerType === "mouse" && root.document.activeElement !== chartOn) chartHide(chartOn);
+    }, { passive: true });
+    root.document.addEventListener("pointerdown", function (ev) {
+      var plot = plotAt(ev.target);
+      if (plot) chartPoint(plot, ev.clientX);
+      else if (chartOn) chartHide(chartOn);
+    }, { passive: true });
+    root.document.addEventListener("focusin", function (ev) {
+      var plot = ev.target && ev.target.classList && ev.target.classList.contains("mine-chart-plot") ? ev.target : null;
+      // Keyboard focus starts on the latest day; a click has already picked one.
+      if (plot && !plot._at) { var c = chartOf(plot); if (c) chartShow(plot, c.x1 - 1); }
+    });
+    root.document.addEventListener("focusout", function (ev) {
+      if (ev.target && ev.target.classList && ev.target.classList.contains("mine-chart-plot")) chartHide(ev.target);
+    });
+    // On the way down, so an arrow key here isn't a page turn and Escape puts
+    // the reader away before it closes the drawer.
+    root.document.addEventListener("keydown", function (ev) {
+      var plot = ev.target && ev.target.classList && ev.target.classList.contains("mine-chart-plot") ? ev.target : null;
+      var c = plot ? chartOf(plot) : null;
+      if (!c || !c.v.length) return;
+      var last = c.v.length - 1;
+      var i = plot._at ? plot._at.i : last;
+      if (ev.key === "ArrowLeft" || ev.key === "ArrowDown") i -= 1;
+      else if (ev.key === "ArrowRight" || ev.key === "ArrowUp") i += 1;
+      else if (ev.key === "PageDown") i -= 10;
+      else if (ev.key === "PageUp") i += 10;
+      else if (ev.key === "Home") i = 0;
+      else if (ev.key === "End") i = last;
+      else if (ev.key === "Escape" && plot._at) { ev.stopPropagation(); chartHide(plot); return; }
+      else return;
+      ev.preventDefault();
+      ev.stopPropagation();
+      i = Math.max(0, Math.min(last, i));
+      // The latest point shows on today's slot, the others on their own day.
+      chartShow(plot, i === last ? c.x1 - 1 : c.v[i][0]);
+    }, true);
   }
 
   // A printing's market price over time for the card file, from [{ date,
@@ -1864,7 +2092,7 @@
       low: formatUsd(Math.min.apply(null, usd)), high: formatUsd(Math.max.apply(null, usd))
     });
     var series = { value: points.map(function (p) { return { date: p.date, value: p.usd }; }), cost: [] };
-    return chartHtml(series, from, to, last, 0, caption) +
+    return chartHtml(series, from, to, last, 0, caption, "price") +
       '<p class="sheet-history-note">' + esc(t("sheet.historyNote", { date: day(from) })) + "</p>";
   }
 
@@ -2088,6 +2316,15 @@
       acct.error = "";
       drawSync('[data-sum="acct-delete"]');
     } else if (act === "acct-delete-yes") deleteMyData();
+    else if (act === "trend") {
+      // The 30 days the little line shows, in full.
+      shelf.open = "history";
+      shelf.range = String(TREND_DAYS);
+      shelfFresh = true;
+      drawSync('[data-sum="shelf"][data-val="history"]');
+      var opened = $("mine-shelf");
+      if (opened && opened.scrollIntoView) opened.scrollIntoView({ block: "nearest", behavior: motionOff() ? "auto" : "smooth" });
+    }
     else if (act === "by" || act === "range" || act === "days") {
       shelf[act] = btn.getAttribute("data-val");
       rerender('[data-sum="' + act + '"][data-val="' + shelf[act] + '"]');

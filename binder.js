@@ -202,7 +202,10 @@
       var src = this.opts.describe(this.cards[i]).image;
       if (src && !this.preloaded[src]) {
         this.preloaded[src] = true;
-        new Image().src = src;
+        // After the scans on the open pages: those are the ones being looked at.
+        var ahead = new Image();
+        ahead.fetchPriority = "low";
+        ahead.src = src;
       }
     }
   };
@@ -456,10 +459,14 @@
       if (pocket) pocket.classList.add("is-out");
       return Promise.resolve(null);
     }
+    // The lift starts from where the card is (a pointed-at card is already
+    // part of the way up), not from the bottom of the sleeve. Where it is gets
+    // read before is-lifting switches the hover transition off (theme.css).
+    var high = card.offsetHeight || card.getBoundingClientRect().height;
+    var at = 0;
+    try { at = new DOMMatrixReadOnly(getComputedStyle(card).transform).m42 || 0; } catch (err) { at = 0; }
     pocket.classList.add("is-lifting");
-    // One keyframe: the lift starts from where the card is (a pointed-at card
-    // is already part of the way up), not from the bottom of the sleeve.
-    var lift = card.animate([{ transform: "translateY(-" + LIFT * 100 + "%)" }],
+    var lift = card.animate([{ transform: "translateY(" + at.toFixed(1) + "px)" }, { transform: "translateY(" + (-LIFT * high).toFixed(1) + "px)" }],
       { duration: 230, easing: "cubic-bezier(.3,.6,.35,1)", fill: "forwards" });
     return lift.finished.then(function () {
       var from = card.getBoundingClientRect();
@@ -470,10 +477,13 @@
       var fly = flyingCard(src, goal);
       var d = centerDelta(from, goal);
       var mid = d.scale + (1 - d.scale) * 0.55;
+      // Only the transform moves, so the flight runs off the main thread and
+      // stays smooth while the card's file is being filled in. The shadow is
+      // part of the picture's layer (theme.css, .card-fly) and grows with it.
       return fly.animate([
-        { transform: pose(d.x, d.y, d.scale, 0, 0), boxShadow: "0 3px 8px rgba(0,0,0,.35)" },
+        { transform: pose(d.x, d.y, d.scale, 0, 0) },
         { transform: pose(d.x * 0.42, d.y * 0.42 - 70, mid, -6, 22), offset: 0.5 },
-        { transform: pose(0, 0, 1, 0, 0), boxShadow: "0 34px 70px rgba(0,0,0,.5)" }
+        { transform: pose(0, 0, 1, 0, 0) }
       ], { duration: 640, easing: "cubic-bezier(.25,.7,.3,1)", fill: "forwards" }).finished.then(function () { return fly; });
     });
   };
@@ -491,9 +501,9 @@
     var fly = flyingCard(src, from);
     var d = centerDelta(above, from);
     return fly.animate([
-      { transform: pose(0, 0, 1, 0, 0), boxShadow: "0 34px 70px rgba(0,0,0,.5)" },
+      { transform: pose(0, 0, 1, 0, 0) },
       { transform: pose(d.x * 0.55, d.y * 0.55 - 50, (1 + d.scale) / 2, 5, -18), offset: 0.5 },
-      { transform: pose(d.x, d.y, d.scale, 0, 0), boxShadow: "0 3px 8px rgba(0,0,0,.35)" }
+      { transform: pose(d.x, d.y, d.scale, 0, 0) }
     ], { duration: 520, easing: "cubic-bezier(.45,0,.25,1)", fill: "forwards" }).finished.then(function () {
       pocket.classList.remove("is-out");
       fly.remove();
