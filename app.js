@@ -503,8 +503,15 @@
       escapeHtml(title) + '</span></div><p class="cover-info">' + INFO_ICON + said("span", noteKey) + "</p></div>";
   }
 
-  function paintResult() {
+  // `fresh`: a binder that was just opened, not one drawn again after a
+  // change. Its header, toolbar and pages come in softly (theme.css,
+  // #result.is-entering).
+  var enterTimer = 0;
+  function paintResult(fresh) {
     if (!current) return;
+    clearTimeout(enterTimer);
+    $("result").classList.toggle("is-entering", !!fresh && !motionOff());
+    if (fresh) enterTimer = setTimeout(function () { $("result").classList.remove("is-entering"); }, 900);
     var cards = current.cards;
     var meta = current.meta;
     var mine = !!meta.mine;
@@ -516,7 +523,7 @@
     var title = mine ? said("h2", "mine.title", 'class="result-title"') : '<h2 class="result-title">' + escapeHtml(meta.name) + "</h2>";
     $("result").innerHTML =
       '<header class="result-header' + (mine ? " is-mine" : "") + '">' +
-        (art ? '<img class="result-art" src="' + escapeHtml(art) + '" alt="" width="112" height="112" onerror="this.remove()">' : "") +
+        (art ? '<img class="result-art" src="' + escapeHtml(art) + '" alt="" width="112" height="112" onload="this.classList.add(&quot;is-in&quot;)" onerror="this.remove()">' : "") +
         '<div class="result-heading">' +
           '<button type="button" class="back-home" data-go-home><span aria-hidden="true">←</span> ' + said("span", "result.back") + "</button>" +
           '<p class="result-dex" id="result-dex"></p>' + title +
@@ -923,6 +930,14 @@
       if (pickerMode === "species") closePicker(false);
       else openPicker("species");
     });
+    // Escape on either button puts its shelf away too.
+    [btn, who].forEach(function (b) {
+      if (b) b.addEventListener("keydown", function (ev) {
+        if (ev.key !== "Escape" || !pickerMode || pickerMode === "sets") return;
+        ev.stopPropagation();
+        closePicker(true);
+      });
+    });
     box.addEventListener("click", function (ev) {
       var act = ev.target.closest("[data-act]");
       if (act) {
@@ -973,10 +988,14 @@
   }
 
   // A click anywhere outside the toolbar (or the phone's Filters sheet, where
-  // the shelf moves with its buttons) puts the shelf away.
-  document.addEventListener("pointerdown", function (ev) {
+  // the shelf moves with its buttons) puts the shelf away. It waits for the
+  // click, not the press: closing on the press moved the binder up under the
+  // pointer, so a click on a card landed on nothing. It listens on the way
+  // down, while the clicked element is still in the page (a pick redraws the
+  // shelf).
+  document.addEventListener("click", function (ev) {
     if (pickerMode && !(ev.target.closest && ev.target.closest("#toolbar, #filters-sheet .filters-panel"))) closePicker(false);
-  });
+  }, true);
 
   // Re-files the binder after a filter, sort or price change.
   function showCards(fromStart) {
@@ -1364,6 +1383,7 @@
     var thumb = pocket && pocket.querySelector(".pk-card img");
     art.classList.remove("is-landing");
     art.classList.add("is-waiting");
+    settleDrag(overlay.querySelector(".sheet"));
     overlay.classList.add("is-on");
     overlay.setAttribute("aria-hidden", "false");
     document.body.classList.add("is-locked");
@@ -1403,6 +1423,7 @@
     function finish() {
       animating = false;
       overlay.classList.remove("is-on", "is-closing");
+      settleDrag(overlay.querySelector(".sheet"));
       overlay.setAttribute("aria-hidden", "true");
       document.body.classList.remove("is-locked");
       art.classList.remove("is-waiting", "is-landing");
@@ -1558,6 +1579,55 @@
     if (stops.length) stops[tabBack ? stops.length - 1 : 0].focus();
   });
 
+  // iOS Safari shows a control's pressed look (:active in theme.css) only on
+  // a page that listens for touches.
+  document.addEventListener("touchstart", function () {}, { passive: true });
+
+  /* ---- pulling a sheet down ---- */
+
+  // A sheet on a phone can be pulled down by its top edge (`grip`): the panel
+  // follows the finger through --drag (theme.css). Let go after a good pull,
+  // or a quick flick, and it closes; otherwise it settles back. Buttons in
+  // the grip keep working, and Escape and the close button are unchanged.
+  function dragToClose(grip, panel, close) {
+    if (!grip || !panel) return;
+    var pull = null;
+    grip.addEventListener("pointerdown", function (ev) {
+      if (ev.button > 0 || ev.isPrimary === false || (ev.target.closest && ev.target.closest("button, a, input, select"))) return;
+      pull = { id: ev.pointerId, y: ev.clientY, at: Date.now(), by: 0, on: false };
+      try { grip.setPointerCapture(ev.pointerId); } catch (err) { /* not held: the moves still come while over the grip */ }
+    });
+    grip.addEventListener("pointermove", function (ev) {
+      if (!pull || ev.pointerId !== pull.id) return;
+      var by = Math.max(0, ev.clientY - pull.y);
+      if (!pull.on && by < 6) return;
+      pull.on = true;
+      pull.by = by;
+      panel.classList.add("is-dragged", "is-dragging");
+      panel.style.setProperty("--drag", by + "px");
+    });
+    function letGo(ev) {
+      if (!pull || (ev && ev.pointerId !== pull.id)) return;
+      var was = pull;
+      pull = null;
+      panel.classList.remove("is-dragging");
+      if (!was.on) return;
+      var quick = was.by / Math.max(1, Date.now() - was.at) > 0.55; // px per ms
+      if (ev.type === "pointerup" && (was.by > Math.min(150, panel.offsetHeight * 0.3) || (quick && was.by > 36))) { close(); return; }
+      panel.style.setProperty("--drag", "0px");
+      setTimeout(function () { if (!pull) settleDrag(panel); }, 360);
+    }
+    grip.addEventListener("pointerup", letGo);
+    grip.addEventListener("pointercancel", letGo);
+  }
+  function settleDrag(panel) {
+    if (!panel) return;
+    panel.classList.remove("is-dragged", "is-dragging");
+    panel.style.removeProperty("--drag");
+  }
+  // The card's file, on a phone: its handle is the grip.
+  dragToClose(document.querySelector("#overlay .sheet-handle"), document.querySelector("#overlay .sheet"), function () { closeSheet(false); });
+
   /* ---- the Filters sheet (phones) ---- */
 
   // Under 600px the toolbar keeps the set field and a Filters button. Sort,
@@ -1631,6 +1701,7 @@
     });
     filtersOpen = true;
     sheet.hidden = false;
+    settleDrag(sheet.querySelector(".filters-panel"));
     sheet.getBoundingClientRect(); // so the panel slides up from below
     sheet.classList.add("is-open");
     document.body.classList.add("has-filters");
@@ -1648,7 +1719,7 @@
     syncFilters();
     if (focusBack && $("filters-btn")) $("filters-btn").focus({ preventScroll: true });
     // The controls ride the panel down, then go home.
-    if (sheet && sheet.isConnected && !motionOff()) filtersTimer = setTimeout(putFiltersBack, 220);
+    if (sheet && sheet.isConnected && !motionOff()) filtersTimer = setTimeout(putFiltersBack, 320);
     else putFiltersBack();
   }
 
@@ -1674,6 +1745,7 @@
     sheet.addEventListener("click", function (ev) {
       if (ev.target.closest("[data-filters-close]")) closeFilters(true);
     });
+    dragToClose(sheet.querySelector(".filters-head"), sheet.querySelector(".filters-panel"), function () { closeFilters(true); });
     sheet.addEventListener("keydown", function (ev) {
       if (ev.key === "Tab") {
         filtersTabBack = ev.shiftKey;
@@ -1717,6 +1789,9 @@
     if (ev.key === "Escape") {
       if (activeCard) closeSheet(false); // the search field handles its own Escape
       else if (dexItem) closeDexCard();
+      // An open shelf, wherever the focus is: Safari doesn't focus a clicked
+      // button, so the key may not start on the shelf's own button.
+      else if (pickerMode) closePicker(true);
     } else if (ev.key === "Tab" && activeCard) {
       trapTab(ev);
     } else if ((ev.key === "ArrowLeft" || ev.key === "ArrowRight") && binder && !activeCard && $("binder") &&
@@ -2078,7 +2153,7 @@
         priced: 0,
         priceTime: ""
       };
-      paintResult();
+      paintResult(true);
       setStatus("status.fetching");
       var ids = cards.map(function (c) { return c.productId; }).filter(Boolean);
       var t0 = Date.now();
@@ -2231,7 +2306,7 @@
       });
       scoreMineCards();
       mineDirty = false;
-      paintResult();
+      paintResult(true);
       priceMine(token);
       reconcileMine(token);
     });

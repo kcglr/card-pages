@@ -123,8 +123,20 @@
     }
     if (page < this.pageCount()) html += '<span class="page-no" aria-hidden="true">' + (page + 1) + "</span>";
     el.innerHTML = html;
+    softImages(el);
     return el;
   };
+
+  // A scan still on its way fades in over the card's back when it arrives
+  // (theme.css, .pk-card img.is-loading); one the browser already has shows
+  // at once, so a turned page never blinks.
+  function softImages(page) {
+    page.querySelectorAll(".pk-card img").forEach(function (img) {
+      if (img.complete && img.naturalWidth) return;
+      img.classList.add("is-loading");
+      img.addEventListener("load", function () { img.classList.remove("is-loading"); });
+    });
+  }
 
   Binder.prototype.render = function (deal) {
     this.finishFlip();
@@ -214,7 +226,8 @@
       var info = self.opts.describe(card);
       var sticker = pocket.querySelector(".pk-price");
       if (info.price && !sticker) {
-        sticker = node("span", "pk-price");
+        // A price that has just arrived: its sticker is pressed on (is-new).
+        sticker = node("span", "pk-price is-new");
         sticker.setAttribute("aria-hidden", "true");
         pocket.appendChild(sticker);
       }
@@ -444,7 +457,9 @@
       return Promise.resolve(null);
     }
     pocket.classList.add("is-lifting");
-    var lift = card.animate([{ transform: "translateY(0)" }, { transform: "translateY(-" + LIFT * 100 + "%)" }],
+    // One keyframe: the lift starts from where the card is (a pointed-at card
+    // is already part of the way up), not from the bottom of the sleeve.
+    var lift = card.animate([{ transform: "translateY(-" + LIFT * 100 + "%)" }],
       { duration: 230, easing: "cubic-bezier(.3,.6,.35,1)", fill: "forwards" });
     return lift.finished.then(function () {
       var from = card.getBoundingClientRect();

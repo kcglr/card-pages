@@ -1584,7 +1584,8 @@
     html += '<div data-mine-import aria-live="polite">' + importHtml() + "</div>";
     // Breakdown, Value over time and Top movers: one tab bar at the foot,
     // the open one's panel under it.
-    if (s.cards) html += shelfTabsHtml() + (shelf.open && shelf.open !== "sync" ? '<div class="mine-shelf" id="mine-shelf" role="region" aria-label="' +
+    if (s.cards) html += shelfTabsHtml() + (shelf.open && shelf.open !== "sync" ? '<div class="mine-shelf' + (shelfFresh ? " is-fresh" : "") +
+      '" id="mine-shelf" role="region" aria-label="' +
       esc(t(shelfLabel(shelf.open))) + '">' + shelfHtml(s) + "</div>" : "");
     return html;
   }
@@ -1940,6 +1941,52 @@
     return '[data-sum="' + q(act) + '"]' + (val ? '[data-val="' + q(val) + '"]' : "") + (kind ? '[data-kind="' + q(kind) + '"]' : "");
   }
 
+  // The drawer under the tab bar unfolds when it was just opened, not each
+  // time the card is drawn again (theme.css, .mine-shelf.is-fresh).
+  var shelfFresh = false;
+
+  // The total counts up or down to a new amount in about half a second
+  // instead of jumping (not with reduced motion, and not when the currency
+  // changes). The card is drawn again often, so a count carries on in the
+  // new element.
+  var TOTAL_MS = 600;
+  var total = { seen: null, lira: false, run: null };
+  function motionOff() {
+    return !!(root.matchMedia && root.matchMedia("(prefers-reduced-motion: reduce)").matches);
+  }
+  function totalAt(run, now) {
+    var k = Math.min(1, (now - run.t0) / TOTAL_MS);
+    k = 1 - Math.pow(1 - k, 3);
+    return run.from + (run.to - run.from) * k;
+  }
+  function stepTotal(run) {
+    if (total.run !== run) return;
+    var now = Date.now();
+    if (now - run.t0 >= TOTAL_MS || !run.el.isConnected) {
+      if (run.el.isConnected) run.el.textContent = run.fmt(run.to);
+      total.run = null;
+      return;
+    }
+    run.el.textContent = run.fmt(totalAt(run, now));
+    root.requestAnimationFrame(function () { stepTotal(run); });
+  }
+  function tweenTotal(el, s) {
+    var rate = api.fxRate();
+    var inLira = wantsLira() && !!rate;
+    var to = el && s && s.cards ? (inLira ? s.value * rate : s.value) : null;
+    var now = Date.now();
+    var shown = total.run ? totalAt(total.run, now) : total.seen;
+    var jump = to == null || !isFinite(to) || shown == null || total.lira !== inLira || motionOff() ||
+      document.hidden || !root.requestAnimationFrame || Math.abs(to - shown) < 0.005;
+    total.seen = to;
+    total.lira = inLira;
+    total.run = null;
+    if (jump) return;
+    var run = total.run = { from: shown, to: to, t0: now, el: el, fmt: inLira ? liraAmount : formatUsd };
+    el.textContent = run.fmt(shown);
+    root.requestAnimationFrame(function () { stepTotal(run); });
+  }
+
   var lastSummary = null;
   function renderSummary(stats) {
     if (stats) lastSummary = stats;
@@ -1950,6 +1997,8 @@
     }
     var focus = focusKey(document.activeElement, box);
     box.innerHTML = summaryHtml(lastSummary);
+    shelfFresh = false;
+    tweenTotal(box.querySelector(".mine-total-value"), lastSummary);
     if (focus) {
       var again = box.querySelector(focus);
       if (again) again.focus({ preventScroll: true });
@@ -2010,6 +2059,7 @@
     else if (act === "shelf") {
       var name = btn.getAttribute("data-val");
       shelf.open = shelf.open === name ? "" : name;
+      shelfFresh = !!shelf.open;
       drawSync('[data-sum="shelf"][data-val="' + name + '"]');
     } else if (act === "sync-now") syncNow();
     else if (act === "sync-off") disconnectSync();

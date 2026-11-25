@@ -4,18 +4,40 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="Pullfolio files every Pokémon TCG printing in a binder you can flip through. Pull out any card to check TCGplayer prices and open exact marketplace pages.">
-<meta name="theme-color" content="#eee5d3">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#eee5d3" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1b1714" media="(prefers-color-scheme: dark)">
 <title data-i18n="title.home">Pullfolio — every Pokémon card in one binder</title>
+<!-- What a shared link shows: the site's own logo and line, no card art. -->
+<link rel="canonical" href="https://kcglr.github.io/card-pages/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Pullfolio">
+<meta property="og:title" content="Pullfolio — every Pokémon card in one binder">
+<meta property="og:description" content="Every Pokémon TCG printing, filed in a binder you can flip through. Pull out any card to see what it sells for.">
+<meta property="og:url" content="https://kcglr.github.io/card-pages/">
+<meta property="og:image" content="https://kcglr.github.io/card-pages/assets/share.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Pullfolio: every Pokémon card, filed in one binder.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="apple-mobile-web-app-title" content="Pullfolio">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="assets/icon-180.png">
+<!-- The card scans and the sprites come from these two hosts. -->
+<link rel="preconnect" href="https://pokecottagecdn.com">
+<link rel="preconnect" href="https://raw.githubusercontent.com">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&display=swap">
 <link rel="stylesheet" href="styles.css">
 <link rel="stylesheet" href="card-tilt.css?v=2">
-<link rel="stylesheet" href="theme.css?v=34">
+<link rel="stylesheet" href="theme.css?v=35">
+<link rel="icon" href="assets/icon-32.png" sizes="32x32" type="image/png">
 <link rel="icon" href="assets/pullfolio-icon.svg?v=2" type="image/svg+xml">
 <link rel="preload" href="assets/binder-charcoal.webp" as="image" type="image/webp">
 </head>
 <body>
+  <noscript><p class="no-script">Pullfolio needs JavaScript to open its binders. / Pullfolio’nun klasörleri açması için JavaScript gerekir.</p></noscript>
   <a class="skip-link" href="#main" data-i18n="skip">Skip to the binder</a>
   <div class="page">
     <nav class="topbar" aria-label="Main navigation" data-i18n-attr="aria-label:nav.label">
@@ -110,8 +132,8 @@
   <script src="collection-sync.js?v=1"></script>
   <script src="collection-supabase.js?v=2"></script>
   <script src="account.js?v=5"></script>
-  <script src="collection.js?v=10"></script>
-  <script src="binder.js?v=14"></script>
-  <script src="app.js?v=41"></script>
+  <script src="collection.js?v=11"></script>
+  <script src="binder.js?v=15"></script>
+  <script src="app.js?v=42"></script>
 </body>
 </html>

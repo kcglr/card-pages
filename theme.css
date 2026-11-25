@@ -1,8 +1,26 @@
 /* Pullfolio: a collector's desk. Kraft paper, label-maker tape, an index card,
    and a red ring binder full of clear sleeves. Layered over styles.css. */
+/* Stand-ins for the site font. On a first visit the text shows in a system
+   font for a moment, then Bricolage Grotesque arrives. These faces are the
+   system's own fonts (Segoe UI on Windows, Arial on a Mac or an iPhone),
+   resized to take the room Bricolage takes (measured in the browser:
+   scratch fontfit.py), so lines don't re-wrap or jump when it swaps in.
+   Big headlines need their own sizes: Bricolage narrows as it grows. Where
+   neither font is installed the browser's own sans-serif shows, as before. */
+@font-face { font-family: "Pullfolio Text"; src: local("Segoe UI"); font-weight: 100 549; size-adjust: 104.3%; ascent-override: 89.2%; descent-override: 25.9%; line-gap-override: 0%; }
+@font-face { font-family: "Pullfolio Text"; src: local("Segoe UI Semibold"); font-weight: 550 699; size-adjust: 103.5%; ascent-override: 89.9%; descent-override: 26.1%; line-gap-override: 0%; }
+@font-face { font-family: "Pullfolio Text"; src: local("Segoe UI Bold"); font-weight: 700 900; size-adjust: 102%; ascent-override: 91.2%; descent-override: 26.5%; line-gap-override: 0%; }
+@font-face { font-family: "Pullfolio Text A"; src: local("Arial"), local("ArialMT"); font-weight: 100 599; size-adjust: 102.2%; ascent-override: 91.0%; descent-override: 26.4%; line-gap-override: 0%; }
+@font-face { font-family: "Pullfolio Text A"; src: local("Arial Bold"), local("Arial-BoldMT"); font-weight: 600 900; size-adjust: 100.5%; ascent-override: 92.5%; descent-override: 26.9%; line-gap-override: 0%; }
+@font-face { font-family: "Pullfolio Heading"; src: local("Segoe UI Bold"); font-weight: 600 900; size-adjust: 94.5%; ascent-override: 98.4%; descent-override: 28.6%; line-gap-override: 0%; }
+@font-face { font-family: "Pullfolio Heading A"; src: local("Arial Bold"), local("Arial-BoldMT"); font-weight: 600 900; size-adjust: 86%; ascent-override: 108.1%; descent-override: 31.4%; line-gap-override: 0%; }
+@font-face { font-family: "Pullfolio Display"; src: local("Segoe UI Bold"); font-weight: 600 900; size-adjust: 91%; ascent-override: 102.2%; descent-override: 29.7%; line-gap-override: 0%; }
+@font-face { font-family: "Pullfolio Display A"; src: local("Arial Bold"), local("Arial-BoldMT"); font-weight: 600 900; size-adjust: 83%; ascent-override: 112.0%; descent-override: 32.5%; line-gap-override: 0%; }
 :root {
   color-scheme: light;
-  --font: "Bricolage Grotesque", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font: "Bricolage Grotesque", "Pullfolio Text", "Pullfolio Text A", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-heading: "Bricolage Grotesque", "Pullfolio Heading", "Pullfolio Heading A", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Bricolage Grotesque", "Pullfolio Display", "Pullfolio Display A", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --bg: #eee5d3;
   --desk-dot: rgba(74, 52, 30, .14);
   --card: #fbf7ef;
@@ -35,6 +53,19 @@
     var(--sprite-print, none) 0 0 / var(--sprite-print-size, 384px 336px),
     var(--fabric);
   --shadow: 0 1px 0 rgba(31, 26, 22, .06), 0 10px 24px -12px rgba(60, 40, 20, .35);
+  /* Motion: one set of curves and times for the whole site (see "finish"
+     near the end). --ease-out settles, --ease-in-out goes from A to B,
+     --ease-spring overshoots a little. */
+  --ease-out: cubic-bezier(.22, 1, .36, 1);
+  --ease-in-out: cubic-bezier(.65, 0, .35, 1);
+  --ease-spring: cubic-bezier(.34, 1.56, .64, 1);
+  --t-fast: .12s;
+  --t-base: .2s;
+  --t-slow: .36s;
+  /* The keyboard's focus ring where a control has no ink edge of its own,
+     and the page's scrollbar. */
+  --focus: #1f1a16;
+  --scroll: #b5a48b;
 }
 @media (prefers-color-scheme: dark) {
   :root {
@@ -56,9 +87,14 @@
     --on-ink: #1b1714;
     --accent: #93b2ff;
     --mark: #a8770f;
+    --focus: #ffd43b;
+    --scroll: #5f5247;
   }
 }
 
+/* Breakpoints end at .98 px ("up to 700.98", then "from 701"), so a window
+   whose width isn't a whole number, as display scaling gives, always matches
+   one side. */
 /* ---- base ---- */
 html { scroll-behavior: smooth; scrollbar-gutter: stable; }
 html, body { font-family: var(--font); }
@@ -71,7 +107,7 @@ body {
 button, input, select { font-family: inherit; }
 button, a, input, select { -webkit-tap-highlight-color: transparent; }
 button, a { touch-action: manipulation; }
-:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
 ::selection { background: var(--sticker); color: #1f1a16; }
 .page { max-width: 1400px; padding: 0 40px 40px; }
 .skip-link { position: fixed; top: -80px; left: 16px; z-index: 100; padding: 10px 16px; border-radius: 8px; background: var(--ink-btn); color: var(--on-ink); font-weight: 700; }
@@ -109,11 +145,11 @@ button, a { touch-action: manipulation; }
   height: 56px;
   transition: transform .15s steps(2, end);
 }
-.brand:hover .brand-logo { transform: translateY(-2px); }
+@media (hover: hover) { .brand:hover .brand-logo { transform: translateY(-2px); } }
 .brand-logo.small { flex: 0 0 auto; height: 28px; }
 .nav-links { margin-left: auto; display: flex; gap: 4px; }
 .nav-links a { color: var(--text); text-decoration: none; font-size: 14px; font-weight: 650; padding: 10px 12px; border-radius: 8px; }
-.nav-links a:hover { background: var(--chip); }
+@media (hover: hover) { .nav-links a:hover { background: var(--chip); } }
 
 /* EN / TR: two keys on a strip of label tape. */
 .lang-switch {
@@ -139,7 +175,7 @@ button, a { touch-action: manipulation; }
   cursor: pointer;
   transition: background .18s ease, color .18s ease;
 }
-.lang-switch button:hover { color: var(--text); }
+@media (hover: hover) { .lang-switch button:hover { color: var(--text); } }
 .lang-switch button[aria-pressed="true"] { background: var(--ink-btn); color: var(--on-ink); }
 
 /* The cover page: the pitch on the left, the binder with its search on the
@@ -191,7 +227,7 @@ body.is-viewing .search-hero { display: none; }
   transform-origin: left center;
   transition: transform .5s cubic-bezier(.3, .7, .3, 1);
 }
-.closed-binder:hover { transform: perspective(1400px) rotateY(-10deg); }
+@media (hover: hover) { .closed-binder:hover { transform: perspective(1400px) rotateY(-10deg); } }
 /* Zipper teeth (dotted line) on a dark tape (the two box-shadows). */
 .closed-binder::before, .cover-front::before {
   content: "";
@@ -276,7 +312,7 @@ body.is-viewing .search-hero { display: none; }
   width: min(440px, 100%);
   background: linear-gradient(160deg, rgba(255, 255, 255, .07), transparent 40%, rgba(0, 0, 0, .22)), var(--fabric);
 }
-.search-cover:hover { transform: perspective(1400px) rotateY(0deg); } /* it holds a text field: no tilt */
+@media (hover: hover) { .search-cover:hover { transform: perspective(1400px) rotateY(0deg); } } /* it holds a text field: no tilt */
 .search-cover::before { z-index: 1; }
 .search-cover::after { z-index: 2; }
 .search-cover.is-loading { animation: binder-peek 1.3s ease-in-out infinite; }
@@ -296,7 +332,7 @@ body.is-viewing .search-hero { display: none; }
 .cover-sprite img.is-big { width: 44px; height: 44px; image-rendering: auto; } /* front sprites after #807 */
 .cover-sprite:not([data-n]) img { visibility: hidden; }
 .cover-sprite.is-flip img { scale: -1 1; }
-.cover-sprite:hover { z-index: 1; scale: 1.3; }
+@media (hover: hover) { .cover-sprite:hover { z-index: 1; scale: 1.3; } }
 /* The match the search would open (or the one under the pointer) bobs, in a
    wave spreading out from the label. */
 .cover-sprite.is-active { z-index: 1; animation: sprite-bob .45s ease-in-out infinite alternate; animation-delay: calc(var(--wave) * -.9s); }
@@ -392,7 +428,8 @@ body.is-viewing .search-hero { display: none; }
   transition: background .15s ease;
 }
 .cover-go svg { width: 55%; height: 55%; }
-.cover-go:hover, .cover-go:focus-visible { background: #1f1a16; outline: none; }
+.cover-go:focus-visible { background: #1f1a16; outline: none; }
+@media (hover: hover) { .cover-go:hover { background: #1f1a16; outline: none; } }
 /* The pocket's strip: the Pokémon Enter opens (or the one under the pointer)
    with its box icon, its number and its card count on a price-sticker-yellow
    chip, and a key cap when Enter applies. */
@@ -466,7 +503,7 @@ body.is-viewing .search-hero { display: none; }
     linear-gradient(#fbf7ef, #fbf7ef) var(--px) var(--px) / calc(100% - 2 * var(--px)) calc(100% - 2 * var(--px)) no-repeat;
   filter: drop-shadow(var(--px) var(--px) 0 rgba(0, 0, 0, .55));
   transform-origin: top center;
-  animation: list-drop .16s ease-out;
+  animation: list-drop .2s var(--ease-out);
 }
 .cover-list[hidden] { display: none; }
 @keyframes list-drop { from { opacity: 0; transform: translateY(-6px) scaleY(.92); } }
@@ -553,7 +590,8 @@ body.is-viewing .search-hero { display: none; }
   font: 700 24px/1 var(--font);
   cursor: pointer;
 }
-.dex-close:hover, .dex-close:focus-visible { color: #c8302a; outline: none; }
+.dex-close:focus-visible { color: #c8302a; outline: none; }
+@media (hover: hover) { .dex-close:hover { color: #c8302a; outline: none; } }
 .dex-top { display: flex; align-items: center; gap: 14px; margin: 0 24px 16px 0; }
 /* The sprite stands on a plate with a ground shadow, scaled by app.js
    (fitPortrait) so every Pokémon fills it about the same. */
@@ -625,8 +663,9 @@ body.is-viewing .search-hero { display: none; }
   transition: background .15s ease;
 }
 .dex-open svg { flex: none; width: 18px; height: 18px; transition: translate .15s ease; }
-.dex-open:hover, .dex-open:focus-visible { background: #1f1a16; outline: none; }
-.dex-open:hover svg { translate: 3px 0; }
+.dex-open:focus-visible { background: #1f1a16; outline: none; }
+@media (hover: hover) { .dex-open:hover { background: #1f1a16; outline: none; } }
+@media (hover: hover) { .dex-open:hover svg { translate: 3px 0; } }
 /* The line from the card to its sprite: a yellow cable with an ink edge, a
    lit top edge and a hard shadow, laid in a soft dark band so it reads over
    the print. It leaves the sprite from a socket (#dex-jack in index.html) and
@@ -690,7 +729,7 @@ body.is-viewing .search-hero { display: none; }
   box-shadow: 2px 2px 0 var(--edge-shadow);
   transition: transform .15s ease, box-shadow .15s ease;
 }
-.back-home:hover { transform: translate(-1px, -1px); box-shadow: 3px 3px 0 var(--edge-shadow); }
+@media (hover: hover) { .back-home:hover { transform: translate(-1px, -1px); box-shadow: 3px 3px 0 var(--edge-shadow); } }
 .result-header .result-status { margin: 6px 0 0; min-height: 0; }
 .result-dex { margin: 0 0 4px; font-size: 13px; font-weight: 750; letter-spacing: .06em; color: var(--muted); font-variant-numeric: tabular-nums; }
 .result-title { margin: 0 0 6px; font-size: clamp(34px, 4.4vw, 58px); font-weight: 800; line-height: 1; letter-spacing: -.035em; overflow-wrap: anywhere; }
@@ -770,9 +809,11 @@ body.is-viewing .search-hero { display: none; }
 .picker-title { flex: 1; margin: 0; font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
 .picker-title span { margin-left: 8px; color: #66584b; font-weight: 700; letter-spacing: .02em; text-transform: none; }
 .picker-clear { padding: 5px 11px; border: 2px solid #1f1a16; border-radius: 999px; background: #fffdf8; color: #1f1a16; font: 750 12px/1 var(--font); cursor: pointer; }
-.picker-clear:hover, .picker-clear:focus-visible { background: var(--sticker); outline: none; }
+.picker-clear:focus-visible { background: var(--sticker); outline: none; }
+@media (hover: hover) { .picker-clear:hover { background: var(--sticker); outline: none; } }
 .picker-close { display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 0; background: none; color: #66584b; font: 700 22px/1 var(--font); cursor: pointer; }
-.picker-close:hover, .picker-close:focus-visible { color: #c8302a; outline: none; }
+.picker-close:focus-visible { color: #c8302a; outline: none; }
+@media (hover: hover) { .picker-close:hover { color: #c8302a; outline: none; } }
 .picker-list {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -812,7 +853,8 @@ body.is-viewing .search-hero { display: none; }
 .is-sets .pick::before { content: ""; position: absolute; top: 0; bottom: 0; left: 0; width: 6px; border-right: 2px solid #1f1a16; border-radius: 3px 0 0 3px; background: var(--tab, #e8dec9); }
 .pick-name { flex: 1; min-width: 0; font-size: 13.5px; font-weight: 700; line-height: 1.2; overflow-wrap: anywhere; }
 .pick-meta { flex: none; color: #66584b; font-size: 12px; font-weight: 650; font-variant-numeric: tabular-nums; }
-.pick:hover, .pick:focus-visible { transform: translate(-1px, -1px); box-shadow: 2px 2px 0 #1f1a16; outline: none; }
+.pick:focus-visible { transform: translate(-1px, -1px); box-shadow: 2px 2px 0 #1f1a16; outline: none; }
+@media (hover: hover) { .pick:hover { transform: translate(-1px, -1px); box-shadow: 2px 2px 0 #1f1a16; outline: none; } }
 .pick:focus-visible { background: #fff3bf; }
 .pick.is-on { background: var(--sticker); box-shadow: 2px 2px 0 #1f1a16; }
 .pick.is-on .pick-meta { color: #1f1a16; }
@@ -833,7 +875,7 @@ body.is-viewing .search-hero { display: none; }
   font-weight: 750;
   letter-spacing: .04em;
 }
-.chip:hover { background: var(--chip); }
+@media (hover: hover) { .chip:hover { background: var(--chip); } }
 .chip.is-on { background: var(--ink-btn); color: var(--on-ink); border-color: var(--ink-btn); }
 
 /* ---- the binder ---- */
@@ -863,7 +905,7 @@ body.is-viewing .search-hero { display: none; }
   transform: translateY(6px);
   transition: transform .18s ease;
 }
-.chip.tab:hover { transform: translateY(2px); background: var(--tab); }
+@media (hover: hover) { .chip.tab:hover { transform: translateY(2px); background: var(--tab); } }
 .chip.tab.is-on { transform: translateY(0); background: var(--tab); color: #1f1a16; border-color: var(--edge); box-shadow: inset 0 3px 0 rgba(255, 255, 255, .55); }
 /* Language tabs are toggles, so several can be picked; the tick box says so. */
 .chip.tab { display: inline-flex; align-items: center; gap: 7px; }
@@ -993,8 +1035,9 @@ body.is-viewing .search-hero { display: none; }
   transition: background-position .5s ease;
 }
 .pk-sleeve::before { content: ""; position: absolute; top: 5%; left: 4px; right: 4px; height: 1px; background: rgba(255, 255, 255, .28); }
-.pocket[data-key]:hover .pk-card, .pocket[data-key]:focus-visible .pk-card { transform: translateY(-9%); box-shadow: 0 8px 12px rgba(0, 0, 0, .5); }
-.pocket[data-key]:hover .pk-sleeve { background-position: 60% 0; }
+.pocket[data-key]:focus-visible .pk-card { transform: translateY(-9%); box-shadow: 0 8px 12px rgba(0, 0, 0, .5); }
+@media (hover: hover) { .pocket[data-key]:hover .pk-card { transform: translateY(-9%); box-shadow: 0 8px 12px rgba(0, 0, 0, .5); } }
+@media (hover: hover) { .pocket[data-key]:hover .pk-sleeve { background-position: 60% 0; } }
 .pocket:focus-visible { outline: 3px solid var(--sticker); outline-offset: 2px; z-index: 3; }
 .pocket.is-lifting, .pocket.is-out { z-index: 4; }
 .pocket.is-out .pk-card { visibility: hidden; }
@@ -1056,7 +1099,7 @@ body.is-viewing .search-hero { display: none; }
 }
 .turn-corner.next::before { right: 0; border-radius: 0 0 10px 0; background: linear-gradient(315deg, #9f2923 50%, #5a514a 50%, #3a3430); }
 .turn-corner.prev::before { left: 0; border-radius: 0 0 0 10px; box-shadow: 2px -2px 5px rgba(0, 0, 0, .35); background: linear-gradient(45deg, #9f2923 50%, #5a514a 50%, #3a3430); }
-.turn-corner:hover::before { width: 34px; height: 34px; }
+@media (hover: hover) { .turn-corner:hover::before { width: 34px; height: 34px; } }
 .at-start .turn-corner.prev, .at-end .turn-corner.next { display: none; }
 
 .binder-nav { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px 14px; margin-top: 28px; }
@@ -1074,7 +1117,7 @@ body.is-viewing .search-hero { display: none; }
   box-shadow: 2px 2px 0 var(--edge-shadow);
   transition: transform .15s ease, box-shadow .15s ease;
 }
-.nav-btn:hover:not(:disabled) { transform: translate(-1px, -1px); box-shadow: 3px 3px 0 var(--edge-shadow); }
+@media (hover: hover) { .nav-btn:hover:not(:disabled) { transform: translate(-1px, -1px); box-shadow: 3px 3px 0 var(--edge-shadow); } }
 .nav-btn:disabled { opacity: .35; cursor: default; box-shadow: none; }
 /* The page slider: a gauge in the binder's Pokémon colour (--poke-rgb, read
    from its sprite by app.js), cut into one segment per spread when they fit,
@@ -1199,6 +1242,7 @@ body.is-viewing .search-hero { display: none; }
    frame (like the cover's info card), the binder's Pokémon sitting on its top
    edge and its colour on the header and in the light behind the card. The
    colours stay light in both themes, as on the cover's info card. */
+.sheet, .filters-panel, .pop, .dex-card, .picker-card, .mine-summary, .cover-list, .relink-strip { --focus: #1f1a16; }
 .sheet {
   --text: #1f1a16;
   --muted: #66584b;
@@ -1283,7 +1327,8 @@ body.is-viewing .search-hero { display: none; }
   font-size: 26px;
   box-shadow: 2px 2px 0 var(--edge-shadow);
 }
-.sheet-close:hover, .sheet-close:focus-visible { background: var(--sticker); color: #1f1a16; outline: none; }
+.sheet-close:focus-visible { background: var(--sticker); color: #1f1a16; outline: none; }
+@media (hover: hover) { .sheet-close:hover { background: var(--sticker); color: #1f1a16; outline: none; } }
 
 .sheet-head {
   padding: 20px 24px 18px;
@@ -1374,7 +1419,7 @@ body.is-viewing .search-hero { display: none; }
   transition: transform .12s ease, box-shadow .12s ease, background-color .12s ease;
 }
 .site::after { content: "↗"; position: absolute; top: 4px; right: 7px; color: var(--muted); font-size: 11px; font-weight: 800; }
-.site:hover { transform: translate(-2px, -2px); box-shadow: 3px 3px 0 var(--ink); }
+@media (hover: hover) { .site:hover { transform: translate(-2px, -2px); box-shadow: 3px 3px 0 var(--ink); } }
 .site:focus-visible { outline: none; transform: translate(-2px, -2px); box-shadow: 3px 3px 0 var(--ink); background: var(--sticker); }
 .site:active { transform: none; box-shadow: none; }
 .site-logo { width: 32px; height: 32px; margin-bottom: 5px; border-radius: 7px; background: #fff; box-shadow: 0 0 0 1px rgba(31, 26, 22, .16); }
@@ -1432,22 +1477,17 @@ body.is-viewing .search-hero { display: none; }
   .binder-tabs { padding-left: 16px; }
 }
 
-@media (max-width: 900px) {
+@media (max-width: 900.98px) {
   .search-hero { grid-template-columns: minmax(0, 1fr); gap: 30px; padding: 26px 0 48px; text-align: center; }
   .hero-description { margin-inline: auto; }
   .result-hint { display: none; }
 }
 /* Phones: the logo and the language switch share the top bar; the price guide
    stays reachable at the foot of the page. */
-@media (max-width: 480px) {
-  .nav-links { display: none; }
-  .lang-switch { margin-left: auto; }
-}
-@media (max-width: 700px) {
+@media (max-width: 700.98px) {
   .page { padding: 0 16px 28px; }
   .topbar { padding-top: 16px; gap: 12px; }
   .nav-links a { padding: 8px; font-size: 13px; }
-  .nav-links a:first-child { display: none; }
   .brand-logo { height: 42px; }
   .search-hero { gap: 24px; padding: 20px 0 40px; }
   .search-hero h1 { font-size: clamp(36px, 11vw, 52px); margin-bottom: 16px; }
@@ -1485,11 +1525,6 @@ body.is-viewing .search-hero { display: none; }
   .price-value { font-size: 32px; }
 }
 @keyframes info-up { from { opacity: 0; transform: translateY(18px); } }
-/* The narrowest phones: the logo drops to its next size so the top bar fits
-   without scrolling sideways. */
-@media (max-width: 330px) {
-  .brand-logo { height: 28px; }
-}
 
 /* ---- My binder (docs/COLLECTION-PLAN.md) ---- */
 
@@ -1511,7 +1546,7 @@ body.is-viewing .search-hero { display: none; }
   text-decoration: none;
   box-shadow: 2px 2px 0 var(--edge-shadow);
 }
-.mine-link:hover { background: var(--chip); }
+@media (hover: hover) { .mine-link:hover { background: var(--chip); } }
 .mine-link:focus-visible { outline: none; box-shadow: 2px 2px 0 var(--edge-shadow), 0 0 0 4px var(--sticker); }
 body.is-mine .mine-link { background: var(--sticker); color: #1f1a16; border-color: #1f1a16; }
 .mine-link-icon { flex: none; width: 16px; height: 16px; image-rendering: pixelated; }
@@ -1618,7 +1653,7 @@ body.is-mine .mine-count { background: #fbf7ef; }
   body.has-filters { overflow: hidden; }
   .filters-sheet { display: block; position: fixed; inset: 0; z-index: 80; }
   .filters-sheet[hidden] { display: none; }
-  .filters-backdrop { position: absolute; inset: 0; background: rgba(24, 16, 10, .6); opacity: 0; transition: opacity .2s ease; }
+  .filters-backdrop { position: absolute; inset: 0; background: rgba(24, 16, 10, .6); opacity: 0; transition: opacity .28s ease; }
   /* Light in both themes, like the card's file. */
   .filters-panel {
     --text: #1f1a16;
@@ -1645,17 +1680,18 @@ body.is-mine .mine-count { background: #fbf7ef; }
     background: #fbf7ef;
     color: #1f1a16;
     font-family: var(--font);
-    transform: translateY(100%);
-    transition: transform .22s cubic-bezier(.2, .8, .25, 1);
+    transform: translateY(calc(100% + var(--drag, 0px)));
+    transition: transform .32s var(--ease-out);
   }
   .filters-sheet.is-open .filters-backdrop { opacity: 1; }
-  .filters-sheet.is-open .filters-panel { transform: none; }
+  .filters-sheet.is-open .filters-panel { transform: translateY(var(--drag, 0px)); }
   .filters-panel:focus { outline: none; }
   .filters-head { position: relative; display: flex; align-items: center; gap: 8px; padding: 20px 8px 10px 18px; border-bottom: 2px dashed #d3c4aa; }
   .filters-handle { position: absolute; top: 8px; left: 50%; width: 40px; height: 4px; margin-left: -20px; border-radius: 999px; background: #d3c4aa; }
   .filters-title { flex: 1; margin: 0; font-size: 21px; font-weight: 800; letter-spacing: -.01em; line-height: 1.15; }
   .filters-x { display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 10px; background: none; color: #66584b; font: 700 26px/1 var(--font); cursor: pointer; }
-  .filters-x:hover, .filters-x:focus-visible { color: #c8302a; background: #fff1a6; outline: none; }
+  .filters-x:focus-visible { color: #c8302a; background: #fff1a6; outline: none; }
+  @media (hover: hover) { .filters-x:hover { color: #c8302a; background: #fff1a6; outline: none; } }
   .filters-body { flex: 1 1 auto; min-height: 0; overflow: auto; overscroll-behavior: contain; padding: 14px 18px 20px; }
   .filters-group + .filters-group { margin-top: 20px; }
   .filters-label { margin: 0 0 8px; color: #66584b; font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
@@ -1693,8 +1729,8 @@ body.is-mine .mine-count { background: #fbf7ef; }
   .filters-backdrop, .filters-panel, .filters-show { transition: none; }
 }
 .is-collecting .pocket[aria-pressed="false"] .pk-card { filter: grayscale(1) brightness(.6); }
-.is-collecting .pocket[aria-pressed="false"]:hover .pk-card,
 .is-collecting .pocket[aria-pressed="false"]:focus-visible .pk-card { filter: grayscale(.35) brightness(.85); }
+@media (hover: hover) { .is-collecting .pocket[aria-pressed="false"]:hover .pk-card { filter: grayscale(.35) brightness(.85); } }
 
 /* Master-set progress under a Pokémon's subtitle, in its colour. */
 .own-progress { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin: 8px 0 0; }
@@ -1739,7 +1775,7 @@ body.is-mine .mine-count { background: #fbf7ef; }
   filter: drop-shadow(3px 3px 0 #1f1a16);
 }
 .mine-add svg { width: 16px; height: 16px; }
-.mine-add:hover { --fill: #ffe066; }
+@media (hover: hover) { .mine-add:hover { --fill: #ffe066; } }
 .mine-add:active { translate: 2px 2px; filter: drop-shadow(1px 1px 0 #1f1a16); }
 .mine-add:focus-visible { outline: 2px solid #1f1a16; outline-offset: 4px; }
 .mine-have { display: flex; align-items: center; gap: 9px; margin: 0 0 8px; font-size: 17px; font-weight: 800; }
@@ -1780,7 +1816,7 @@ body.is-mine .mine-count { background: #fbf7ef; }
   font: 750 12.5px/1 var(--font);
   cursor: pointer;
 }
-.mine-mini:hover, .mine-chip:hover { background: #e8dec9; }
+@media (hover: hover) { .mine-mini:hover, .mine-chip:hover { background: #e8dec9; } }
 .mine-mini:focus-visible, .mine-chip:focus-visible, .mine-textbtn:focus-visible, .mine-save:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--sticker); }
 .mine-chip.is-on { background: #1f1a16; color: #fbf7ef; }
 .mine-chip.is-due { background: var(--sticker); }
@@ -1799,7 +1835,7 @@ body.is-mine .mine-count { background: #fbf7ef; }
   text-underline-offset: 4px;
   cursor: pointer;
 }
-.mine-textbtn:hover { text-decoration-color: #1f1a16; }
+@media (hover: hover) { .mine-textbtn:hover { text-decoration-color: #1f1a16; } }
 .mine-save {
   min-height: 40px;
   padding: 0 20px;
@@ -1810,7 +1846,7 @@ body.is-mine .mine-count { background: #fbf7ef; }
   font: 800 14px/1 var(--font);
   cursor: pointer;
 }
-.mine-save:hover { background: #3a2f26; }
+@media (hover: hover) { .mine-save:hover { background: #3a2f26; } }
 
 /* The slip: what you have of it. Focus is the sticker yellow. */
 .mine-slip { display: grid; gap: 12px; margin: 0; }
@@ -1847,7 +1883,7 @@ body.is-mine .mine-count { background: #fbf7ef; }
 }
 .mine-stepper button:first-child { border-radius: 6px 0 0 6px; }
 .mine-stepper button:last-child { border-radius: 0 6px 6px 0; }
-.mine-stepper button:hover { background: #e8dec9; }
+@media (hover: hover) { .mine-stepper button:hover { background: #e8dec9; } }
 .mine-slip .mine-stepper input { width: 64px; flex: none; margin: 0 -2px; border-radius: 0; text-align: center; font-weight: 800; font-variant-numeric: tabular-nums; }
 .mine-seg { display: inline-flex; justify-self: start; padding: 2px; border: 2px solid #1f1a16; border-radius: 999px; background: #fffdf8; }
 .mine-seg label, .mine-cond, .mine-check { position: relative; cursor: pointer; }
@@ -1867,7 +1903,7 @@ body.is-mine .mine-count { background: #fbf7ef; }
   font-weight: 800;
   text-align: center;
 }
-.mine-cond:hover > span[lang] { background: #e8dec9; }
+@media (hover: hover) { .mine-cond:hover > span[lang] { background: #e8dec9; } }
 .mine-cond input:checked + span { background: var(--sticker); box-shadow: 2px 2px 0 #1f1a16; }
 .mine-graded { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 8px; }
 .mine-graded label { display: grid; gap: 5px; min-width: 0; }
@@ -1918,9 +1954,9 @@ body.is-mine .mine-count { background: #fbf7ef; }
   opacity: 0;
   visibility: hidden;
   transform: translate(-50%, 12px);
-  transition: opacity .18s ease, transform .18s ease, visibility 0s linear .18s;
+  transition: opacity .2s ease, transform .2s ease, visibility 0s linear .2s;
 }
-.mine-toast.is-on { opacity: 1; visibility: visible; transform: translate(-50%, 0); transition: opacity .18s ease, transform .18s ease; }
+.mine-toast.is-on { opacity: 1; visibility: visible; transform: translate(-50%, 0); transition: opacity .2s ease, transform .4s var(--ease-spring); }
 .mine-toast-text { min-width: 0; overflow-wrap: anywhere; }
 .mine-toast-undo { flex: none; min-height: 34px; padding: 0 14px; border: 0; border-radius: 6px; background: var(--sticker); color: #1f1a16; font: 800 13px/1 var(--font); cursor: pointer; }
 .mine-toast-undo:focus-visible { outline: 2px solid #fbf7ef; outline-offset: 2px; }
@@ -1956,7 +1992,7 @@ body.is-mine .mine-count { background: #fbf7ef; }
   text-underline-offset: 3px;
   cursor: pointer;
 }
-.mine-note-link:hover { text-decoration-color: #1f1a16; }
+@media (hover: hover) { .mine-note-link:hover { text-decoration-color: #1f1a16; } }
 .mine-note-link:focus-visible { outline: none; border-radius: 2px; box-shadow: 0 0 0 3px var(--sticker); }
 
 /* My binder's summary: a cream index card with the total on a sticker. */
@@ -2027,7 +2063,7 @@ body.is-mine .mine-count { background: #fbf7ef; }
 .mine-sync-intro { font-size: 14px; font-weight: 650; line-height: 1.45; }
 .mine-sync-steps { display: grid; gap: 6px; margin: 0; padding-left: 22px; font-size: 13.5px; line-height: 1.45; }
 .mine-sync a { color: #1f1a16; font-weight: 750; text-decoration: underline 2px #d3c4aa; text-underline-offset: 3px; }
-.mine-sync a:hover { text-decoration-color: #1f1a16; }
+@media (hover: hover) { .mine-sync a:hover { text-decoration-color: #1f1a16; } }
 .mine-sync a:focus-visible { outline: none; border-radius: 2px; box-shadow: 0 0 0 3px var(--sticker); }
 .mine-sync .mine-more { margin: 0; align-items: center; }
 .mine-sync-on { font-size: 14px; font-weight: 650; }
@@ -2056,7 +2092,7 @@ body.is-mine .mine-count { background: #fbf7ef; }
   text-align: left;
   cursor: pointer;
 }
-.mine-row:hover { background: #f3ead8; }
+@media (hover: hover) { .mine-row:hover { background: #f3ead8; } }
 .mine-row:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--sticker); }
 .mine-row-name { grid-area: name; overflow: hidden; font-size: 14px; font-weight: 750; white-space: nowrap; text-overflow: ellipsis; }
 .mine-row-cards { grid-area: cards; color: #66584b; font-size: 12.5px; font-weight: 650; }
@@ -2122,7 +2158,7 @@ body.is-mine .mine-count { background: #fbf7ef; }
 .mine-mover-change { display: grid; justify-items: end; font-size: 14px; font-weight: 800; font-variant-numeric: tabular-nums; }
 .mine-mover-change small { font-size: 12px; font-weight: 700; }
 
-@media (max-width: 700px) {
+@media (max-width: 700.98px) {
   .mine-summary { padding: calc(var(--px) + 14px) calc(var(--px) + 14px); }
   .mine-sum-main { gap: 14px 24px; }
   .mine-sum-facts dd { font-size: 19px; }
@@ -2133,13 +2169,6 @@ body.is-mine .mine-count { background: #fbf7ef; }
   .mine-chart-plot svg { left: 54px; width: calc(100% - 62px); }
   .mine-chart-y { width: 44px; font-size: 10.5px; }
   .mine-chart-x { padding-left: 56px; }
-}
-/* Phones: My binder becomes an icon with its count on the corner. */
-@media (max-width: 480px) {
-  .mine-link { margin-left: auto; width: 40px; padding: 0; justify-content: center; }
-  .mine-link-text { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-  .mine-link .mine-count { position: absolute; top: -9px; right: -10px; min-width: 18px; height: 18px; padding: 0 3px; font-size: 10px; line-height: 14px; }
-  .mine-link ~ .lang-switch { margin-left: 0; }
 }
 
 /* An account (supabase/README.md), once accounts are on (body.has-accounts):
@@ -2164,49 +2193,56 @@ body.is-mine .mine-count { background: #fbf7ef; }
   box-shadow: 2px 2px 0 var(--edge-shadow);
 }
 .acct-link[hidden] { display: none; }
-.acct-link:hover { background: color-mix(in srgb, var(--ink-btn) 84%, var(--bg)); }
+@media (hover: hover) { .acct-link:hover { background: color-mix(in srgb, var(--ink-btn) 84%, var(--bg)); } }
 .acct-link:focus-visible { outline: none; box-shadow: 2px 2px 0 var(--edge-shadow), 0 0 0 4px var(--sticker); }
 .acct-link-icon { flex: none; width: 16px; height: 16px; fill: currentColor; }
 .acct-link.is-in { width: 38px; padding: 0; border-color: #1f1a16; background: var(--sticker); color: #1f1a16; font-size: 16px; }
-.acct-link.is-in:hover { background: #ffe27a; }
+@media (hover: hover) { .acct-link.is-in:hover { background: #ffe27a; } }
 .acct-dot { position: absolute; right: -5px; bottom: -5px; width: 15px; height: 15px; border: 3px solid var(--bg); border-radius: 50%; background: #1d6b35; }
 .acct-dot.is-busy { background: #d08f00; }
 .acct-dot.is-warn { background: #c8302a; }
-/* The row keeps one line. Under 1000 px the "Find a Pokémon" link goes (the
-   search is on the page), under 860 px the logo is the middle size; up to
-   760 px My binder is its icon (as on phones), "Sign in" drops its icon and
-   EN/TR close up; then the price guide link goes (it is at the foot of the
-   page too), the logo gets smaller and "Sign in" becomes an icon. Below
-   352 px EN/TR take a second line. */
-@media (max-width: 1000px) {
-  body.has-accounts .nav-links a:first-child { display: none; }
+/* The top bar keeps one row at every width, in both languages, with an
+   account button or without (checked every 8 px from 320 to 1120). A link's
+   text never wraps. As the window narrows: under 1040 px the "Find a
+   Pokémon" link goes (the search is on the page), under 900 px the logo is
+   its middle size, under 800 px My binder is its icon with the count on the
+   corner, and under 620 px the price guide link goes (it is at the foot of
+   the page too). With an account button the logo then gets smaller under
+   450 px, "Sign in" becomes an icon under 383 px and EN/TR take a second
+   line under 352 px; without one the logo gets smaller under 372 px. */
+.nav-links a { white-space: nowrap; }
+@media (max-width: 1040.98px) {
+  .nav-links a:first-child { display: none; }
 }
-@media (min-width: 701px) and (max-width: 860px) {
-  body.has-accounts .topbar { gap: 16px; }
-  body.has-accounts .brand-logo { height: 42px; }
+@media (min-width: 701px) and (max-width: 900.98px) {
+  .topbar { gap: 16px; }
+  .brand-logo { height: 42px; }
 }
-@media (max-width: 760px) {
-  body.has-accounts .mine-link { width: 40px; padding: 0; justify-content: center; }
-  body.has-accounts .mine-link-text { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-  body.has-accounts .mine-link .mine-count { position: absolute; top: -9px; right: -10px; min-width: 18px; height: 18px; padding: 0 3px; font-size: 10px; line-height: 14px; }
+@media (max-width: 800.98px) {
+  .mine-link { width: 40px; padding: 0; justify-content: center; }
+  .mine-link-text { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .mine-link .mine-count { position: absolute; top: -9px; right: -10px; min-width: 18px; height: 18px; padding: 0 3px; font-size: 10px; line-height: 14px; }
   body.has-accounts .acct-link { padding: 0 12px; }
   body.has-accounts .acct-link-icon { display: none; }
   body.has-accounts .acct-link.is-in { padding: 0; }
   body.has-accounts .lang-switch button { min-width: 34px; padding: 0 7px; }
 }
-@media (max-width: 600px) {
-  body.has-accounts .nav-links { display: none; }
-  body.has-accounts .mine-link { margin-left: auto; }
+@media (max-width: 620.98px) {
+  .nav-links { display: none; }
+  .mine-link { margin-left: auto; }
 }
-@media (max-width: 450px) {
+@media (max-width: 450.98px) {
   body.has-accounts .brand-logo { height: 28px; }
 }
-@media (max-width: 383px) {
+@media (max-width: 383.98px) {
   body.has-accounts .acct-link { width: 40px; padding: 0; }
   body.has-accounts .acct-link-icon { display: block; }
   body.has-accounts .acct-link-text { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 }
-@media (max-width: 351px) {
+@media (max-width: 372.98px) {
+  .brand-logo { height: 28px; }
+}
+@media (max-width: 351.98px) {
   body.has-accounts .topbar { flex-wrap: wrap; row-gap: 10px; }
   body.has-accounts .lang-switch { margin-left: auto; }
 }
@@ -2233,9 +2269,9 @@ body.is-mine .mine-count { background: #fbf7ef; }
   visibility: hidden;
   transform: scale(.96);
   transform-origin: var(--caret, 50%) -10px;
-  transition: opacity .12s ease, transform .12s ease, visibility 0s linear .12s;
+  transition: opacity .12s ease, transform .14s var(--ease-out), visibility 0s linear .14s;
 }
-.pop.is-open { opacity: 1; visibility: visible; transform: none; transition: opacity .12s ease, transform .12s ease; }
+.pop.is-open { opacity: 1; visibility: visible; transform: none; transition: opacity .12s ease, transform .14s var(--ease-out); }
 .pop:focus { outline: none; }
 .pop p { margin: 0; }
 .pop-caret {
@@ -2269,7 +2305,7 @@ body.is-mine .mine-count { background: #fbf7ef; }
   text-align: left;
   cursor: pointer;
 }
-.pop-row:hover, .pop-link:hover { background: #fff1a6; }
+@media (hover: hover) { .pop-row:hover, .pop-link:hover { background: #fff1a6; } }
 .pop-row:focus-visible, .pop-link:focus-visible { outline: none; background: #fff1a6; box-shadow: inset 0 0 0 2px #1f1a16; }
 .pop-row[aria-disabled="true"] { opacity: .55; cursor: default; }
 .pop-icon { flex: none; width: 18px; height: 18px; }
@@ -2281,7 +2317,8 @@ body.is-mine .mine-count { background: #fbf7ef; }
 .pop-foot { margin-top: 10px; padding-top: 8px; border-top: 2px dashed #d3c4aa; }
 .pop-link { gap: 10px; min-height: 40px; color: #66584b; font-size: 13px; font-weight: 700; }
 .pop-link > span { flex: 1 1 auto; }
-.pop-link:hover, .pop-link:focus-visible { color: #1f1a16; }
+.pop-link:focus-visible { color: #1f1a16; }
+@media (hover: hover) { .pop-link:hover { color: #1f1a16; } }
 
 /* Signed in: who, then how saving is going. */
 .pop-head { display: flex; align-items: center; gap: 12px; padding: 2px; border-radius: 10px; }
@@ -2329,7 +2366,7 @@ body.is-mine .mine-count { background: #fbf7ef; }
   box-shadow: 2px 2px 0 rgba(0, 0, 0, .5);
   cursor: pointer;
 }
-.pop-google:hover { background: #fff1a6; }
+@media (hover: hover) { .pop-google:hover { background: #fff1a6; } }
 .pop-google:focus-visible { outline: none; box-shadow: 2px 2px 0 rgba(0, 0, 0, .5), 0 0 0 4px var(--sticker); }
 .pop-google[aria-disabled="true"] { opacity: .7; cursor: default; }
 .pop-g { flex: none; width: 18px; height: 18px; }
@@ -2351,11 +2388,11 @@ body.is-mine .mine-count { background: #fbf7ef; }
 .mine-sum-corner { display: flex; align-items: center; gap: 8px; }
 .mine-cur { display: inline-flex; padding: 2px; border: 2px solid #1f1a16; border-radius: 999px; background: #fffdf8; }
 .mine-cur button { min-width: 32px; height: 28px; padding: 0 9px; border: 0; border-radius: 999px; background: none; color: #1f1a16; font: 800 14px/1 var(--font); cursor: pointer; }
-.mine-cur button:hover { background: #e8dec9; }
+@media (hover: hover) { .mine-cur button:hover { background: #e8dec9; } }
 .mine-cur button[aria-pressed="true"] { background: #1f1a16; color: #fbf7ef; }
 .mine-cur button:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--sticker); }
 .mine-dots { position: relative; display: grid; flex: none; place-items: center; width: 36px; height: 36px; padding: 0; border: 2px solid #1f1a16; border-radius: 50%; background: #fffdf8; color: #1f1a16; cursor: pointer; }
-.mine-dots:hover { background: #e8dec9; }
+@media (hover: hover) { .mine-dots:hover { background: #e8dec9; } }
 .mine-dots.is-on { background: #1f1a16; color: #fbf7ef; }
 .mine-dots:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--sticker); }
 .mine-dots-dot { position: absolute; top: -4px; right: -4px; width: 13px; height: 13px; border: 2px solid #1f1a16; border-radius: 50%; background: var(--sticker); }
@@ -2383,13 +2420,13 @@ body.is-mine .mine-count { background: #fbf7ef; }
   background: var(--sticker);
   box-shadow: inset 0 3px 0 rgba(255, 255, 255, .55);
   transform: translateX(calc(var(--at) * 100%));
-  transition: transform .22s cubic-bezier(.2, .8, .25, 1), opacity .12s ease;
+  transition: transform .3s var(--ease-out), opacity .12s ease;
 }
 .mine-tabs.is-none .mine-tabs-glider { opacity: 0; }
 .mine-tabs.is-fresh .mine-tabs-glider { animation: tabs-in .14s ease-out; }
 @keyframes tabs-in { from { opacity: 0; transform: translateX(calc(var(--at) * 100%)) scale(.9); } }
 .mine-tab-btn { position: relative; min-width: 0; min-height: 40px; padding: 6px 8px; border: 0; border-radius: 9px; background: none; color: #3a2f26; font: 750 13px/1.15 var(--font); cursor: pointer; }
-.mine-tab-btn:hover { color: #1f1a16; text-decoration: underline 2px #d3c4aa; text-underline-offset: 3px; }
+@media (hover: hover) { .mine-tab-btn:hover { color: #1f1a16; text-decoration: underline 2px #d3c4aa; text-underline-offset: 3px; } }
 .mine-tab-btn.is-on { color: #1f1a16; font-weight: 800; text-decoration: none; }
 .mine-tab-btn:focus-visible { outline: none; box-shadow: inset 0 0 0 2px #1f1a16, 0 0 0 3px var(--sticker); }
 
@@ -2399,12 +2436,12 @@ body.is-mine .mine-count { background: #fbf7ef; }
 .mine-sync-title:focus { outline: none; }
 .mine-sync-title:focus-visible { box-shadow: 0 0 0 3px var(--sticker); }
 .mine-x { display: grid; flex: none; place-items: center; width: 32px; height: 32px; padding: 0; border: 2px solid #1f1a16; border-radius: 50%; background: #fffdf8; color: #1f1a16; cursor: pointer; }
-.mine-x:hover { background: #e8dec9; }
+@media (hover: hover) { .mine-x:hover { background: #e8dec9; } }
 .mine-x:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--sticker); }
 .mine-empty [data-mine-sync-empty] { width: 100%; }
 
 .mine-save[aria-disabled="true"], .mine-chip[aria-disabled="true"], .mine-textbtn[aria-disabled="true"] { opacity: .55; cursor: default; }
-@media (max-width: 600px) {
+@media (max-width: 600.98px) {
   /* The total and the corner share the first row; Paid and Gain/loss go
      under them, the whole width. */
   .mine-sum-top .mine-sum-main { display: contents; }
@@ -2414,11 +2451,164 @@ body.is-mine .mine-count { background: #fbf7ef; }
   .mine-total-value { font-size: clamp(26px, 8vw, 32px); }
   .mine-tab-btn { font-size: 12.5px; }
 }
-@media (max-width: 700px) {
+@media (max-width: 700.98px) {
   /* An empty binder on a phone: the cover at most about 45% of the screen's
      height, so the help and "Load a backup" show without much scrolling. */
   body.has-accounts .mine-empty-state .closed-binder { width: min(380px, 84vw, 33.75vh); width: min(380px, 84vw, 33.75svh); }
 }
+/* ---- finish: motion, touch and type (r19) ----
+   One set of curves and times (the --ease-* and --t-* tokens at the top), so
+   everything on the site moves the same way: quick for hover and press, a
+   soft landing for panels, a small overshoot for stickers and toasts. */
+
+/* Type: headings break into even lines, paragraphs avoid a lone last word,
+   and a phone turned on its side keeps its text size. */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; scroll-padding-top: 12px; scrollbar-color: var(--scroll) transparent; }
+body { font-optical-sizing: auto; font-kerning: normal; font-synthesis: none; }
+h1, h2, h3, .result-title, .pop-title, .filters-title, .dex-name { text-wrap: balance; }
+.search-hero h1, .result-title, .sheet h2, .mine-total-value, .price-value { font-family: var(--font-heading); }
+@media (min-width: 701px) { .search-hero h1 { font-family: var(--font-display); } }
+p, li, dd, figcaption, .cover-info { text-wrap: pretty; }
+/* The typing caret is the logo's red, and ticks and sliders are ink. */
+input, textarea { caret-color: #c8302a; }
+input, select { accent-color: #1f1a16; }
+/* Without JavaScript the binders can't open: say so, on a sticker. */
+.no-script { margin: 0; padding: 12px 16px; border-bottom: 2px solid #1f1a16; background: var(--sticker); color: #1f1a16; font-size: 14px; font-weight: 700; text-align: center; }
+/* A double tap or a long press on a control never selects its label. */
+button, summary, .chip, .cover-list li { -webkit-user-select: none; user-select: none; }
+
+/* Every control answers at the same speed. */
+.nav-links a, .lang-switch button, .mine-link, .acct-link, .back-home, .nav-btn, .chip, .picker-btn, .filters-btn,
+.sort-wrap select, .search-wrap input, .picker-clear, .picker-close, .dex-close, .sheet-close, .site, .mine-mini, .mine-chip,
+.mine-save, .mine-textbtn, .mine-note-link, .mine-row, .mine-cur button, .mine-dots, .mine-tab-btn, .mine-x, .pop-row, .pop-link,
+.pop-google, .pop-pill-btn, .mine-stepper button, .mine-cond > span[lang], .mine-seg span, .mine-toast-undo, .filters-x, .cover-go,
+.dex-open, .cover-list li, .mine-slip input, .mine-slip select, .mine-slip textarea {
+  transition: background-color var(--t-fast) ease, color var(--t-fast) ease, border-color var(--t-fast) ease,
+    box-shadow var(--t-fast) ease, transform var(--t-fast) var(--ease-out), opacity var(--t-fast) ease,
+    text-decoration-color var(--t-fast) ease;
+}
+
+/* Pressing: a button with a hard shadow goes down into it; a flat one gives
+   a little; a row darkens. */
+.back-home:active, .nav-btn:active:not(:disabled), .mine-link:active, .acct-link:active, .sheet-close:active { transform: translate(2px, 2px); box-shadow: 0 0 0 var(--edge-shadow); }
+.pop-google:active { transform: translate(2px, 2px); box-shadow: none; }
+.pop-google[aria-disabled="true"]:active { transform: none; box-shadow: 2px 2px 0 rgba(0, 0, 0, .5); }
+.chip:active, .picker-btn:active, .filters-btn:active, .mine-chip:active, .mine-mini:active, .mine-save:active, .mine-dots:active,
+.mine-x:active, .picker-clear:active, .mine-stepper button:active, .mine-tab-btn:active, .mine-cur button:active,
+.mine-toast-undo:active, .lang-switch button:active, .filters-x:active, .picker-close:active, .dex-close:active { transform: scale(.95); }
+.chip.tab:active { transform: translateY(4px); }
+.mine-chip[aria-disabled="true"]:active, .mine-save[aria-disabled="true"]:active, .mine-chip:disabled:active, .mine-save:disabled:active { transform: none; }
+.cover-go:active { transform: scale(.92); }
+.dex-open:active { transform: scale(.985); }
+.cover-sprite:active { scale: 1.12; }
+.pick:active { transform: none; box-shadow: none; }
+.pop-row:active, .pop-link:active { background: #ffe58a; }
+.pop-row[aria-disabled="true"]:active { background: none; }
+.mine-row:active { background: #eadfc9; }
+.cover-list li:active { background: #fff1a6; }
+.brand:active .brand-logo { transform: translateY(1px); }
+.turn-corner:active::before { width: 40px; height: 40px; }
+.mine-textbtn:active, .mine-note-link:active { opacity: .6; }
+
+/* The first look: the pitch and the binder rise into place, and again when
+   you come back to the cover. */
+@keyframes rise-in { from { opacity: 0; transform: translateY(14px); } }
+@keyframes fade-in { from { opacity: 0; } }
+.search-hero > .hero-copy { animation: rise-in .7s var(--ease-out) backwards; }
+.search-hero > .cover-stage { animation: rise-in .8s var(--ease-out) .07s backwards; }
+/* A binder that was just opened (app.js sets is-entering): its header, the
+   summary and the toolbar rise in one after the other and the pages fade in
+   under the opening cover. The pages only fade: they hold the 3D page turns. */
+#result.is-entering > .result-header { animation: rise-in .55s var(--ease-out) backwards; }
+#result.is-entering > .mine-summary { animation: rise-in .55s var(--ease-out) .05s backwards; }
+#result.is-entering > .toolbar { animation: rise-in .55s var(--ease-out) .09s backwards; }
+#result.is-entering > .binder-wrap { animation: fade-in .45s ease .04s backwards; }
+#result.is-entering > .mine-empty-state { animation: rise-in .55s var(--ease-out) .05s backwards; }
+#result.is-entering > #result-footer { animation: fade-in .5s ease .2s backwards; }
+#result > .welcome-state:not(.mine-empty-state) { animation: fade-in .3s ease backwards; }
+
+/* Pictures arrive softly: a scan fades in over the card's back, the
+   Pokémon's portrait settles beside its name, and a price that has just come
+   in is pressed on like a sticker, one pocket after the other. */
+.pk-card img { transition: opacity .32s ease; }
+.pk-card img.is-loading { opacity: 0; }
+.result-art { opacity: 0; transform: translateY(6px) scale(.96); transition: opacity .4s ease, transform .5s var(--ease-out); }
+.result-art.is-in { opacity: 1; transform: none; }
+.pk-price.is-new { animation: sticker-on .42s var(--ease-spring) backwards; animation-delay: calc(var(--i, 0) * 24ms); }
+@keyframes sticker-on { from { opacity: 0; transform: rotate(-16deg) scale(.4); } }
+
+/* EN / TR: the ink key slides to the language in use. */
+.lang-switch { position: relative; display: inline-grid; grid-template-columns: 1fr 1fr; }
+.lang-switch button { position: relative; }
+@supports selector(:has(*)) {
+  .lang-switch::before {
+    content: "";
+    position: absolute;
+    top: 3px;
+    bottom: 3px;
+    left: 3px;
+    width: calc(50% - 3px);
+    border-radius: 999px;
+    background: var(--ink-btn);
+    transition: transform var(--t-slow) var(--ease-out);
+  }
+  .lang-switch:has(button:last-child[aria-pressed="true"])::before { transform: translateX(100%); }
+  .lang-switch button[aria-pressed="true"] { background: transparent; }
+  /* Keyboard focus: the switch gets the yellow halo My binder's button has,
+     and the key in focus is underlined. */
+  .lang-switch:has(button:focus-visible) { box-shadow: 2px 2px 0 var(--edge-shadow), 0 0 0 4px var(--sticker); }
+  .lang-switch button:focus-visible { outline: none; text-decoration: underline 2px; text-underline-offset: 4px; }
+}
+
+/* The drawer under My binder's tab bar unfolds once when it opens. */
+.mine-shelf.is-fresh { animation: shelf-in .3s var(--ease-out) backwards; }
+@keyframes shelf-in { from { opacity: 0; transform: translateY(-8px); } }
+
+/* "How prices and links work" opens and closes smoothly where the browser
+   can animate to a height it doesn't know yet; elsewhere it just opens. */
+@supports (interpolate-size: allow-keywords) {
+  .market-guide { interpolate-size: allow-keywords; }
+  .market-guide::details-content { block-size: 0; overflow: hidden; opacity: 0; transition: block-size var(--t-slow) var(--ease-out), opacity var(--t-base) ease, content-visibility var(--t-slow) allow-discrete; }
+  .market-guide[open]::details-content { block-size: auto; opacity: 1; }
+}
+.market-guide summary { border-radius: 8px; }
+.guide-toggle { transition: transform var(--t-slow) var(--ease-spring); }
+
+/* Four price sites on a phone make two rows of two, not three and one. */
+@container (max-width: 460px) {
+  .site-grid:has(li:nth-child(4):last-child) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* A phone zooms the page when a field's text is under 16 px: keep it at 16. */
+@media (hover: none) and (pointer: coarse) {
+  .mine-slip input:not([type]), .mine-slip input[type="date"], .mine-slip input[type="password"], .mine-slip select, .mine-slip textarea,
+  .sort-wrap select, .search-wrap input { font-size: 16px; }
+}
+
+/* Sheets on a phone follow the finger: app.js (dragToClose) moves the panel
+   with --drag while its top edge is pulled down, and lets go of the
+   transition meanwhile. The card's file gets a taller handle to pull by. */
+.is-dragging { transition: none !important; }
+@media (max-width: 700.98px) {
+  .sheet.is-dragged { translate: 0 var(--drag, 0px); transition: translate .32s var(--ease-out); }
+  .sheet-handle { position: relative; width: 100%; height: 30px; margin: -12px 0 2px; border-radius: 0; background: none; touch-action: none; cursor: grab; }
+  .sheet-handle::after { content: ""; position: absolute; top: 12px; left: 50%; width: 40px; height: 4px; margin-left: -20px; border-radius: 999px; background: var(--line); }
+}
+@media (max-width: 599.98px) {
+  .filters-head { touch-action: none; cursor: grab; }
+  .filters-head button { cursor: pointer; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .search-hero > .hero-copy, .search-hero > .cover-stage, .pk-price.is-new, .mine-shelf.is-fresh,
+  #result.is-entering > .result-header, #result.is-entering > .mine-summary, #result.is-entering > .toolbar, #result.is-entering > .binder-wrap,
+  #result.is-entering > .mine-empty-state, #result.is-entering > #result-footer, #result > .welcome-state:not(.mine-empty-state) { animation: none; }
+  .pk-card img, .result-art, .lang-switch::before, .guide-toggle { transition: none; }
+  .result-art { opacity: 1; transform: none; }
+  .market-guide::details-content { transition: none; }
+  .sheet.is-dragged { transition: none; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .pop, .pop.is-open, .mine-tabs-glider { transition: none; }
   .acct-dot.is-busy, .mine-tabs.is-fresh .mine-tabs-glider { animation: none; }
@@ -2435,11 +2625,12 @@ body.is-mine .mine-count { background: #fbf7ef; }
   .pk-card, .pk-sleeve, .closed-binder, .cover-sprite, .cover-search, .search-hero > .hero-copy, .chip.tab, .guide-toggle, .label-tape, .nav-btn, .back-home { transition: none; }
   .search-cover.is-loading, .cover-sprite.is-active, .search-cover.is-picked .cover-sprite, .cover-list, .cover-sprite.is-chosen::before, .dex-line, .dex-chart.is-loading,
   .welcome-state.is-loading .closed-binder, .overlay.is-on, .sheet-info, .bpage.is-dealing .pocket, .sheet-art.is-landing, .sheet-art.is-landing::before { animation: none; }
-  .pocket[data-key]:hover .pk-card, .closed-binder:hover { transform: none; }
+  @media (hover: hover) { .pocket[data-key]:hover .pk-card, .closed-binder:hover { transform: none; } }
   .cover-sprite.is-chosen::after, .cover-sprite.is-chosen img, .dex-link .dex-link-glint, .dex-link .dex-link-spark, .cover-match.is-busy::after { animation: none; }
   .picker, .picker.is-open, .pick, .picker-caret { transition: none; }
   .sheet-stage::before, .sheet-info::before, .sheet-part, .fact-wait, .sheet-price.is-busy .price-kind::after, .site.is-busy .site-note::after { animation: none; }
   .site { transition: none; }
-  .site:hover, .site:focus-visible { transform: none; }
+  .site:focus-visible { transform: none; }
+  @media (hover: hover) { .site:hover { transform: none; } }
   .overlay.is-closing { transition: none; }
 }
