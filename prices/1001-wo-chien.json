@@ -1,18 +1,18 @@
-{"v":1,"day":"2026-11-23","p":{
+{"v":1,"day":"2026-11-24","p":{
 "497438":{"Holofoil":[71,65]},
-"497637":{"Holofoil":[171,176]},
-"497676":{"Holofoil":[1440,1794]},
-"523618":{"Holofoil":[17,9],"Reverse Holofoil":[28,19]},
-"535112":{"Holofoil":[736,892]},
-"565969":{"Holofoil":[16,null]},
+"497637":{"Holofoil":[170,200]},
+"497676":{"Holofoil":[1456,1794]},
+"523618":{"Holofoil":[18,9],"Reverse Holofoil":[27,19]},
+"535112":{"Holofoil":[727,892]},
+"565969":{"Holofoil":[17,null]},
 "567379":{"Holofoil":[27,null]},
-"567752":{"Holofoil":[349,null]},
+"567752":{"Holofoil":[350,null]},
 "567772":{"Holofoil":[28,null]},
 "567841":{"Holofoil":[103,null]},
 "567849":{"Holofoil":[1954,null]},
 "587590":{"Normal":[19,null]},
 "590095":{"Normal":[16,1],"Reverse Holofoil":[25,18]},
-"602345":{"Holofoil":[12,null],"Normal":[12,null]},
+"602345":{"Holofoil":[12,null],"Normal":[13,null]},
 "602346":{"Holofoil":[44,null]},
-"604514":{"Holofoil":[263,null]}
+"604514":{"Holofoil":[255,null]}
 }}

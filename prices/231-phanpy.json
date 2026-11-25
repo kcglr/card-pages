@@ -1,7 +1,7 @@
-{"v":1,"day":"2026-11-23","p":{
+{"v":1,"day":"2026-11-24","p":{
 "87995":{"1st Edition":[345,null],"Unlimited":[146,null]},
 "87996":{"Normal":[356,null],"Reverse Holofoil":[2205,null]},
-"87997":{"1st Edition":[577,null],"Unlimited":[151,168]},
+"87997":{"1st Edition":[577,null],"Unlimited":[153,168]},
 "87998":{"Normal":[1499,10399],"Reverse Holofoil":[5998,null]},
 "87999":{"Normal":[987,null],"Reverse Holofoil":[4957,null]},
 "88000":{"Normal":[1927,null]},
@@ -10,13 +10,13 @@
 "88003":{"Normal":[95,104],"Reverse Holofoil":[2175,null]},
 "88004":{"Normal":[50,null],"Reverse Holofoil":[653,null]},
 "88005":{"Normal":[54,null],"Reverse Holofoil":[522,null]},
-"170894":{"Normal":[35,19],"Reverse Holofoil":[55,null]},
-"178924":{"Normal":[348,null],"Reverse Holofoil":[1429,null]},
-"226517":{"Normal":[23,5],"Reverse Holofoil":[45,47]},
+"170894":{"Normal":[33,19],"Reverse Holofoil":[55,null]},
+"178924":{"Normal":[353,null],"Reverse Holofoil":[1429,null]},
+"226517":{"Normal":[26,5],"Reverse Holofoil":[44,45]},
 "241882":{"Holofoil":[47,33]},
 "451745":{"Normal":[12,null],"Reverse Holofoil":[24,null]},
 "480431":{"Normal":[235,null]},
-"534198":{"Normal":[11,null],"Reverse Holofoil":[21,null]},
+"534198":{"Normal":[10,null],"Reverse Holofoil":[23,null]},
 "566882":{"Normal":[19,null]},
 "568882":{"Normal":[46,null]},
 "569989":{"Normal":[27,null]},
@@ -27,8 +27,8 @@
 "576312":{"1st Edition":[1350,null],"Unlimited":[2099,null]},
 "587644":{"Normal":[21,null]},
 "587692":{"Holofoil":[302,null]},
-"590023":{"Normal":[15,1],"Reverse Holofoil":[20,15]},
-"590024":{"Holofoil":[827,1262]},
+"590023":{"Normal":[17,1],"Reverse Holofoil":[20,15]},
+"590024":{"Holofoil":[829,1262]},
 "597316":{"Normal":[102,null]},
 "601849":{"1st Edition":[365,null],"Unlimited":[217,null]},
 "605949":{"1st Edition":[400,null],"Unlimited":[300,null]},
@@ -39,5 +39,5 @@
 "613944":{"Normal":[4000,null]},
 "670112":{"Normal":[300,null]},
 "683695":{"Normal":[12,null]},
-"693530":{"Normal":[12,1],"Reverse Holofoil":[26,20]}
+"693530":{"Normal":[13,1],"Reverse Holofoil":[29,20]}
 }}
