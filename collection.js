@@ -830,8 +830,8 @@
 
   /* ---- a Pullfolio account: sign in with Google to save (supabase/README.md) ---- */
 
-  // Shown only after ?accounts=1 was opened on this device, while Google
-  // sign-in is in testing (account.js). Searching and flipping through
+  // Shown on every device unless ?accounts=0 hid them there (account.js,
+  // enabled()). Searching and flipping through
   // binders never needs an account; signing in only adds saving.
   var Supa = root.PullfolioSupabase;
   var Account = root.PullfolioAccount;

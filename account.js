@@ -44,7 +44,7 @@
   var SESSION_STORE = "pullfolio.account"; // localStorage: the session
   var PENDING_STORE = "pullfolio.account.pending"; // sessionStorage: a sign-in on its way to Google and back
   var SEEN_STORE = "pullfolio.account.seen"; // localStorage: { user id: the version last synced }
-  var GATE_STORE = "pullfolio.accounts"; // localStorage: "1" once ?accounts=1 was opened
+  var GATE_STORE = "pullfolio.accounts"; // localStorage: 0 once ?accounts=0 was opened (accounts hidden on this device)
   var EARLY = 60; // seconds: a token this close to running out is refreshed first
   var PENDING_MAX = 15 * 60 * 1000; // a sign-in that takes longer starts again
   var SEEN_MAX = 8; // accounts a device remembers syncing
@@ -223,10 +223,12 @@
   Account.prototype.signedIn = function () { return !!this.session; };
   Account.prototype.user = function () { return this.session ? this.session.user : null; };
 
-  // Accounts are shown only after ?accounts=1 was opened once on this device
-  // (?accounts=0 hides them again), while Google sign-in is in testing.
-  // "?accounts=1" typed at the end of an address that has a "#" in it
-  // (…/card-pages/#my-binder?accounts=1) lands after the "#", where the
+  // Accounts show on every device. ?accounts=0 hides them on this device
+  // (remembered, and the page is as it was before accounts); ?accounts=1
+  // shows them again. A device that kept the old "1" from when they were
+  // hidden by default just shows them. Signed in, they always show.
+  // "?accounts=0" typed at the end of an address that has a "#" in it
+  // (…/card-pages/#my-binder?accounts=0) lands after the "#", where the
   // query isn't. It counts there too, and moves in front of the "#", so the
   // page (app.js, which runs after this) still finds its own "#my-binder".
   Account.prototype.enabled = function () {
@@ -244,9 +246,9 @@
         this.history.replaceState(null, "", loc.pathname + search + hash.slice(0, cut) + rest);
       }
     }
-    if (q.accounts === "1") this.store.set(GATE_STORE, 1);
-    else if (q.accounts === "0") this.store.drop(GATE_STORE);
-    return this.store.get(GATE_STORE) === 1 || !!this.session;
+    if (q.accounts === "1") this.store.drop(GATE_STORE);
+    else if (q.accounts === "0") this.store.set(GATE_STORE, 0);
+    return this.store.get(GATE_STORE) !== 0 || !!this.session;
   };
 
   Account.prototype.keep = function (session) {
